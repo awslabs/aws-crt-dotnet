@@ -12,17 +12,7 @@
  * express or implied. See the License for the specific language governing
  * permissions and limitations under the License.
  */
-#include <crt.h>
 
-#include <exports.h>
+#include <aws/common/common.h>
 
-#include <stdio.h>
-
-struct aws_allocator* aws_dotnet_get_allocator() {
-    return aws_default_allocator();
-}
-
-AWS_DOTNET_API
-void DoTheThing() {
-    printf("I DID THE THING\n");
-}
+struct aws_allocator *aws_dotnet_get_allocator(void);
