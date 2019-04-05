@@ -10,7 +10,6 @@ namespace tests
         [Fact]
         public void Test1()
         {
-            int thing = 42;
             Action doTheThing = CRT.Binding.GetFunction<Action>("DoTheThing");
             doTheThing();
         }
