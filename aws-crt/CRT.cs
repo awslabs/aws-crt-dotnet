@@ -93,7 +93,10 @@ namespace Aws.CRT
         {
             public override IntPtr LoadLibrary(string name)
             {
-                return kernel32.LoadLibrary(name);
+                Assembly crtAsm = Assembly.GetAssembly(typeof(CRT));
+                string path = crtAsm.Location.Replace(crtAsm.GetName().Name + ".dll", "");
+                string pathToLib = path + name;
+                return kernel32.LoadLibrary(pathToLib);
             }
 
             public override void FreeLibrary(IntPtr handle)
