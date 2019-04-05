@@ -119,15 +119,8 @@ set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY 
 set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY_DEBUG ${TARGET_LIB_DIR})
 set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY_RELEASE ${TARGET_LIB_DIR})
 
-set(CMAKE_C_FLAGS_DEBUGOPT "")
-set_property(TARGET ${CMAKE_PROJECT_NAME} PROPERTY C_STANDARD 99)
-
 aws_set_common_properties(${CMAKE_PROJECT_NAME})
 include_directories(src)
-
-if (CMAKE_BUILD_TYPE STREQUAL "" OR CMAKE_BUILD_TYPE MATCHES Debug)
-    target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE "-DDEBUG_BUILD")
-endif ()
 
 # This is always a shared lib, so always export
 target_compile_definitions(${CMAKE_PROJECT_NAME} PUBLIC "-DAWS_DOTNET_USE_IMPORT_EXPORT")
