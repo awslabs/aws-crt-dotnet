@@ -4,55 +4,30 @@
     <TargetFramework>netstandard2.0</TargetFramework>
     <RootNamespace>Aws.CRT</RootNamespace>
   </PropertyGroup>
-    
-<ItemGroup>
-  <ContentWithTargetPath Include="..\bin\$(Configuration)\libaws-crt-dotnet.dylib"
-                         Condition="Exists('..\bin\$(Configuration)\libaws-crt-dotnet.dylib')">
-    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    <TargetPath>libaws-crt-dotnet.dylib</TargetPath>
- </ContentWithTargetPath>
-</ItemGroup>
-    
-    <ItemGroup>
-  <ContentWithTargetPath Include="..\bin\$(Configuration)\libaws-crt-dotnet.so"
-                         Condition="Exists('..\bin\$(Configuration)\libaws-crt-dotnet.so')">
-    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    <TargetPath>libaws-crt-dotnet.so</TargetPath>
- </ContentWithTargetPath>
-</ItemGroup>
-    
- <ItemGroup>
-  <ContentWithTargetPath Include="..\bin\$(Configuration)\aws-crt-dotnet.dll"
-                         Condition="Exists('..\bin\$(Configuration)\aws-crt-dotnet.dll')">
-    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    <TargetPath>aws-crt-dotnet.dll</TargetPath>
- </ContentWithTargetPath>
-</ItemGroup>
-    
-
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <OutputPath>..\bin\Debug</OutputPath>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <OutputPath>..\bin\Release</OutputPath>
-  </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="CMake" Version="3.5.2" />
     <PackageReference Include="System.Runtime.Loader" Version="4.3.0" />
   </ItemGroup>
 
-  <Target Name="CMakeConfigure" BeforeTargets="PrepareForBuild" Outputs="../build/CMakeCache.txt">
+  <Target Name="BuildNativeLibrary" BeforeTargets="PrepareForBuild" Outputs="$(ProjectDir)../build/CMakeCache.txt">
     <MakeDir Directories="../build" />
-    <Exec Command="cmake -DCMAKE_BUILD_TYPE=Debug ../native" WorkingDirectory="../build" ConsoleToMSBuild="true">
-        <Output TaskParameter="ConsoleOutput" PropertyName="OutputOfExec" />
+    <Message Text="Configuring CMake project" Importance="high"/>
+    <Exec Command="cmake -DCMAKE_BUILD_TYPE=$(Configuration) -DCMAKE_PREFIX_PATH=$(ProjectDir)../build/deps/install $(ProjectDir)../native" WorkingDirectory="$(ProjectDir)../build" ConsoleToMSBuild="true">
+      <Output TaskParameter="ConsoleOutput" PropertyName="OutputOfExec" />
     </Exec>
+    <Message Text="Building native library" Importance="high"/>
+    <Exec Command="cmake --build ." WorkingDirectory="$(ProjectDir)../build" ConsoleToMSBuild="true">
+      <Output TaskParameter="ConsoleOutput" PropertyName="OutputOfExec" />
+    </Exec>
+    <ItemGroup>
+      <NativeLibraries Include="$(ProjectDir)../build/lib/*aws-crt-dotnet.*"/>
+      <None Include="@(NativeLibraries)">
+        <Link>%(RecursiveDir)%(FileName)%(Extension)</Link>
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
+    </ItemGroup>
   </Target>
 
-  <Target Name="CMakeBuild" AfterTargets="CMakeConfigure">
-    <Exec Command="cmake --build ." WorkingDirectory="../build" ConsoleToMSBuild="true">
-        <Output TaskParameter="ConsoleOutput" PropertyName="OutputOfExec" />
-    </Exec>
-  </Target>
   <ProjectExtensions>
     <MonoDevelop>
       <Properties>

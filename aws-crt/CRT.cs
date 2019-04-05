@@ -69,7 +69,7 @@ namespace Aws.CRT
                 IntPtr function = CRT.Loader.GetFunction(crt, name);
                 if (function == IntPtr.Zero)
                 {
-                    throw new InvalidOperationException($"Unable to resolve function {name}.");
+                    throw new InvalidOperationException($"Unable to resolve function {name}");
                 }
 
                 return Marshal.GetDelegateForFunctionPointer<DT>(function);
