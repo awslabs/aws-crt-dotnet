@@ -14,8 +14,11 @@
  * permissions and limitations under the License.
  */
 
+#include <exports.h>
+
 #include <stdio.h>
 
+AWS_DOTNET_API
 void DoTheThing() {
     printf("I DID THE THING\n");
 }

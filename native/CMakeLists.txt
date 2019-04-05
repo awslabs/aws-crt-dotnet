@@ -1,10 +1,21 @@
 cmake_minimum_required(VERSION 3.1)
 
+if (DEFINED CMAKE_PREFIX_PATH)
+    file(TO_CMAKE_PATH ${CMAKE_PREFIX_PATH} CMAKE_PREFIX_PATH)
+endif()
+
+if (DEFINED CMAKE_INSTALL_PREFIX)
+    file(TO_CMAKE_PATH ${CMAKE_INSTALL_PREFIX} CMAKE_INSTALL_PREFIX)
+endif()
+
+
 if (UNIX AND NOT APPLE)
     include(GNUInstallDirs)
 elseif(NOT DEFINED CMAKE_INSTALL_LIBDIR)
     set(CMAKE_INSTALL_LIBDIR "lib")
 endif()
+
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_PREFIX_PATH}/${CMAKE_INSTALL_LIBDIR}/cmake")
 
 if (${CMAKE_INSTALL_LIBDIR} STREQUAL "lib64")
     set(FIND_LIBRARY_USE_LIB64_PATHS true)
@@ -87,14 +98,16 @@ else()
     list(APPEND CMAKE_MODULE_PATH "${CMAKE_PREFIX_PATH}/${CMAKE_INSTALL_LIBDIR}/cmake")
 endif()
 
-# Local CMake scripts
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
+include(AwsCFlags)
+include(AwsSharedLibSetup)
+include(AwsSanitizers)
 
 # Native CRT bindings files
 file(GLOB AWS_CRT_DOTNET_HEADERS src/*.h)
 file(GLOB AWS_CRT_DOTNET_SRC src/*.c)
 
-set(TARGET_LIB_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../bin/${CMAKE_BUILD_TYPE}")
+# TODO: Make this more os/arch dependent and match the loader to it
+set(TARGET_LIB_DIR "lib")
 
 # shared lib that contains the CRT and API bindings, to be loaded by .NET
 add_library(${CMAKE_PROJECT_NAME} SHARED ${AWS_CRT_DOTNET_HEADERS} ${AWS_CRT_DOTNET_SRC})
@@ -115,6 +128,10 @@ include_directories(src)
 if (CMAKE_BUILD_TYPE STREQUAL "" OR CMAKE_BUILD_TYPE MATCHES Debug)
     target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE "-DDEBUG_BUILD")
 endif ()
+
+# This is always a shared lib, so always export
+target_compile_definitions(${CMAKE_PROJECT_NAME} PUBLIC "-DAWS_DOTNET_USE_IMPORT_EXPORT")
+target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE "-DAWS_DOTNET_EXPORTS")
 
 target_include_directories(${CMAKE_PROJECT_NAME} PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
