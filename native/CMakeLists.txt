@@ -109,13 +109,7 @@ set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY_
 set(CMAKE_C_FLAGS_DEBUGOPT "")
 set_property(TARGET ${CMAKE_PROJECT_NAME} PROPERTY C_STANDARD 99)
 
-#set warnings
-if (MSVC)
-    target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE /W4 /WX -D_CRT_SECURE_NO_WARNINGS)
-else ()
-    target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE -Wall -Wno-long-long -pedantic -Werror)
-endif ()
-
+aws_set_common_properties(${CMAKE_PROJECT_NAME})
 include_directories(src)
 
 if (CMAKE_BUILD_TYPE STREQUAL "" OR CMAKE_BUILD_TYPE MATCHES Debug)
