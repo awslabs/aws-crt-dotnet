@@ -1,0 +1,65 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <RootNamespace>Aws.CRT</RootNamespace>
+  </PropertyGroup>
+    
+<ItemGroup>
+  <ContentWithTargetPath Include="..\bin\$(Configuration)\libaws-crt-dotnet.dylib"
+                         Condition="Exists('..\bin\$(Configuration)\libaws-crt-dotnet.dylib')">
+    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    <TargetPath>libaws-crt-dotnet.dylib</TargetPath>
+ </ContentWithTargetPath>
+</ItemGroup>
+    
+    <ItemGroup>
+  <ContentWithTargetPath Include="..\bin\$(Configuration)\libaws-crt-dotnet.so"
+                         Condition="Exists('..\bin\$(Configuration)\libaws-crt-dotnet.so')">
+    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    <TargetPath>libaws-crt-dotnet.so</TargetPath>
+ </ContentWithTargetPath>
+</ItemGroup>
+    
+ <ItemGroup>
+  <ContentWithTargetPath Include="..\bin\$(Configuration)\aws-crt-dotnet.dll"
+                         Condition="Exists('..\bin\$(Configuration)\aws-crt-dotnet.dll')">
+    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    <TargetPath>aws-crt-dotnet.dll</TargetPath>
+ </ContentWithTargetPath>
+</ItemGroup>
+    
+
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <OutputPath>..\bin\Debug</OutputPath>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <OutputPath>..\bin\Release</OutputPath>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="CMake" Version="3.5.2" />
+    <PackageReference Include="System.Runtime.Loader" Version="4.3.0" />
+  </ItemGroup>
+
+  <Target Name="CMakeConfigure" BeforeTargets="PrepareForBuild" Outputs="../build/CMakeCache.txt">
+    <MakeDir Directories="../build" />
+    <Exec Command="cmake -DCMAKE_BUILD_TYPE=Debug ../native" WorkingDirectory="../build" ConsoleToMSBuild="true">
+        <Output TaskParameter="ConsoleOutput" PropertyName="OutputOfExec" />
+    </Exec>
+  </Target>
+
+  <Target Name="CMakeBuild" AfterTargets="CMakeConfigure">
+    <Exec Command="cmake --build ." WorkingDirectory="../build" ConsoleToMSBuild="true">
+        <Output TaskParameter="ConsoleOutput" PropertyName="OutputOfExec" />
+    </Exec>
+  </Target>
+  <ProjectExtensions>
+    <MonoDevelop>
+      <Properties>
+        <Policies>
+          <StandardHeader IncludeInNewFiles="True" Text="/*&#xA; * Copyright 2010-2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.&#xA; *&#xA; * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;).&#xA; * You may not use this file except in compliance with the License.&#xA; * A copy of the License is located at&#xA; *&#xA; *  http://aws.amazon.com/apache2.0&#xA; *&#xA; * or in the &quot;license&quot; file accompanying this file. This file is distributed&#xA; * on an &quot;AS IS&quot; BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either&#xA; * express or implied. See the License for the specific language governing&#xA; * permissions and limitations under the License.&#xA; */" />
+        </Policies>
+      </Properties>
+    </MonoDevelop>
+  </ProjectExtensions>
+</Project>
