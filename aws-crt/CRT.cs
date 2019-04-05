@@ -94,9 +94,8 @@ namespace Aws.CRT
             public override IntPtr LoadLibrary(string name)
             {
                 Assembly crtAsm = Assembly.GetAssembly(typeof(CRT));
-                string path = crtAsm.Location.Replace(crtAsm.GetName().Name + ".dll", "");
-                string pathToLib = path + name;
-                return kernel32.LoadLibrary(pathToLib);
+                string path = crtAsm.Location.Replace(crtAsm.GetName().Name + ".dll", name);
+                return kernel32.LoadLibrary(path);
             }
 
             public override void FreeLibrary(IntPtr handle)
@@ -115,9 +114,8 @@ namespace Aws.CRT
             public override IntPtr LoadLibrary(string name)
             {
                 Assembly crtAsm = Assembly.GetAssembly(typeof(CRT));
-                string path = crtAsm.Location.Replace(crtAsm.GetName().Name + ".dll", "");
-                string pathToLib = path + name;
-                return dl.dlopen(pathToLib, dl.RTLD_NOW);
+                string path = crtAsm.Location.Replace(crtAsm.GetName().Name + ".dll", name);
+                return dl.dlopen(path, dl.RTLD_NOW);
             }
 
             public override void FreeLibrary(IntPtr handle)
