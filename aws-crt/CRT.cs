@@ -163,6 +163,9 @@ namespace Aws.CRT
             }
         }
 
+        // Base class for native resources. SafeHandle guarantees that when the handle
+        // goes out of scope, the ReleaseHandle() function will be called, which each
+        // Handle subclass will implement to free the resource
         internal abstract class Handle : SafeHandle
         {
             protected Handle()
