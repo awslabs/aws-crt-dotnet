@@ -12,9 +12,7 @@
  * express or implied. See the License for the specific language governing
  * permissions and limitations under the License.
  */
+#include "crt.h"
+#include "exports.h"
 
-#include <aws/common/common.h>
-
-struct aws_allocator *aws_dotnet_get_allocator(void);
-
-void aws_dotnet_throw_exception(const char* message, ...);
+#include <aws/io/tls_channel_handler.h>

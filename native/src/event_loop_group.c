@@ -13,11 +13,10 @@
  * permissions and limitations under the License.
  */
 
-#include <crt.h>
+#include "crt.h"
+#include "exports.h"
 
 #include <aws/io/event_loop.h>
-
-#include <exports.h>
 
 AWS_DOTNET_API
 struct aws_event_loop_group* aws_dotnet_event_loop_group_new_default(int num_threads) {
