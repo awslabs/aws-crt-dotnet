@@ -3,6 +3,7 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <RootNamespace>Aws.CRT</RootNamespace>
+    <NoWarn>CS0649</NoWarn>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="CMake" Version="3.5.2" />

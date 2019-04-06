@@ -18,34 +18,19 @@ using System.Runtime.InteropServices;
 namespace Aws.CRT {
     public class EventLoopGroup {
 
-        internal static class API
+        internal class Interface
         {
             public delegate EventLoopGroup.Handle aws_dotnet_event_loop_group_new_default(int numThreads);
             public delegate void aws_dotnet_event_loop_group_clean_up(IntPtr elg);
 
-            public static aws_dotnet_event_loop_group_new_default new_default;
-            public static aws_dotnet_event_loop_group_clean_up clean_up;
-
-            static API()
-            {
-                new_default = CRT.Binding.GetFunction<aws_dotnet_event_loop_group_new_default>("aws_dotnet_event_loop_group_new_default");
-                clean_up = CRT.Binding.GetFunction<aws_dotnet_event_loop_group_clean_up>("aws_dotnet_event_loop_group_clean_up");
-            }
+            public aws_dotnet_event_loop_group_new_default new_default;
+            public aws_dotnet_event_loop_group_clean_up clean_up;
         }
-        
-        internal class Handle : SafeHandle
+
+        static Interface API = NativeAPI.Resolve<Interface>();
+
+        internal class Handle : CRT.Handle
         {
-            private Handle()
-            : base((IntPtr)0, true) {
-                
-            }
-
-            public override bool IsInvalid {
-                get {
-                    return handle == (IntPtr)0;
-                }
-            }
-
             protected override bool ReleaseHandle() {
                 API.clean_up(handle);
                 return true;
@@ -56,10 +41,6 @@ namespace Aws.CRT {
 
         public EventLoopGroup(int numThreads=1) {
             nativeHandle = API.new_default(numThreads);
-        }
-
-        public void Dispose() {
-
         }
     }
  }

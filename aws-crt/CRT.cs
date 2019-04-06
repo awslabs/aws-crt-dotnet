@@ -163,6 +163,23 @@ namespace Aws.CRT
             }
         }
 
+        internal abstract class Handle : SafeHandle
+        {
+            protected Handle()
+            : base((IntPtr)0, true)
+            {
+
+            }
+
+            public override bool IsInvalid
+            {
+                get
+                {
+                    return handle == (IntPtr)0;
+                }
+            }
+        }
+
         public static void Init()
         {
 
