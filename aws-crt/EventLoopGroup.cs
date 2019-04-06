@@ -16,21 +16,23 @@ using System;
 using System.Runtime.InteropServices;
 
 namespace Aws.CRT {
-    internal static class API
-    {
-        public delegate EventLoopGroup.Handle aws_dotnet_event_loop_group_new_default(int numThreads);
-        public delegate void aws_dotnet_event_loop_group_clean_up(IntPtr elg);
-
-        public static aws_dotnet_event_loop_group_new_default new_default;
-        public static aws_dotnet_event_loop_group_clean_up clean_up;
-
-        static API()
-        {
-            new_default = CRT.Binding.GetFunction<aws_dotnet_event_loop_group_new_default>("aws_dotnet_event_loop_group_new_default");
-            clean_up = CRT.Binding.GetFunction<aws_dotnet_event_loop_group_clean_up>("aws_dotnet_event_loop_group_clean_up");
-        }
-    }
     public class EventLoopGroup {
+
+        internal static class API
+        {
+            public delegate EventLoopGroup.Handle aws_dotnet_event_loop_group_new_default(int numThreads);
+            public delegate void aws_dotnet_event_loop_group_clean_up(IntPtr elg);
+
+            public static aws_dotnet_event_loop_group_new_default new_default;
+            public static aws_dotnet_event_loop_group_clean_up clean_up;
+
+            static API()
+            {
+                new_default = CRT.Binding.GetFunction<aws_dotnet_event_loop_group_new_default>("aws_dotnet_event_loop_group_new_default");
+                clean_up = CRT.Binding.GetFunction<aws_dotnet_event_loop_group_clean_up>("aws_dotnet_event_loop_group_clean_up");
+            }
+        }
+        
         internal class Handle : SafeHandle
         {
             private Handle()
