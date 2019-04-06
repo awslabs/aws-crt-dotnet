@@ -11,6 +11,7 @@ namespace tests
         public void TestCreateDestroy()
         {
             EventLoopGroup elg = new EventLoopGroup(1);
+            // When elg goes out of scope, the native handle will be released
         }
     }
 }
