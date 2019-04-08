@@ -36,6 +36,8 @@ namespace Aws.CRT {
         internal static void RecordNativeException(string message)
         {
             exceptionMessage.Value = message;
+            // HACK until we can get injection working
+            ThrowNativeException();
         }
         internal static void ThrowNativeException()
         {
@@ -47,8 +49,78 @@ namespace Aws.CRT {
         private static ThreadLocal<string> exceptionMessage;
     }
 
-    internal class NativeFunction
-    {
+    internal static class NativeAPI {
+
+        static MethodInfo GetFunction = CRT.Binding.GetType().GetMethod("GetFunction");
+
+#if true
+        public static T Resolve<T>()
+            where T : new()
+        {
+            T api = new T();
+            FieldInfo[] fields = typeof(T).GetFields();
+            foreach (FieldInfo field in fields)
+            {
+                if (field.FieldType.BaseType.IsSubclassOf(typeof(System.Delegate)))
+                {
+                    Type[] args = new Type[] { typeof(IntPtr) };
+                    MethodInfo resolveFunction = GetFunction.MakeGenericMethod(new Type[] { field.FieldType });
+                    Delegate function = (Delegate)resolveFunction.Invoke(CRT.Binding, new object[] { field.FieldType.Name });
+                    field.SetValue(api, function);
+                }
+            }
+
+            return api;
+        }
+
+#else // experimental injection of exception handler
+        static MethodInfo[] WrapNativeVariants = Array.FindAll(
+            typeof(NativeAPI).GetMethods(BindingFlags.Public | BindingFlags.Static),
+            m => m.Name == "WrapNative");
+
+        private static Delegate GetWrappedMethod(Type delegateType, Type[] delegateParams, Delegate targetFunction) {
+            MethodInfo wrapNativeGeneric = Array.Find(WrapNativeVariants, w => w.GetParameters()[0].ParameterType.Name == delegateType.Name);
+            MethodInfo wrapNative = wrapNativeGeneric.MakeGenericMethod(delegateParams);
+            Delegate funcOrAction = Delegate.CreateDelegate(delegateType, targetFunction.Target, targetFunction.Method);
+            return (Delegate)wrapNative.Invoke(null, new object[] { funcOrAction }); ;
+        }
+        public static T Resolve<T>() 
+            where T: new() 
+        {
+            T api = new T();
+            FieldInfo[] fields = typeof(T).GetFields();
+            foreach (FieldInfo field in fields) {
+                if (field.FieldType.BaseType.IsSubclassOf(typeof(System.Delegate))) {
+                    Type[] args = new Type[]{typeof(IntPtr)};
+                    MethodInfo resolveFunction = GetFunction.MakeGenericMethod(new Type[] { field.FieldType });
+                    Delegate function = (Delegate)resolveFunction.Invoke(CRT.Binding, new object[] {field.FieldType.Name});
+                    MethodInfo functionInfo = function.GetMethodInfo();
+                    ParameterInfo[] paramInfos = functionInfo.GetParameters();
+                    Type[] paramTypes = Array.ConvertAll<ParameterInfo, Type>(paramInfos, p => p.ParameterType);
+                    Type returnType = functionInfo.ReturnType;
+                    Type delegateType;
+                    Type[] delegateParams; 
+                    if (returnType == typeof(void)) {
+                        Type actionType = typeof(Action<>).MakeGenericType(paramTypes);
+                        delegateType = actionType;
+                        delegateParams = paramTypes;
+                    } else {
+                        var funcParamsList = new List<Type>(paramTypes);
+                        funcParamsList.Add(functionInfo.ReturnType);
+                        delegateParams = funcParamsList.ToArray();
+                        Type funcType = typeof(Func<,>).MakeGenericType(delegateParams);
+                        delegateType = funcType;
+                    }
+
+                    Delegate wrapper = GetWrappedMethod(delegateType, delegateParams, function);
+                    var wrapperAsDelegate = Delegate.CreateDelegate(field.FieldType, wrapper.Target, wrapper.Method);
+                    field.SetValue(api, wrapperAsDelegate);
+                }
+            }
+
+            return api;
+        }
+
         public static Action WrapNative(Action func)
         {
             return () =>
@@ -71,7 +143,7 @@ namespace Aws.CRT {
         {
             return () =>
             {
-                R res = func();
+                var res = func();
                 NativeException.ThrowNativeException();
                 return res;
             };
@@ -81,9 +153,10 @@ namespace Aws.CRT {
         {
             return (a1) =>
             {
-                R res = func(a1);
-                NativeException.ThrowNativeException();
-                return res;
+                // var res = func(a1);
+                // NativeException.ThrowNativeException();
+                // return res;
+                return func(a1);
             };
         }
 
@@ -91,7 +164,7 @@ namespace Aws.CRT {
         {
             return (a1, a2) =>
             {
-                R res = func(a1, a2);
+                var res = func(a1, a2);
                 NativeException.ThrowNativeException();
                 return res;
             };
@@ -100,52 +173,11 @@ namespace Aws.CRT {
         {
             return (a1, a2, a3) =>
             {
-                R res = func(a1, a2, a3);
+                var res = func(a1, a2, a3);
                 NativeException.ThrowNativeException();
                 return res;
             };
         }
-    }
-    internal static class NativeAPI {
-        public static T Resolve<T>() 
-            where T: new() 
-        {
-            T api = new T();
-            Type type = typeof(T);
-            FieldInfo[] fields = type.GetFields();
-            MethodInfo getFunction = CRT.Binding.GetType().GetMethod("GetFunction");
-            MethodInfo[] wrapNativeVariants = typeof(NativeFunction).GetMethods(BindingFlags.Public | BindingFlags.Static);
-            wrapNativeVariants = Array.FindAll(wrapNativeVariants, m => m.Name == "WrapNative");
-            foreach (FieldInfo field in fields) {
-                if (field.FieldType.BaseType.IsSubclassOf(typeof(System.Delegate))) {
-                    Type[] args = new Type[]{typeof(IntPtr)};
-                    var resolveFunction = getFunction.MakeGenericMethod(new Type[] { field.FieldType });
-                    Delegate function = (Delegate)resolveFunction.Invoke(CRT.Binding, new object[] {field.FieldType.Name});
-                    ParameterInfo[] paramInfos = function.GetMethodInfo().GetParameters();
-                    Type[] paramTypes = Array.ConvertAll<ParameterInfo, Type>(paramInfos, p => p.ParameterType);
-                    Type returnType = function.GetMethodInfo().ReturnType;
-                    Type delegateType;
-                    Type[] delegateParams;
-                    if (returnType == typeof(void)) {
-                        Type actionType = typeof(Action<>).MakeGenericType(paramTypes);
-                        delegateType = actionType;
-                        delegateParams = paramTypes;
-                    } else {
-                        var funcParamsList = new List<Type>(paramTypes);
-                        funcParamsList.Add(function.GetMethodInfo().ReturnType);
-                        delegateParams = funcParamsList.ToArray();
-                        Type funcType = typeof(Func<,>).MakeGenericType(delegateParams);
-                        delegateType = funcType;
-                    }
-                    MethodInfo wrapNativeGeneric = Array.Find(wrapNativeVariants, w => w.GetParameters()[0].ParameterType.Name == delegateType.Name);
-                    MethodInfo wrapNative = wrapNativeGeneric.MakeGenericMethod(delegateParams);
-                    var wrapper = (Delegate)wrapNative.Invoke(null, new object[] { Delegate.CreateDelegate(delegateType, function.Target, function.Method) });
-                    var wrapperAsDelegate = Delegate.CreateDelegate(field.FieldType, wrapper.Target, wrapper.Method);
-                    field.SetValue(api, wrapperAsDelegate);
-                }
-            }
-
-            return api;
-        }
+#endif
     }
 }

@@ -27,7 +27,7 @@ namespace Aws.CRT {
             public aws_dotnet_event_loop_group_clean_up clean_up;
         }
 
-        static Interface API = NativeAPI.Resolve<Interface>();
+        private static Interface API = NativeAPI.Resolve<Interface>();
 
         internal class Handle : CRT.Handle
         {
