@@ -1,4 +1,18 @@
-﻿using System;
+﻿/*
+ * Copyright 2010-2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ * or in the "license" file accompanying this file. This file is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
+using System;
 using System.Reflection;
 using System.Runtime.InteropServices;
 
@@ -62,6 +76,8 @@ namespace Aws.CRT
                 {
                     crt = CRT.Loader.LoadLibrary("libaws-crt-dotnet.dylib");
                 }
+                var setExceptionCallback = GetFunction<NativeException.SetExceptionCallback>("aws_dotnet_set_exception_callback");
+                setExceptionCallback(NativeException.RecordNativeException);
             }
 
             public DT GetFunction<DT>(string name)
@@ -145,6 +161,26 @@ namespace Aws.CRT
                 else
                 {
                     return s_loaderInstance = new DlopenLoader();
+                }
+            }
+        }
+
+        // Base class for native resources. SafeHandle guarantees that when the handle
+        // goes out of scope, the ReleaseHandle() function will be called, which each
+        // Handle subclass will implement to free the resource
+        internal abstract class Handle : SafeHandle
+        {
+            protected Handle()
+            : base((IntPtr)0, true)
+            {
+
+            }
+
+            public override bool IsInvalid
+            {
+                get
+                {
+                    return handle == (IntPtr)0;
                 }
             }
         }

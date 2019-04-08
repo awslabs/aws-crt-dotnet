@@ -3,6 +3,7 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <RootNamespace>Aws.CRT</RootNamespace>
+    <NoWarn>CS0649</NoWarn>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="CMake" Version="3.5.2" />
@@ -12,7 +13,7 @@
   <Target Name="BuildNativeLibrary" BeforeTargets="PrepareForBuild" Outputs="$(ProjectDir)../build/CMakeCache.txt">
     <MakeDir Directories="../build" />
     <Message Text="Configuring CMake project" Importance="high"/>
-    <Exec Command="cmake -DCMAKE_BUILD_TYPE=$(Configuration) -DCMAKE_PREFIX_PATH=$(ProjectDir)../build/deps/install $(ProjectDir)../native" WorkingDirectory="$(ProjectDir)../build" ConsoleToMSBuild="true">
+    <Exec Command="cmake -DCMAKE_BUILD_TYPE=$(Configuration) -DCMAKE_PREFIX_PATH=$(ProjectDir)../build/deps/install -DCMAKE_EXPORT_COMPILE_COMMANDS=ON $(ProjectDir)../native" WorkingDirectory="$(ProjectDir)../build" ConsoleToMSBuild="true">
       <Output TaskParameter="ConsoleOutput" PropertyName="OutputOfExec" />
     </Exec>
     <Message Text="Building native library" Importance="high"/>
