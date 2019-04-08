@@ -66,7 +66,6 @@ namespace Aws.CRT {
             {
                 if (field.FieldType.BaseType.IsSubclassOf(typeof(System.Delegate)))
                 {
-                    Type[] args = new Type[] { typeof(IntPtr) };
                     MethodInfo resolveFunction = GetFunction.MakeGenericMethod(new Type[] { field.FieldType });
                     Delegate function = (Delegate)resolveFunction.Invoke(CRT.Binding, new object[] { field.FieldType.Name });
                     field.SetValue(api, function);
