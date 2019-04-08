@@ -36,7 +36,12 @@ namespace Aws.CRT {
         internal static void RecordNativeException(string message)
         {
             exceptionMessage.Value = message;
-            // HACK until we can get injection working
+            // HACK HACK HACK until we can get injection working, this will work
+            // but the callstacks will be lies and villainy, native code will leak. 
+            // The goal is to inject a call to ThrowNativeException after every 
+            // native call, to get the stack right. If native code deposited an error
+            // in the TLS slot, then an exception will be thrown after control exits
+            // native code
             ThrowNativeException();
         }
         internal static void ThrowNativeException()
@@ -53,7 +58,6 @@ namespace Aws.CRT {
 
         static MethodInfo GetFunction = CRT.Binding.GetType().GetMethod("GetFunction");
 
-#if true
         public static T Resolve<T>()
             where T : new()
         {
@@ -72,112 +76,5 @@ namespace Aws.CRT {
 
             return api;
         }
-
-#else // experimental injection of exception handler
-        static MethodInfo[] WrapNativeVariants = Array.FindAll(
-            typeof(NativeAPI).GetMethods(BindingFlags.Public | BindingFlags.Static),
-            m => m.Name == "WrapNative");
-
-        private static Delegate GetWrappedMethod(Type delegateType, Type[] delegateParams, Delegate targetFunction) {
-            MethodInfo wrapNativeGeneric = Array.Find(WrapNativeVariants, w => w.GetParameters()[0].ParameterType.Name == delegateType.Name);
-            MethodInfo wrapNative = wrapNativeGeneric.MakeGenericMethod(delegateParams);
-            Delegate funcOrAction = Delegate.CreateDelegate(delegateType, targetFunction.Target, targetFunction.Method);
-            return (Delegate)wrapNative.Invoke(null, new object[] { funcOrAction }); ;
-        }
-        public static T Resolve<T>() 
-            where T: new() 
-        {
-            T api = new T();
-            FieldInfo[] fields = typeof(T).GetFields();
-            foreach (FieldInfo field in fields) {
-                if (field.FieldType.BaseType.IsSubclassOf(typeof(System.Delegate))) {
-                    Type[] args = new Type[]{typeof(IntPtr)};
-                    MethodInfo resolveFunction = GetFunction.MakeGenericMethod(new Type[] { field.FieldType });
-                    Delegate function = (Delegate)resolveFunction.Invoke(CRT.Binding, new object[] {field.FieldType.Name});
-                    MethodInfo functionInfo = function.GetMethodInfo();
-                    ParameterInfo[] paramInfos = functionInfo.GetParameters();
-                    Type[] paramTypes = Array.ConvertAll<ParameterInfo, Type>(paramInfos, p => p.ParameterType);
-                    Type returnType = functionInfo.ReturnType;
-                    Type delegateType;
-                    Type[] delegateParams; 
-                    if (returnType == typeof(void)) {
-                        Type actionType = typeof(Action<>).MakeGenericType(paramTypes);
-                        delegateType = actionType;
-                        delegateParams = paramTypes;
-                    } else {
-                        var funcParamsList = new List<Type>(paramTypes);
-                        funcParamsList.Add(functionInfo.ReturnType);
-                        delegateParams = funcParamsList.ToArray();
-                        Type funcType = typeof(Func<,>).MakeGenericType(delegateParams);
-                        delegateType = funcType;
-                    }
-
-                    Delegate wrapper = GetWrappedMethod(delegateType, delegateParams, function);
-                    var wrapperAsDelegate = Delegate.CreateDelegate(field.FieldType, wrapper.Target, wrapper.Method);
-                    field.SetValue(api, wrapperAsDelegate);
-                }
-            }
-
-            return api;
-        }
-
-        public static Action WrapNative(Action func)
-        {
-            return () =>
-            {
-                func();
-                NativeException.ThrowNativeException();
-            };
-        }
-
-        public static Action<T1> WrapNative<T1>(Action<T1> func)
-        {
-            return (a1) =>
-            {
-                func(a1);
-                NativeException.ThrowNativeException();
-            };
-        }
-
-        public static Func<R> WrapNative<R>(Func<R> func)
-        {
-            return () =>
-            {
-                var res = func();
-                NativeException.ThrowNativeException();
-                return res;
-            };
-        }
-
-        public static Func<T1, R> WrapNative<T1, R>(Func<T1, R> func)
-        {
-            return (a1) =>
-            {
-                // var res = func(a1);
-                // NativeException.ThrowNativeException();
-                // return res;
-                return func(a1);
-            };
-        }
-
-        public static Func<T1, T2, R> WrapNative<T1, T2, R>(Func<T1, T2, R> func)
-        {
-            return (a1, a2) =>
-            {
-                var res = func(a1, a2);
-                NativeException.ThrowNativeException();
-                return res;
-            };
-        }
-        public static Func<T1, T2, T3, R> WrapNative<T1, T2, T3, R>(Func<T1, T2, T3, R> func)
-        {
-            return (a1, a2, a3) =>
-            {
-                var res = func(a1, a2, a3);
-                NativeException.ThrowNativeException();
-                return res;
-            };
-        }
-#endif
     }
 }
