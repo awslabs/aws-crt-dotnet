@@ -77,18 +77,22 @@ namespace Aws.CRT
                     crt = CRT.Loader.LoadLibrary("libaws-crt-dotnet.dylib");
                 }
                 var setExceptionCallback = GetFunction<NativeException.SetExceptionCallback>("aws_dotnet_set_exception_callback");
-                setExceptionCallback(NativeException.RecordNativeException);
+                setExceptionCallback(NativeException.ThrowNativeException);
             }
 
             public DT GetFunction<DT>(string name)
             {
-                IntPtr function = CRT.Loader.GetFunction(crt, name);
+                IntPtr function = GetFunctionAddress(name);
                 if (function == IntPtr.Zero)
                 {
                     throw new InvalidOperationException($"Unable to resolve function {name}");
                 }
 
                 return Marshal.GetDelegateForFunctionPointer<DT>(function);
+            }
+
+            public IntPtr GetFunctionAddress(string name) {
+                return CRT.Loader.GetFunction(crt, name);
             }
         }
 
