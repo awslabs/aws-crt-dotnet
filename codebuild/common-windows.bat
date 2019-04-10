@@ -1,6 +1,7 @@
 
 :: install dotnet
 choco install dotnetcore-sdk -y
+call RefreshEnv.cmd
 
 dotnet test tests || goto :error
 
