@@ -1,0 +1,24 @@
+version: 0.2
+#this buildspec assumes the ubuntu 14.04 trusty image
+phases:
+  install:
+    commands:
+      - wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
+      - sudo add-apt-repository ppa:ubuntu-toolchain-r/test
+      - sudo apt-add-repository "deb http://apt.llvm.org/trusty/ llvm-toolchain-trusty-6.0 main"
+      - sudo apt-get update -y
+      - sudo apt-get install clang-6.0 cmake3 -y -f
+      - curl -L https://packages.microsoft.com/config/ubuntu/14.04/packages-microsoft-prod.deb --output /tmp/packages-microsoft-prod.deb
+      - sudo dpkg -i /tmp/packages-microsoft-prod.deb
+
+  pre_build:
+    commands:
+      - export CC=clang-6.0
+  build:
+    commands:
+      - echo Build started on `date`
+      - ./codebuild/common-posix.sh
+  post_build:
+    commands:
+      - echo Build completed on `date`
+

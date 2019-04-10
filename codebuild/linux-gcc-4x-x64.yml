@@ -1,0 +1,21 @@
+version: 0.2
+#this build spec assumes the ubuntu 14.04 trusty image
+phases:
+  install:
+    commands:
+      - sudo apt-get update -y
+      - sudo apt-get install gcc g++ cmake3 -y
+      - curl -L https://packages.microsoft.com/config/ubuntu/14.04/packages-microsoft-prod.deb --output /tmp/packages-microsoft-prod.deb
+      - sudo dpkg -i /tmp/packages-microsoft-prod.deb
+  pre_build:
+    commands:
+      - export CC=gcc
+      - export CXX=g++
+  build:
+    commands:
+      - echo Build started on `date`
+      - ./codebuild/common-posix.sh
+  post_build:
+    commands:
+      - echo Build completed on `date`
+
