@@ -4,7 +4,7 @@ phases:
   # download and install dotnet SDK 2.2
   install:
     commands:
-      - "%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -InputFormat None -ExecutionPolicy Bypass -Command "Invoke-WebRequest https://download.visualstudio.microsoft.com/download/pr/df174ab6-0fcd-47cd-bc95-6a0e09e8f71b/fc7101af6ac2cdac1e0a09075490fd45/dotnet-sdk-2.2.203-win-x86.exe -OutFile %TEMP%\dotnet-sdk-install.exe"
+      - "%SystemRoot%\\System32\\WindowsPowerShell\\v1.0\\powershell.exe" -NoProfile -InputFormat None -ExecutionPolicy Bypass -Command "Invoke-WebRequest https://download.visualstudio.microsoft.com/download/pr/df174ab6-0fcd-47cd-bc95-6a0e09e8f71b/fc7101af6ac2cdac1e0a09075490fd45/dotnet-sdk-2.2.203-win-x86.exe -OutFile %TEMP%\dotnet-sdk-install.exe"
       - %TEMP%\dotnet-sdk-install.exe /install /quiet /norestart
   build:
     commands:
