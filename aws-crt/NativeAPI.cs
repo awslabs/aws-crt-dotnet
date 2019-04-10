@@ -42,7 +42,7 @@ namespace Aws.CRT {
         internal static void CheckNativeException()
         {
             if (exceptionMessage.Value != null) {
-                ExceptionInfo ex = exceptionMessage.Value;
+                var ex = exceptionMessage.Value;
                 exceptionMessage.Value = null;
                 throw new NativeException(ex.ErrorCode, ex.Message);
             }
@@ -53,8 +53,8 @@ namespace Aws.CRT {
                 ErrorCode = errorCode;
                 Message = message;
             }
-            public int ErrorCode;
-            public string Message;
+            public int ErrorCode { get; private set; }
+            public string Message { get; private set; }
         }
 
         private static ThreadLocal<ExceptionInfo> exceptionMessage = new ThreadLocal<ExceptionInfo>();
@@ -68,8 +68,8 @@ namespace Aws.CRT {
         private static Dictionary<int, MethodInfo> MakeVoidCallImpls = GetMakeCallImpls("MakeVoidCall");
 
         private static Dictionary<int, MethodInfo> GetMakeCallImpls(string name) {
-            MethodInfo[] methodInfos = Array.FindAll(typeof(NativeAPI).GetMethods(), (m) => m.Name == name);
-            Dictionary<int, MethodInfo> impls = new Dictionary<int, MethodInfo>();
+            var methodInfos = Array.FindAll(typeof(NativeAPI).GetMethods(), (m) => m.Name == name);
+            var impls = new Dictionary<int, MethodInfo>();
             Array.ForEach(methodInfos, (m) => impls.Add(m.GetGenericArguments().Length, m));
             return impls;
         }
@@ -98,17 +98,17 @@ namespace Aws.CRT {
         // perfectly capable of casting a dynamic -> generic parameter though
         private static dynamic BindImpl<D>(string nativeFunctionName)
         {
-            Type delegateType = typeof(D);
+            var delegateType = typeof(D);
 
             // resolve the native function from the CRT Binding
-            MethodInfo resolve = GetFunction.MakeGenericMethod(new Type[] { delegateType });
-            D function = (D)resolve.Invoke(CRT.Binding, new object[] { nativeFunctionName });
+            var resolve = GetFunction.MakeGenericMethod(new Type[] { delegateType });
+            var function = (D)resolve.Invoke(CRT.Binding, new object[] { nativeFunctionName });
 
             // generate a call to MakeCall<> with the right generic parameters
-            MethodInfo makeCallImpl = GetMakeCallImpl(GetFuncParameterTypes(delegateType));
+            var makeCallImpl = GetMakeCallImpl(GetFuncParameterTypes(delegateType));
 
             // call MakeCall<> to make a lambda that captures the native function
-            Delegate callImpl = (Delegate)makeCallImpl.Invoke(null, new object[] { function });
+            var callImpl = (Delegate)makeCallImpl.Invoke(null, new object[] { function });
 
             // convert the result to the delegate type of the native function
             return Delegate.CreateDelegate(delegateType, callImpl.Target, callImpl.Method);
@@ -416,15 +416,15 @@ namespace Aws.CRT {
 
         // Returns just the argument types for a given delegate type
         private static Type[] GetDelegateParameterTypes(Type dt) {
-            ParameterInfo[] paramInfos = dt.GetMethod("Invoke").GetParameters();
-            Type[] paramTypes = Array.ConvertAll<ParameterInfo, Type>(paramInfos, (p) => p.ParameterType);
+            var paramInfos = dt.GetMethod("Invoke").GetParameters();
+            var paramTypes = Array.ConvertAll<ParameterInfo, Type>(paramInfos, (p) => p.ParameterType);
             return paramTypes;
         }
 
         // Returns types in the format of System.Func: [args..., return type]
         private static Type[] GetFuncParameterTypes(Type dt) {
-            Type[] paramTypes = GetDelegateParameterTypes(dt);
-            List<Type> funcTypeList = new List<Type>(paramTypes);
+            var paramTypes = GetDelegateParameterTypes(dt);
+            var funcTypeList = new List<Type>(paramTypes);
             funcTypeList.Add(dt.GetMethod("Invoke").ReturnType);
             return funcTypeList.ToArray();
         }
