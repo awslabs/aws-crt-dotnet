@@ -19,7 +19,7 @@
 #include <aws/io/event_loop.h>
 
 AWS_DOTNET_API
-struct aws_event_loop_group* aws_dotnet_event_loop_group_new_default(int num_threads) {
+struct aws_event_loop_group *aws_dotnet_event_loop_group_new_default(int num_threads) {
     struct aws_allocator *allocator = aws_dotnet_get_allocator();
     struct aws_event_loop_group *elg = aws_mem_acquire(allocator, sizeof(struct aws_event_loop_group));
     if (!elg) {
@@ -39,7 +39,7 @@ error:
 }
 
 AWS_DOTNET_API
-void aws_dotnet_event_loop_group_clean_up(struct aws_event_loop_group* elg) {
+void aws_dotnet_event_loop_group_clean_up(struct aws_event_loop_group *elg) {
     if (!elg) {
         return;
     }

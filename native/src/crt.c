@@ -15,35 +15,32 @@
 #include "crt.h"
 #include "exports.h"
 
-#include <stdio.h>
 #include <stdarg.h>
+#include <stdio.h>
 #include <stdlib.h>
 
-struct aws_allocator* aws_dotnet_get_allocator() {
+struct aws_allocator *aws_dotnet_get_allocator() {
     return aws_default_allocator();
 }
 
-typedef void(*dotnet_exception_callback)(const char*);
+typedef void (*dotnet_exception_callback)(const char *);
 static dotnet_exception_callback s_throw_exception = NULL;
 AWS_DOTNET_API
 void aws_dotnet_set_exception_callback(dotnet_exception_callback callback) {
     s_throw_exception = callback;
 }
 
-void aws_dotnet_throw_exception(const char *message, ...)
-{
-  AWS_FATAL_ASSERT(s_throw_exception != NULL &&
-                   "Exception handler not installed");
-  va_list args;
-  va_start(args, message);
-  char buf[1024];
-  vsnprintf(buf, sizeof(buf), message, args);
-  va_end(args);
+void aws_dotnet_throw_exception(const char *message, ...) {
+    AWS_FATAL_ASSERT(s_throw_exception != NULL && "Exception handler not installed");
+    va_list args;
+    va_start(args, message);
+    char buf[1024];
+    vsnprintf(buf, sizeof(buf), message, args);
+    va_end(args);
 
-  char exception[1280];
-  snprintf(exception, sizeof(exception), "%s (aws_last_error: %s)", buf,
-           aws_error_str(aws_last_error()));
-  s_throw_exception(exception);
+    char exception[1280];
+    snprintf(exception, sizeof(exception), "%s (aws_last_error: %s)", buf, aws_error_str(aws_last_error()));
+    s_throw_exception(exception);
 }
 
 AWS_DOTNET_API
