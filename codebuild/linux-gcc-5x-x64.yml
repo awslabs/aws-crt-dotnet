@@ -5,7 +5,7 @@ phases:
     commands:
       - sudo add-apt-repository ppa:ubuntu-toolchain-r/test
       - sudo apt-get update -y
-      - sudo apt-get install gcc-5 cmake3 -y
+      - sudo apt-get install gcc-5 cmake3 dpkg -y
       # .NET Core install instructions taken from: https://dotnet.microsoft.com/download/linux-package-manager/ubuntu14-04/sdk-current
       - curl -L https://packages.microsoft.com/config/ubuntu/14.04/packages-microsoft-prod.deb --output /tmp/packages-microsoft-prod.deb
       - sudo dpkg -i /tmp/packages-microsoft-prod.deb
