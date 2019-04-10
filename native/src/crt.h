@@ -26,4 +26,4 @@ struct aws_allocator *aws_dotnet_get_allocator(void);
 
 /* This will throw an exception via a callback into .NET. It will never
  * return, so you must be sure to do all cleanup before throwing */
-AWS_NORETURN(void aws_dotnet_throw_exception(const char *message, ...));
+void aws_dotnet_throw_exception(const char *message, ...);

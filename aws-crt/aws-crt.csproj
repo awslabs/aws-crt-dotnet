@@ -8,6 +8,7 @@
   <ItemGroup>
     <PackageReference Include="CMake" Version="3.5.2" />
     <PackageReference Include="System.Runtime.Loader" Version="4.3.0" />
+    <PackageReference Include="Microsoft.CSharp" Version="4.5.0" />
   </ItemGroup>
 
   <Target Name="BuildNativeLibrary" BeforeTargets="PrepareForBuild" Outputs="$(ProjectDir)../build/CMakeCache.txt">

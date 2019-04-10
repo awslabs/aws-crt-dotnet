@@ -23,8 +23,8 @@ struct aws_allocator* aws_dotnet_get_allocator() {
     return aws_default_allocator();
 }
 
-typedef AWS_NORETURN(void(*dotnet_exception_callback)(const char*));
-static AWS_NORETURN(dotnet_exception_callback s_throw_exception) = NULL;
+typedef void(*dotnet_exception_callback)(const char*);
+static dotnet_exception_callback s_throw_exception = NULL;
 AWS_DOTNET_API
 void aws_dotnet_set_exception_callback(dotnet_exception_callback callback) {
     s_throw_exception = callback;
@@ -50,4 +50,9 @@ AWS_DOTNET_API
 int aws_test_exception(int a, int b) {
     aws_dotnet_throw_exception("TEST EXCEPTION");
     return a * b;
+}
+
+AWS_DOTNET_API
+void aws_test_exception_void() {
+    aws_dotnet_throw_exception("TEST EXCEPTION VOID");
 }

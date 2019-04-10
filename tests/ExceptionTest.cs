@@ -6,18 +6,19 @@ using Aws.CRT;
 namespace tests
 {
     class Test {
-        public class Interface {
+        internal static class API
+        {
             public delegate int aws_test_exception(int a, int b);
+            public delegate void aws_test_exception_void();
 
-            public aws_test_exception test;
+            public static aws_test_exception test = NativeAPI.Bind<aws_test_exception>();
+            public static aws_test_exception_void test_void = NativeAPI.Bind<aws_test_exception_void>();
         }
-
-        public static Interface API = NativeAPI.Resolve<Interface>();
     }
     public class ExceptionTest
     {
         [Fact]
-        public void TestException()
+        public void EnsureExceptionThrown()
         {
             int result = 0;
             bool threwException = false;
@@ -29,6 +30,12 @@ namespace tests
 
             Assert.True(threwException);
             Assert.Equal(0, result);
+        }
+
+        [Fact]
+        public void EnsureExceptionThrownVoid()
+        {
+            Assert.Throws<NativeException>(() => { Test.API.test_void(); });
         }
     }
 }
