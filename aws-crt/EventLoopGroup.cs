@@ -13,21 +13,22 @@
  * permissions and limitations under the License.
  */
 using System;
+using System.Security;
 using System.Runtime.InteropServices;
 
 namespace Aws.CRT {
     public class EventLoopGroup {
 
-        internal class Interface
+        internal static class API
         {
             public delegate EventLoopGroup.Handle aws_dotnet_event_loop_group_new_default(int numThreads);
             public delegate void aws_dotnet_event_loop_group_clean_up(IntPtr elg);
 
-            public aws_dotnet_event_loop_group_new_default new_default;
-            public aws_dotnet_event_loop_group_clean_up clean_up;
+            [SecuritySafeCritical]
+            public static aws_dotnet_event_loop_group_new_default new_default = NativeAPI.Bind<aws_dotnet_event_loop_group_new_default>();
+            [SecuritySafeCritical] 
+            public static aws_dotnet_event_loop_group_clean_up clean_up = NativeAPI.Bind<aws_dotnet_event_loop_group_clean_up>();
         }
-
-        private static Interface API = NativeAPI.Resolve<Interface>();
 
         internal class Handle : CRT.Handle
         {

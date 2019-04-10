@@ -17,4 +17,7 @@
 
 struct aws_allocator *aws_dotnet_get_allocator(void);
 
-void aws_dotnet_throw_exception(const char* message, ...);
+/* This will record an exception message via a callback into .NET. When the
+ * native function returns, the exception will be thrown, which preserves the
+ * .NET callstack */
+void aws_dotnet_throw_exception(const char *message, ...);
