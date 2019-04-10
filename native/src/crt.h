@@ -17,13 +17,7 @@
 
 struct aws_allocator *aws_dotnet_get_allocator(void);
 
-
-#if defined(_MSC_VER)
-#define AWS_NORETURN(...) __declspec(noreturn) __VA_ARGS__
-#elif defined(__clang__) || defined(__GNUC__)
-#define AWS_NORETURN(...) __VA_ARGS__ __attribute__((noreturn))
-#endif
-
-/* This will throw an exception via a callback into .NET. It will never
- * return, so you must be sure to do all cleanup before throwing */
+/* This will record an exception message via a callback into .NET. When the
+ * native function returns, the exception will be thrown, which preserves the
+ * .NET callstack */
 void aws_dotnet_throw_exception(const char *message, ...);

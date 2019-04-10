@@ -32,7 +32,7 @@ namespace Aws.CRT {
         internal delegate void SetExceptionCallback(NativeExceptionThrower callback);
         // Called from native code as a callback, store the message in TLS and
         // throw it when we return to CLR code
-        internal static void ThrowNativeException(string message)
+        internal static void RecordNativeException(string message)
         {
             exceptionMessage.Value = message;
         }

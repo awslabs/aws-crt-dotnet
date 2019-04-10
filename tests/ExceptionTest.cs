@@ -21,14 +21,7 @@ namespace tests
         public void EnsureExceptionThrown()
         {
             int result = 0;
-            bool threwException = false;
-            try {
-                result = Test.API.test(42, 1);
-            } catch (NativeException ex) {
-                threwException = true;
-            }
-
-            Assert.True(threwException);
+            Assert.Throws<NativeException>(() => result = Test.API.test(42, 1));
             Assert.Equal(0, result);
         }
 

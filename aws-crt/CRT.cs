@@ -77,7 +77,7 @@ namespace Aws.CRT
                     crt = CRT.Loader.LoadLibrary("libaws-crt-dotnet.dylib");
                 }
                 var setExceptionCallback = GetFunction<NativeException.SetExceptionCallback>("aws_dotnet_set_exception_callback");
-                setExceptionCallback(NativeException.ThrowNativeException);
+                setExceptionCallback(NativeException.RecordNativeException);
             }
 
             public DT GetFunction<DT>(string name)
