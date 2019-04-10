@@ -11,7 +11,7 @@ phases:
       - sudo dpkg -i /tmp/packages-microsoft-prod.deb
       - sudo apt-get install apt-transport-https
       - sudo apt-get update -y
-      - sudo apt-get install dotnet-sdk-2.2
+      - sudo apt-get install dotnet-sdk-2.2 -y
   pre_build:
     commands:
       - export CC=gcc-6
