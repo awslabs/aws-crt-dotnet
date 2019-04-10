@@ -23,30 +23,41 @@ namespace Aws.CRT {
     // Unique exception only thrown by native code when something unrecoverable happens
     public class NativeException : Exception
     {
-        public NativeException(string message)
+        public NativeException(int errorCode, string message)
             : base(message)
         {
+            ErrorCode = errorCode;
         }
+        public int ErrorCode { get; private set; }
 
-        public delegate void NativeExceptionRecorder(string message);
+        public delegate void NativeExceptionRecorder(int errorCode, string message);
         internal delegate void SetExceptionCallback(NativeExceptionRecorder callback);
         // Called from native code as a callback, store the message in TLS and
         // throw it when we return to CLR code
-        internal static void RecordNativeException(string message)
+        internal static void RecordNativeException(int errorCode, string message)
         {
-            exceptionMessage.Value = message;
+            exceptionMessage.Value = new ExceptionInfo(errorCode, message);
         }
 
         internal static void CheckNativeException()
         {
             if (exceptionMessage.Value != null) {
-                string message = exceptionMessage.Value;
+                ExceptionInfo ex = exceptionMessage.Value;
                 exceptionMessage.Value = null;
-                throw new NativeException(message);
+                throw new NativeException(ex.ErrorCode, ex.Message);
             }
         }
 
-        private static ThreadLocal<string> exceptionMessage = new ThreadLocal<string>();
+        private class ExceptionInfo {
+            public ExceptionInfo(int errorCode, string message) {
+                ErrorCode = errorCode;
+                Message = message;
+            }
+            public int ErrorCode;
+            public string Message;
+        }
+
+        private static ThreadLocal<ExceptionInfo> exceptionMessage = new ThreadLocal<ExceptionInfo>();
     }
 
     public static class NativeAPI {
