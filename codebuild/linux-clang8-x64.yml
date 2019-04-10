@@ -24,7 +24,7 @@ phases:
     commands:
       - echo Build started on `date`
       - ./codebuild/common-posix.sh -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DENABLE_FUZZ_TESTS=ON
-      - clang-tidy-8 -p=$CODEBUILD_SRC_DIR/build $CODEBUILD_SRC_DIR/native/*.c
+      - clang-tidy-8 -p=$CODEBUILD_SRC_DIR/build $CODEBUILD_SRC_DIR/native/src/*.c
       - ./codebuild/format-check.sh
   post_build:
     commands:
