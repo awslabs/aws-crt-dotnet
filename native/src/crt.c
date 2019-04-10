@@ -51,6 +51,6 @@ int aws_test_exception(int a, int b) {
 }
 
 AWS_DOTNET_API
-void aws_test_exception_void() {
+void aws_test_exception_void(void) {
     aws_dotnet_throw_exception("TEST EXCEPTION VOID");
 }
