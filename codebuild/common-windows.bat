@@ -4,7 +4,7 @@
 %TEMP%\dotnet-sdk-install.exe /silent
 call RefreshEnv.Cmd
 
-dotnet test tests || goto :error
+dotnet test tests %* || goto :error
 
 goto :EOF
 
