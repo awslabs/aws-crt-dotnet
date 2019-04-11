@@ -16,32 +16,35 @@ using System;
 using System.Security;
 using System.Runtime.InteropServices;
 
-namespace Aws.CRT {
-    public class EventLoopGroup {
-
+namespace Aws.CRT.IO
+{
+    public class ClientBootstrap
+    {
         internal static class API
         {
-            public delegate EventLoopGroup.Handle aws_dotnet_event_loop_group_new_default(int numThreads);
-            public delegate void aws_dotnet_event_loop_group_clean_up(IntPtr elg);
+            public delegate Handle aws_dotnet_client_bootstrap_new(IntPtr eventLoopGroup);
+            public delegate void aws_dotnet_client_bootstrap_clean_up(IntPtr clientBootstrap);
 
             [SecuritySafeCritical]
-            public static aws_dotnet_event_loop_group_new_default new_default = NativeAPI.Bind<aws_dotnet_event_loop_group_new_default>();
-            [SecuritySafeCritical] 
-            public static aws_dotnet_event_loop_group_clean_up clean_up = NativeAPI.Bind<aws_dotnet_event_loop_group_clean_up>();
+            public static aws_dotnet_client_bootstrap_new make_new = NativeAPI.Bind<aws_dotnet_client_bootstrap_new>();
+            [SecuritySafeCritical]
+            public static aws_dotnet_client_bootstrap_clean_up clean_up = NativeAPI.Bind<aws_dotnet_client_bootstrap_clean_up>();
         }
 
         internal class Handle : CRT.Handle
         {
-            protected override bool ReleaseHandle() {
+            protected override bool ReleaseHandle()
+            {
                 API.clean_up(handle);
                 return true;
             }
         }
-        
+
         private Handle nativeHandle;
 
-        public EventLoopGroup(int numThreads=1) {
-            nativeHandle = API.new_default(numThreads);
+        public ClientBootstrap(EventLoopGroup eventLoopGroup)
+        {
+            nativeHandle = API.make_new(eventLoopGroup.NativeHandle.DangerousGetHandle());
         }
     }
- }
+}
