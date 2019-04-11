@@ -23,13 +23,6 @@ struct aws_allocator *aws_dotnet_get_allocator() {
     return aws_default_allocator();
 }
 
-/* Win32 .NET callbacks are __stdcall, everything else is __cdecl */
-#if defined(_MSC_VER) && !defined(_WIN64)
-#   define DOTNET_CALL __stdcall
-#else
-#   define DOTNET_CALL 
-#endif
-
 typedef void (DOTNET_CALL *dotnet_exception_callback)(int, const char *);
 static dotnet_exception_callback s_throw_exception = NULL;
 
