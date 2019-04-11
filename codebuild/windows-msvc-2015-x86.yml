@@ -1,11 +1,9 @@
 version: 0.2
 
 phases:
-  # download and install dotnet SDK 2.2
   install:
     commands:
-      - powershell -NoProfile -InputFormat None -ExecutionPolicy Bypass -Command "Invoke-WebRequest https://download.visualstudio.microsoft.com/download/pr/df174ab6-0fcd-47cd-bc95-6a0e09e8f71b/fc7101af6ac2cdac1e0a09075490fd45/dotnet-sdk-2.2.203-win-x86.exe -OutFile %TEMP%\dotnet-sdk-install.exe"
-      - %TEMP%\dotnet-sdk-install.exe /install /quiet /norestart
+      - .\codebuild\install-dotnet.bat https://download.visualstudio.microsoft.com/download/pr/df174ab6-0fcd-47cd-bc95-6a0e09e8f71b/fc7101af6ac2cdac1e0a09075490fd45/dotnet-sdk-2.2.203-win-x86.exe
   build:
     commands:
       - .\codebuild\common-windows.bat -p:CMakeGenerator="Visual Studio 14 2015"
