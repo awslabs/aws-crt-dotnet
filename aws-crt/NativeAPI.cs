@@ -27,18 +27,18 @@ namespace Aws.CRT {
             : base(message)
         {
             ErrorCode = errorCode;
-            ErrorString = errorString;
+            ErrorName = errorString;
         }
         public int ErrorCode { get; private set; }
-        public string ErrorString { get; private set; }
+        public string ErrorName { get; private set; }
 
-        public delegate void NativeExceptionRecorder(int errorCode, string errorString, string message);
+        public delegate void NativeExceptionRecorder(int errorCode, string errorName, string message);
         internal delegate void SetExceptionCallback(NativeExceptionRecorder callback);
         // Called from native code as a callback, store the exception in TLS and
         // throw it when we return to CLR code
-        internal static void RecordNativeException(int errorCode, string errorString, string message)
+        internal static void RecordNativeException(int errorCode, string errorName, string message)
         {
-            exception.Value = new NativeException(errorCode, errorString, message);
+            exception.Value = new NativeException(errorCode, errorName, message);
         }
 
         internal static void CheckNativeException()
