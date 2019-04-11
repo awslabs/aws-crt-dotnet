@@ -23,19 +23,19 @@ namespace Aws.CRT.IO
         internal static class API
         {
             public delegate Handle aws_dotnet_client_bootstrap_new(IntPtr eventLoopGroup);
-            public delegate void aws_dotnet_client_bootstrap_clean_up(IntPtr clientBootstrap);
+            public delegate void aws_dotnet_client_bootstrap_destroy(IntPtr clientBootstrap);
 
             [SecuritySafeCritical]
             public static aws_dotnet_client_bootstrap_new make_new = NativeAPI.Bind<aws_dotnet_client_bootstrap_new>();
             [SecuritySafeCritical]
-            public static aws_dotnet_client_bootstrap_clean_up clean_up = NativeAPI.Bind<aws_dotnet_client_bootstrap_clean_up>();
+            public static aws_dotnet_client_bootstrap_destroy destroy = NativeAPI.Bind<aws_dotnet_client_bootstrap_destroy>();
         }
 
         internal class Handle : CRT.Handle
         {
             protected override bool ReleaseHandle()
             {
-                API.clean_up(handle);
+                API.destroy(handle);
                 return true;
             }
         }

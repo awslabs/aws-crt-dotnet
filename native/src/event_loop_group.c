@@ -39,7 +39,7 @@ error:
 }
 
 AWS_DOTNET_API
-void aws_dotnet_event_loop_group_clean_up(struct aws_event_loop_group *elg) {
+void aws_dotnet_event_loop_group_destroy(struct aws_event_loop_group *elg) {
     if (!elg) {
         return;
     }

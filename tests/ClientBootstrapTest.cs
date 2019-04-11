@@ -19,13 +19,14 @@ using Aws.CRT.IO;
 
 namespace tests
 {
-    public class EventLoopGroupTest
+    public class ClientBootstrapTest
     {
         [Fact]
-        public void TestCreateDestroy()
+        public void ClientBootstrapLifetime()
         {
             EventLoopGroup elg = new EventLoopGroup(1);
-            // When elg goes out of scope, the native handle will be released
+            ClientBootstrap bootstrap = new ClientBootstrap(elg);
+            // When these go out of scope, the native handle will be released
         }
     }
 }
