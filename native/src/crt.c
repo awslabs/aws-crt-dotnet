@@ -23,7 +23,7 @@ struct aws_allocator *aws_dotnet_get_allocator() {
     return aws_default_allocator();
 }
 
-typedef void(DOTNET_CALL *dotnet_exception_callback)(int, const char*, const char *);
+typedef void(DOTNET_CALL *dotnet_exception_callback)(int, const char *, const char *);
 static dotnet_exception_callback s_throw_exception = NULL;
 
 AWS_DOTNET_API
