@@ -23,11 +23,11 @@ namespace Aws.CRT {
     // Unique exception only thrown by native code when something unrecoverable happens
     public class NativeException : Exception
     {
-        public NativeException(int errorCode, string errorString, string message)
+        public NativeException(int errorCode, string errorName, string message)
             : base(message)
         {
             ErrorCode = errorCode;
-            ErrorName = errorString;
+            ErrorName = errorName;
         }
         public int ErrorCode { get; private set; }
         public string ErrorName { get; private set; }
