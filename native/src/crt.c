@@ -23,7 +23,7 @@ struct aws_allocator *aws_dotnet_get_allocator() {
     return aws_default_allocator();
 }
 
-typedef void(DOTNET_CALL *dotnet_exception_callback)(int, const char *);
+typedef void(DOTNET_CALL *dotnet_exception_callback)(int, const char *, const char *);
 static dotnet_exception_callback s_throw_exception = NULL;
 
 AWS_DOTNET_API
@@ -42,7 +42,7 @@ void aws_dotnet_throw_exception(const char *message, ...) {
     char exception[1280];
     int error_code = aws_last_error();
     snprintf(exception, sizeof(exception), "%s (aws_last_error: %s)", buf, aws_error_str(error_code));
-    s_throw_exception(error_code, exception);
+    s_throw_exception(error_code, aws_error_name(error_code), exception);
 }
 
 AWS_DOTNET_API

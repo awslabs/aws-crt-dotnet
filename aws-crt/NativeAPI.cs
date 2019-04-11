@@ -23,41 +23,34 @@ namespace Aws.CRT {
     // Unique exception only thrown by native code when something unrecoverable happens
     public class NativeException : Exception
     {
-        public NativeException(int errorCode, string message)
+        public NativeException(int errorCode, string errorName, string message)
             : base(message)
         {
             ErrorCode = errorCode;
+            ErrorName = errorName;
         }
         public int ErrorCode { get; private set; }
+        public string ErrorName { get; private set; }
 
-        public delegate void NativeExceptionRecorder(int errorCode, string message);
+        public delegate void NativeExceptionRecorder(int errorCode, string errorName, string message);
         internal delegate void SetExceptionCallback(NativeExceptionRecorder callback);
-        // Called from native code as a callback, store the message in TLS and
+        // Called from native code as a callback, store the exception in TLS and
         // throw it when we return to CLR code
-        internal static void RecordNativeException(int errorCode, string message)
+        internal static void RecordNativeException(int errorCode, string errorName, string message)
         {
-            exceptionMessage.Value = new ExceptionInfo(errorCode, message);
+            exception.Value = new NativeException(errorCode, errorName, message);
         }
 
         internal static void CheckNativeException()
         {
-            if (exceptionMessage.Value != null) {
-                var ex = exceptionMessage.Value;
-                exceptionMessage.Value = null;
-                throw new NativeException(ex.ErrorCode, ex.Message);
+            if (exception.Value != null) {
+                var ex = exception.Value;
+                exception.Value = null;
+                throw ex;
             }
         }
 
-        private class ExceptionInfo {
-            public ExceptionInfo(int errorCode, string message) {
-                ErrorCode = errorCode;
-                Message = message;
-            }
-            public int ErrorCode { get; private set; }
-            public string Message { get; private set; }
-        }
-
-        private static ThreadLocal<ExceptionInfo> exceptionMessage = new ThreadLocal<ExceptionInfo>();
+        private static ThreadLocal<NativeException> exception = new ThreadLocal<NativeException>();
     }
 
     public static class NativeAPI {
