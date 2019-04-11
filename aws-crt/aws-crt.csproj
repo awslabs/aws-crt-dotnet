@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <PlatformTarget Condition="$(OS) == 'Windows_NT' AND ($(CMakeGenerator) == 'Visual Studio 14 2015' OR $(CMakeGenerator) == 'Visual Studio 15 2017')">x86</PlatformTarget>
+    <PlatformTarget Condition="$(PlatformTarget) == '' AND $(OS) == 'Windows_NT' AND ($(CMakeGenerator) == 'Visual Studio 14 2015' OR $(CMakeGenerator) == 'Visual Studio 15 2017')">x86</PlatformTarget>
     <PlatformTarget Condition="$(PlatformTarget) == ''">x64</PlatformTarget>
     <RootNamespace>Aws.CRT</RootNamespace>
   </PropertyGroup>
@@ -14,7 +14,8 @@
 
   <Target Name="BuildNativeLibrary" BeforeTargets="PrepareForBuild" Outputs="$(ProjectDir)../build/CMakeCache.txt">
     <PropertyGroup>
-      <CMakeGenerator Condition="$(CMakeGenerator) == '' AND $(OS) == 'Windows_NT'">Visual Studio 15 2017 Win64</CMakeGenerator>
+      <CMakeGenerator Condition="$(CMakeGenerator) == '' AND $(OS) == 'Windows_NT' AND $(PlatformTarget) == 'x64'">Visual Studio 15 2017 Win64</CMakeGenerator>
+      <CMakeGenerator Condition="$(CMakeGenerator) == '' AND $(OS) == 'Windows_NT' AND $(PlatformTarget) == 'x86'">Visual Studio 15 2017</CMakeGenerator>
       <CMakeGenerator Condition="$(CMakeGenerator) == '' AND $(OS) == 'Unix'">Unix Makefiles</CMakeGenerator>
     </PropertyGroup>
     <MakeDir Directories="$(ProjectDir)../build" />
