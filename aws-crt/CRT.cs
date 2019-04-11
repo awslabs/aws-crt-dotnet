@@ -197,7 +197,6 @@ namespace Aws.CRT
             protected Handle()
             : base((IntPtr)0, true)
             {
-
             }
 
             public override bool IsInvalid
