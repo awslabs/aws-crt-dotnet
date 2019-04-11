@@ -41,7 +41,7 @@ namespace Aws.CRT
         // This will only ever be instantiated on Windows/XboxOne
         internal static class kernel32
         {
-            [DllImport("kernel32")]
+            [DllImport("kernel32", SetLastError=true)]
             public static extern IntPtr LoadLibrary(string fileName);
 
             [DllImport("kernel32")]
@@ -56,6 +56,7 @@ namespace Aws.CRT
             public abstract IntPtr LoadLibrary(string name);
             public abstract void FreeLibrary(IntPtr handle);
             public abstract IntPtr GetFunction(IntPtr handle, string name);
+            public abstract string GetLastError();
         }
 
         public class PlatformBinding
@@ -64,17 +65,25 @@ namespace Aws.CRT
 
             public PlatformBinding()
             {
+                string libraryName = null;
                 if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 {
-                    crt = CRT.Loader.LoadLibrary("aws-crt-dotnet.dll");
+                    libraryName = "aws-crt-dotnet.dll";
                 }
                 else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
                 {
-                    crt = CRT.Loader.LoadLibrary("libaws-crt-dotnet.so");
+                    libraryName = "libaws-crt-dotnet.so";
                 }
                 else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
                 {
-                    crt = CRT.Loader.LoadLibrary("libaws-crt-dotnet.dylib");
+                    libraryName = "libaws-crt-dotnet.dylib";
+                }
+
+                crt = CRT.Loader.LoadLibrary(libraryName);
+                if (crt == IntPtr.Zero)
+                {
+                    string error = CRT.Loader.GetLastError();
+                    throw new InvalidOperationException($"Unable to load {libraryName}: error={error}");
                 }
                 var setExceptionCallback = GetFunction<NativeException.SetExceptionCallback>("aws_dotnet_set_exception_callback");
                 setExceptionCallback(NativeException.RecordNativeException);
@@ -127,6 +136,11 @@ namespace Aws.CRT
             {
                 return kernel32.GetProcAddress(handle, name);
             }
+
+            public override string GetLastError()
+            {
+                return Marshal.GetLastWin32Error().ToString();
+            }
         }
 
         private class DlopenLoader : PlatformLoader
@@ -142,9 +156,15 @@ namespace Aws.CRT
             {
                 dl.dlclose(handle);
             }
+            
             public override IntPtr GetFunction(IntPtr handle, string name)
             {
                 return dl.dlsym(handle, name);
+            }
+
+            public override string GetLastError()
+            {
+                return dl.dlerror();
             }
         }
 
