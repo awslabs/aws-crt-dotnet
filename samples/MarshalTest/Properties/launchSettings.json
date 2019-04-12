@@ -1,0 +1,8 @@
+{
+    "profiles": {
+        "MarshalTest": {
+            "commandName": "Project",
+            "nativeDebugging": true
+        }
+    }
+}
