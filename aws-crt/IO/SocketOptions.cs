@@ -19,7 +19,7 @@ using System.Runtime.InteropServices;
 namespace Aws.CRT.IO
 {
     [StructLayout(LayoutKind.Sequential)]
-    class NativeSocketOptions {
+    class AwsSocketOptions {
         public Int32 type;
         public Int32 domain;
         public UInt32 connect_timeout_ms;
@@ -62,12 +62,12 @@ namespace Aws.CRT.IO
         }
 
         private Handle nativeHandle;
-        private NativeSocketOptions options;
+        private AwsSocketOptions options;
 
         public SocketOptions()
         {
             nativeHandle = API.make_new();
-            options = Marshal.PtrToStructure<NativeSocketOptions>(nativeHandle.DangerousGetHandle());
+            options = Marshal.PtrToStructure<AwsSocketOptions>(nativeHandle.DangerousGetHandle());
         }
 
         public SocketDomain Domain {
