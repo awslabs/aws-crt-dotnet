@@ -19,7 +19,7 @@
 #include <aws/io/socket.h>
 
 AWS_DOTNET_API
-struct aws_socket_options *aws_dotnet_socket_options_new() {
+struct aws_socket_options *aws_dotnet_socket_options_new(void) {
     struct aws_allocator *allocator = aws_dotnet_get_allocator();
     struct aws_socket_options *options = aws_mem_acquire(allocator, sizeof(struct aws_socket_options));
     if (!options) {
