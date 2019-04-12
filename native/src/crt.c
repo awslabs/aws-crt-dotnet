@@ -32,7 +32,7 @@ void aws_dotnet_set_exception_callback(dotnet_exception_callback callback) {
 }
 
 void aws_dotnet_throw_exception(const char *message, ...) {
-    AWS_FATAL_ASSERT(s_throw_exception != NULL && "Exception handler not installed");
+    AWS_FATAL_ASSERT(s_throw_exception != NULL);
     va_list args;
     va_start(args, message);
     char buf[1024];
