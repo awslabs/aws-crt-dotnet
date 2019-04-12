@@ -22,11 +22,35 @@ namespace tests
     public class TlsContextOptionsTest
     {
         [Fact]
+        public void MinimumTlsVersionTest()
+        {
+            var options = new TlsContextOptions();
+            options.MinimumTlsVersion = TlsVersions.TLSv1_3;
+            Assert.Equal(TlsVersions.TLSv1_3, options.MinimumTlsVersion);
+        }
+
+        [Fact]
         public void AlpnListTest()
         {
-            //TlsContextOptions options = new TlsContextOptions();
-            //options.AlpnList = "h2;x-amazon-mqtt";
-            //Assert.Equal(options.AlpnList, "h2;x-amazon-mqtt");
+            var options = new TlsContextOptions();
+            options.AlpnList = "h2;x-amazon-mqtt";
+            Assert.Equal("h2;x-amazon-mqtt", options.AlpnList);
+        }
+
+        [Fact]
+        public void MaxFragmentSizeTest()
+        {
+            var options = new TlsContextOptions();
+            options.MaxFragmentSize = 16 * 1024;
+            Assert.Equal<uint>(16 * 1024, options.MaxFragmentSize);
+        }
+
+        [Fact]
+        public void VerifyPeerTest()
+        {
+            var options = new TlsContextOptions();
+            options.VerifyPeer = true;
+            Assert.True(options.VerifyPeer);
         }
     }
 }
