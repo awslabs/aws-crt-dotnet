@@ -41,7 +41,6 @@ struct aws_tls_ctx_options *aws_dotnet_tls_ctx_options_new_default_client(void) 
     return options;
 }
 
-
 AWS_DOTNET_API
 struct aws_tls_ctx_options *aws_dotnet_tls_ctx_options_new_default_server(const char *cert_path, const char *key_path) {
     struct aws_tls_ctx_options *options = s_tls_ctx_options_new();
@@ -59,7 +58,6 @@ struct aws_tls_ctx_options *aws_dotnet_tls_ctx_options_new_default_server(const 
 
     return options;
 }
-
 
 AWS_DOTNET_API
 void aws_dotnet_tls_ctx_options_destroy(struct aws_tls_ctx_options *options) {
@@ -153,7 +151,10 @@ bool aws_dotnet_tls_ctx_options_get_verify_peer(struct aws_tls_ctx_options *opti
 }
 
 AWS_DOTNET_API
-void aws_dotnet_tls_ctx_options_override_default_trust_store_from_path(struct aws_tls_ctx_options *options, const char* ca_path, const char* ca_file) {
+void aws_dotnet_tls_ctx_options_override_default_trust_store_from_path(
+    struct aws_tls_ctx_options *options,
+    const char *ca_path,
+    const char *ca_file) {
     if (options == NULL) {
         aws_dotnet_throw_exception("Invalid TlsContextOptions");
         return;
@@ -192,7 +193,10 @@ void aws_dotnet_tls_ctx_options_init_default_server_from_path(
 }
 
 AWS_DOTNET_API
-void aws_dotnet_tls_ctx_options_init_client_mtls_pkcs12_from_path(struct aws_tls_ctx_options *options, const char *pkcs12_path, const char *pkcs12_password) {
+void aws_dotnet_tls_ctx_options_init_client_mtls_pkcs12_from_path(
+    struct aws_tls_ctx_options *options,
+    const char *pkcs12_path,
+    const char *pkcs12_password) {
 #if defined(__APPLE__)
     if (options == NULL) {
         aws_dotnet_throw_exception("Invalid TlsContextOptions");

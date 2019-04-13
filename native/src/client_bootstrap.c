@@ -19,7 +19,9 @@
 #include <aws/io/channel_bootstrap.h>
 
 AWS_DOTNET_API
-struct aws_client_bootstrap *aws_dotnet_client_bootstrap_new(struct aws_event_loop_group *elg, struct aws_host_resolver *host_resolver) {
+struct aws_client_bootstrap *aws_dotnet_client_bootstrap_new(
+    struct aws_event_loop_group *elg,
+    struct aws_host_resolver *host_resolver) {
     if (elg == NULL) {
         aws_dotnet_throw_exception("Invalid EventLoopGroup");
         return NULL;
