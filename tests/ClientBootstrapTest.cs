@@ -24,8 +24,9 @@ namespace tests
         [Fact]
         public void ClientBootstrapLifetime()
         {
-            EventLoopGroup elg = new EventLoopGroup(1);
-            ClientBootstrap bootstrap = new ClientBootstrap(elg);
+            var elg = new EventLoopGroup(1);
+            var hostResolver = new DefaultHostResolver(elg);
+            var bootstrap = new ClientBootstrap(elg, hostResolver);
             // When these go out of scope, the native handle will be released
         }
     }

@@ -12,23 +12,24 @@
  * express or implied. See the License for the specific language governing
  * permissions and limitations under the License.
  */
+
 using System;
 using System.Security;
 using System.Runtime.InteropServices;
 
 namespace Aws.CRT.IO
 {
-    public class ClientBootstrap
+    public class HostResolver
     {
         internal static class API
         {
-            public delegate Handle aws_dotnet_client_bootstrap_new(IntPtr eventLoopGroup, IntPtr hostResolver);
-            public delegate void aws_dotnet_client_bootstrap_destroy(IntPtr clientBootstrap);
+            public delegate Handle aws_dotnet_host_resolver_new_default(IntPtr eventLoopGroup, int maxHosts);
+            public delegate void aws_dotnet_host_resolver_destroy(IntPtr hostResolver);
 
             [SecuritySafeCritical]
-            public static aws_dotnet_client_bootstrap_new make_new = NativeAPI.Bind<aws_dotnet_client_bootstrap_new>();
+            public static aws_dotnet_host_resolver_new_default make_new_default = NativeAPI.Bind<aws_dotnet_host_resolver_new_default>();
             [SecuritySafeCritical]
-            public static aws_dotnet_client_bootstrap_destroy destroy = NativeAPI.Bind<aws_dotnet_client_bootstrap_destroy>();
+            public static aws_dotnet_host_resolver_destroy destroy = NativeAPI.Bind<aws_dotnet_host_resolver_destroy>();
         }
 
         internal class Handle : CRT.Handle
@@ -40,11 +41,14 @@ namespace Aws.CRT.IO
             }
         }
 
-        internal Handle NativeHandle { get; private set; }
+        internal Handle NativeHandle { get; set; }
+    }
 
-        public ClientBootstrap(EventLoopGroup eventLoopGroup, HostResolver hostResolver)
+    public class DefaultHostResolver : HostResolver
+    {
+        public DefaultHostResolver(EventLoopGroup eventLoopGroup, int maxHosts=64)
         {
-            NativeHandle = API.make_new(eventLoopGroup.NativeHandle.DangerousGetHandle(), hostResolver.NativeHandle.DangerousGetHandle());
+            NativeHandle = API.make_new_default(eventLoopGroup.NativeHandle.DangerousGetHandle(), maxHosts);
         }
     }
 }

@@ -19,26 +19,24 @@
 #include <aws/io/channel_bootstrap.h>
 
 AWS_DOTNET_API
-struct aws_client_bootstrap *aws_dotnet_client_bootstrap_new(struct aws_event_loop_group *elg) {
+struct aws_client_bootstrap *aws_dotnet_client_bootstrap_new(struct aws_event_loop_group *elg, struct aws_host_resolver *host_resolver) {
     if (elg == NULL) {
         aws_dotnet_throw_exception("Invalid EventLoopGroup");
         return NULL;
     }
+    if (host_resolver == NULL) {
+        aws_dotnet_throw_exception("Invalid HostResolver");
+        return NULL;
+    }
 
     struct aws_allocator *allocator = aws_dotnet_get_allocator();
-    struct aws_client_bootstrap *bootstrap = aws_client_bootstrap_new(allocator, elg, NULL, NULL);
+    struct aws_client_bootstrap *bootstrap = aws_client_bootstrap_new(allocator, elg, host_resolver, NULL);
     if (!bootstrap) {
         aws_dotnet_throw_exception("Failed to allocate new aws_client_bootstrap");
-        goto error;
+        return NULL;
     }
 
     return bootstrap;
-
-error:
-    if (bootstrap) {
-        aws_client_bootstrap_destroy(bootstrap);
-    }
-    return NULL;
 }
 
 AWS_DOTNET_API
@@ -48,5 +46,5 @@ void aws_dotnet_client_bootstrap_destroy(struct aws_client_bootstrap *bootstrap)
         return;
     }
 
-    aws_client_bootstrap_destroy(bootstrap);
+    aws_client_bootstrap_release(bootstrap);
 }

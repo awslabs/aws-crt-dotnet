@@ -51,9 +51,23 @@ namespace Aws.CRT
             public static extern int FreeLibrary(IntPtr module);
         }
 
+        public class LibraryHandle : Handle
+        {
+            public LibraryHandle(IntPtr value) 
+            {
+                SetHandle(value);
+            }
+
+            protected override bool ReleaseHandle()
+            {
+                CRT.Loader.FreeLibrary(handle);
+                return true;
+            }
+        }
+
         public abstract class PlatformLoader
         {
-            public abstract IntPtr LoadLibrary(string name);
+            public abstract LibraryHandle LoadLibrary(string name);
             public abstract void FreeLibrary(IntPtr handle);
             public abstract IntPtr GetFunction(IntPtr handle, string name);
             public abstract string GetLastError();
@@ -61,7 +75,8 @@ namespace Aws.CRT
 
         public class PlatformBinding
         {
-            private IntPtr crt;
+            private LibraryHandle crt;
+            private NativeException.NativeExceptionRecorder recordNativeException = NativeException.RecordNativeException;
 
             public PlatformBinding()
             {
@@ -80,13 +95,14 @@ namespace Aws.CRT
                 }
 
                 crt = CRT.Loader.LoadLibrary(libraryName);
-                if (crt == IntPtr.Zero)
+                if (crt.IsInvalid)
                 {
                     string error = CRT.Loader.GetLastError();
                     throw new InvalidOperationException($"Unable to load {libraryName}: error={error}");
                 }
+
                 var setExceptionCallback = GetFunction<NativeException.SetExceptionCallback>("aws_dotnet_set_exception_callback");
-                setExceptionCallback(NativeException.RecordNativeException);
+                setExceptionCallback(recordNativeException);
             }
 
             public DT GetFunction<DT>(string name)
@@ -101,7 +117,7 @@ namespace Aws.CRT
             }
 
             public IntPtr GetFunctionAddress(string name) {
-                return CRT.Loader.GetFunction(crt, name);
+                return CRT.Loader.GetFunction(crt.DangerousGetHandle(), name);
             }
         }
 
@@ -120,11 +136,11 @@ namespace Aws.CRT
 
         private class WindowsLoader : PlatformLoader
         {
-            public override IntPtr LoadLibrary(string name)
+            public override LibraryHandle LoadLibrary(string name)
             {
                 Assembly crtAsm = Assembly.GetAssembly(typeof(CRT));
                 string path = crtAsm.Location.Replace(crtAsm.GetName().Name + ".dll", name);
-                return kernel32.LoadLibrary(path);
+                return new LibraryHandle(kernel32.LoadLibrary(path));
             }
 
             public override void FreeLibrary(IntPtr handle)
@@ -145,11 +161,11 @@ namespace Aws.CRT
 
         private class DlopenLoader : PlatformLoader
         {
-            public override IntPtr LoadLibrary(string name)
+            public override LibraryHandle LoadLibrary(string name)
             {
                 Assembly crtAsm = Assembly.GetAssembly(typeof(CRT));
                 string path = crtAsm.Location.Replace(crtAsm.GetName().Name + ".dll", name);
-                return dl.dlopen(path, dl.RTLD_NOW);
+                return new LibraryHandle(dl.dlopen(path, dl.RTLD_NOW));
             }
 
             public override void FreeLibrary(IntPtr handle)
@@ -192,7 +208,7 @@ namespace Aws.CRT
         // Base class for native resources. SafeHandle guarantees that when the handle
         // goes out of scope, the ReleaseHandle() function will be called, which each
         // Handle subclass will implement to free the resource
-        internal abstract class Handle : SafeHandle
+        public abstract class Handle : SafeHandle
         {
             protected Handle()
             : base((IntPtr)0, true)
