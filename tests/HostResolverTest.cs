@@ -19,18 +19,15 @@ using Aws.CRT.IO;
 
 namespace tests
 {
-    public class  SocketOptionsTest
+    public class HostResolverTest
     {
         [Fact]
-        public void SocketOptionsFields()
+        public void HostResolverLifetime()
         {
-            var options = new SocketOptions();
-            options.Domain = SocketDomain.IPv4;
-            options.Type = SocketType.STREAM;
-            options.ConnectTimeoutMs = 42;
-            options.KeepAliveIntervalSeconds = 6;
-            options.KeepAliveTimeoutSeconds = 12;
-            options.KeepAlive = true;
+            var elg = new EventLoopGroup(1);
+            var hostResolver = new DefaultHostResolver(elg, 8);
+            // When hostResolver goes out of scope, the native handle will be released
+            // Then elg should be released
         }
     }
 }

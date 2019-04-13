@@ -24,7 +24,7 @@ namespace tests
         [Fact]
         public void EventLoopGroupLifetime()
         {
-            EventLoopGroup elg = new EventLoopGroup(1);
+            var elg = new EventLoopGroup(1);
             // When elg goes out of scope, the native handle will be released
         }
     }
