@@ -18,16 +18,6 @@ using System.Runtime.InteropServices;
 
 namespace Aws.CRT.IO
 {
-    [StructLayout(LayoutKind.Sequential)]
-    class AwsSocketOptions {
-        public Int32 type;
-        public Int32 domain;
-        public UInt32 connect_timeout_ms;
-        public UInt16 keep_alive_interval_sec;
-        public UInt16 keep_alive_timeout_sec;
-        public bool keepalive;
-    }
-
     public enum SocketDomain {
         IPv4 = 0,
         IPv6 = 1,
@@ -43,7 +33,14 @@ namespace Aws.CRT.IO
     {
         internal static class API
         {
-            public delegate Handle aws_dotnet_socket_options_new();
+            public delegate Handle aws_dotnet_socket_options_new(
+                                    Int32 type, 
+                                    Int32 domain, 
+                                    UInt32 connect_timeout_ms, 
+                                    UInt16 keep_alive_interval_sec, 
+                                    UInt16 keep_alive_timeout_sec, 
+                                    UInt16 keep_alive_max_failed_probes, 
+                                    byte keepalive);
             public delegate void aws_dotnet_socket_options_destroy(IntPtr options);
 
             [SecuritySafeCritical]
@@ -61,67 +58,25 @@ namespace Aws.CRT.IO
             }
         }
 
-        private Handle nativeHandle;
-        private AwsSocketOptions options;
-
-        public SocketOptions()
-        {
-            nativeHandle = API.make_new();
-            options = Marshal.PtrToStructure<AwsSocketOptions>(nativeHandle.DangerousGetHandle());
-        }
-
-        public SocketDomain Domain {
+        internal Handle NativeHandle { 
             get {
-                return (SocketDomain)options.domain;
-            }
-            set {
-                options.domain = (Int32)value;
-            }
+                return API.make_new(
+                            (Int32)Type,
+                            (Int32)Domain,
+                            ConnectTimeoutMs,
+                            KeepAliveIntervalSeconds,
+                            KeepAliveTimeoutSeconds,
+                            0,
+                            (byte)(KeepAlive ? 1: 0)
+                );
+            }        
         }
 
-        public SocketType Type {
-            get {
-                return (SocketType)options.type;
-            }
-            set {
-                options.type = (Int32)value;
-            }
-        }
-
-        public UInt32 ConnectTimeoutMs {
-            get {
-                return options.connect_timeout_ms;
-            }
-            set {
-                options.connect_timeout_ms = value;
-            }
-        }
-
-        public UInt16 KeepAliveIntervalSeconds {
-            get {
-                return options.keep_alive_interval_sec;
-            }
-            set {
-                options.keep_alive_interval_sec = value;
-            }
-        }
-
-        public UInt16 KeepAliveTimeoutSeconds {
-            get {
-                return options.keep_alive_timeout_sec;
-            }
-            set {
-                options.keep_alive_timeout_sec = value;
-            }
-        }
-
-        public bool KeepAlive {
-            get {
-                return options.keepalive;
-            }
-            set {
-                options.keepalive = value;
-            }
-        }
+        public SocketType Type { get; set; }
+        public SocketDomain Domain { get; set; }
+        public UInt32 ConnectTimeoutMs { get; set; }
+        public UInt16 KeepAliveIntervalSeconds { get; set; }
+        public UInt16 KeepAliveTimeoutSeconds { get; set; }
+        public bool KeepAlive { get; set; }
     }
 }

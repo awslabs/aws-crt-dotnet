@@ -31,6 +31,9 @@ namespace tests
             options.KeepAliveIntervalSeconds = 6;
             options.KeepAliveTimeoutSeconds = 12;
             options.KeepAlive = true;
+
+            SocketOptions.Handle nativeOptions = options.NativeHandle;
+            Assert.False(nativeOptions.IsInvalid);
         }
     }
 }

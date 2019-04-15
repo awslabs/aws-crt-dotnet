@@ -14,7 +14,11 @@
  */
 using System;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+
+// Make internal classes and members in this assembly available to the unit tests
+[assembly: InternalsVisibleTo("tests")]
 
 namespace Aws.CRT
 {
@@ -51,7 +55,7 @@ namespace Aws.CRT
             public static extern int FreeLibrary(IntPtr module);
         }
 
-        public class LibraryHandle : Handle
+        internal class LibraryHandle : Handle
         {
             public LibraryHandle(IntPtr value) 
             {
@@ -65,7 +69,7 @@ namespace Aws.CRT
             }
         }
 
-        public abstract class PlatformLoader
+        internal abstract class PlatformLoader
         {
             public abstract LibraryHandle LoadLibrary(string name);
             public abstract void FreeLibrary(IntPtr handle);
@@ -73,7 +77,7 @@ namespace Aws.CRT
             public abstract string GetLastError();
         }
 
-        public class PlatformBinding
+        internal class PlatformBinding
         {
             private LibraryHandle crt;
 
@@ -144,7 +148,7 @@ namespace Aws.CRT
             }
         }
 
-        public static PlatformBinding Binding { get; private set; } = new PlatformBinding();
+        internal static PlatformBinding Binding { get; private set; } = new PlatformBinding();
 
         private class WindowsLoader : PlatformLoader
         {
@@ -196,23 +200,22 @@ namespace Aws.CRT
             }
         }
 
-        private static PlatformLoader s_loaderInstance;
-        public static PlatformLoader Loader
+        private static PlatformLoader s_loader = null;
+        internal static PlatformLoader Loader 
         {
-            get
-            {
-                if (s_loaderInstance != null)
+            get {
+                if (s_loader != null)
                 {
-                    return s_loaderInstance;
+                    return s_loader;
                 }
 
                 if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 {
-                    return s_loaderInstance = new WindowsLoader();
+                    return s_loader = new WindowsLoader();
                 }
                 else
                 {
-                    return s_loaderInstance = new DlopenLoader();
+                    return s_loader = new DlopenLoader();
                 }
             }
         }
@@ -220,7 +223,7 @@ namespace Aws.CRT
         // Base class for native resources. SafeHandle guarantees that when the handle
         // goes out of scope, the ReleaseHandle() function will be called, which each
         // Handle subclass will implement to free the resource
-        public abstract class Handle : SafeHandle
+        internal abstract class Handle : SafeHandle
         {
             protected Handle()
             : base((IntPtr)0, true)
