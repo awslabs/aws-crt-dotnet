@@ -91,6 +91,7 @@ namespace Aws.CRT.IO
     }
 
     public abstract class TlsContext {
+        [SecuritySafeCritical]
         internal static class API
         {
             public delegate Handle aws_dotnet_tls_ctx_new_client(Int32 min_tls_version,
@@ -115,11 +116,8 @@ namespace Aws.CRT.IO
                                                                 byte verify_peer);
             public delegate void aws_dotnet_tls_ctx_destroy(IntPtr ctx);
 
-            [SecuritySafeCritical]
             public static aws_dotnet_tls_ctx_new_client make_new_client = NativeAPI.Bind<aws_dotnet_tls_ctx_new_client>();
-            [SecuritySafeCritical]
             public static aws_dotnet_tls_ctx_new_server make_new_server = NativeAPI.Bind<aws_dotnet_tls_ctx_new_server>();
-            [SecuritySafeCritical]
             public static aws_dotnet_tls_ctx_destroy destroy = NativeAPI.Bind<aws_dotnet_tls_ctx_destroy>();
         }
 

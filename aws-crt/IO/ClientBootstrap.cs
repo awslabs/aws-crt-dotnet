@@ -20,14 +20,13 @@ namespace Aws.CRT.IO
 {
     public class ClientBootstrap
     {
+        [SecuritySafeCritical]
         internal static class API
         {
             public delegate Handle aws_dotnet_client_bootstrap_new(IntPtr eventLoopGroup, IntPtr hostResolver);
             public delegate void aws_dotnet_client_bootstrap_destroy(IntPtr clientBootstrap);
 
-            [SecuritySafeCritical]
             public static aws_dotnet_client_bootstrap_new make_new = NativeAPI.Bind<aws_dotnet_client_bootstrap_new>();
-            [SecuritySafeCritical]
             public static aws_dotnet_client_bootstrap_destroy destroy = NativeAPI.Bind<aws_dotnet_client_bootstrap_destroy>();
         }
 

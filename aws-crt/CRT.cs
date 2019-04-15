@@ -16,12 +16,14 @@ using System;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Security;
 
 // Make internal classes and members in this assembly available to the unit tests
 [assembly: InternalsVisibleTo("tests")]
 
 namespace Aws.CRT
 {
+    [SecuritySafeCritical]
     public static class CRT
     {
         // This will only ever be instantiated on dlopen platforms

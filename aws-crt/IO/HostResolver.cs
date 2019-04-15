@@ -21,14 +21,13 @@ namespace Aws.CRT.IO
 {
     public class HostResolver
     {
+        [SecuritySafeCritical]
         internal static class API
         {
             public delegate Handle aws_dotnet_host_resolver_new_default(IntPtr eventLoopGroup, int maxHosts);
             public delegate void aws_dotnet_host_resolver_destroy(IntPtr hostResolver);
 
-            [SecuritySafeCritical]
             public static aws_dotnet_host_resolver_new_default make_new_default = NativeAPI.Bind<aws_dotnet_host_resolver_new_default>();
-            [SecuritySafeCritical]
             public static aws_dotnet_host_resolver_destroy destroy = NativeAPI.Bind<aws_dotnet_host_resolver_destroy>();
         }
 

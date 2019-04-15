@@ -31,6 +31,7 @@ namespace Aws.CRT.IO
 
     public class SocketOptions
     {
+        [SecuritySafeCritical]
         internal static class API
         {
             public delegate Handle aws_dotnet_socket_options_new(
@@ -43,9 +44,7 @@ namespace Aws.CRT.IO
                                     byte keepalive);
             public delegate void aws_dotnet_socket_options_destroy(IntPtr options);
 
-            [SecuritySafeCritical]
             public static aws_dotnet_socket_options_new make_new = NativeAPI.Bind<aws_dotnet_socket_options_new>();
-            [SecuritySafeCritical]
             public static aws_dotnet_socket_options_destroy destroy = NativeAPI.Bind<aws_dotnet_socket_options_destroy>();
         }
 

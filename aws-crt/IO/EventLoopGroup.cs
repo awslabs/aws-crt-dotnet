@@ -19,14 +19,13 @@ using System.Runtime.InteropServices;
 namespace Aws.CRT.IO {
     public class EventLoopGroup {
 
+        [SecuritySafeCritical]
         internal static class API
         {
             public delegate Handle aws_dotnet_event_loop_group_new_default(int numThreads);
             public delegate void aws_dotnet_event_loop_group_destroy(IntPtr elg);
 
-            [SecuritySafeCritical]
             public static aws_dotnet_event_loop_group_new_default make_new_default = NativeAPI.Bind<aws_dotnet_event_loop_group_new_default>();
-            [SecuritySafeCritical] 
             public static aws_dotnet_event_loop_group_destroy destroy = NativeAPI.Bind<aws_dotnet_event_loop_group_destroy>();
         }
 
