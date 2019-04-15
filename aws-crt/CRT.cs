@@ -76,7 +76,6 @@ namespace Aws.CRT
         public class PlatformBinding
         {
             private LibraryHandle crt;
-            private NativeException.NativeExceptionRecorder recordNativeException = NativeException.RecordNativeException;
 
             public PlatformBinding()
             {
@@ -101,8 +100,32 @@ namespace Aws.CRT
                     throw new InvalidOperationException($"Unable to load {libraryName}: error={error}");
                 }
 
+                Init();
+            }
+
+            ~PlatformBinding()
+            {
+                Shutdown();
+            }
+
+            private delegate void aws_dotnet_static_init();
+            private delegate void aws_dotnet_static_shutdown();
+
+            private void Init()
+            {
+                var nativeInit = GetFunction<aws_dotnet_static_init>("aws_dotnet_static_init");
+                nativeInit();
+
+                NativeException.NativeExceptionRecorder recordNativeException = NativeException.RecordNativeException;
+
                 var setExceptionCallback = GetFunction<NativeException.SetExceptionCallback>("aws_dotnet_set_exception_callback");
                 setExceptionCallback(recordNativeException);
+            }
+
+            private void Shutdown()
+            {
+                var nativeShutdown = GetFunction<aws_dotnet_static_shutdown>("aws_dotnet_static_shutdown");
+                nativeShutdown();
             }
 
             public DT GetFunction<DT>(string name)
@@ -121,18 +144,7 @@ namespace Aws.CRT
             }
         }
 
-        private static PlatformBinding s_binding;
-        public static PlatformBinding Binding
-        {
-            get
-            {
-                if (s_binding != null)
-                {
-                    return s_binding;
-                }
-                return s_binding = new PlatformBinding();
-            }
-        }
+        public static PlatformBinding Binding { get; private set; } = new PlatformBinding();
 
         private class WindowsLoader : PlatformLoader
         {
@@ -222,16 +234,6 @@ namespace Aws.CRT
                     return handle == (IntPtr)0;
                 }
             }
-        }
-
-        public static void Init()
-        {
-
-        }
-
-        public static void Shutdown()
-        {
-
         }
     }
 }
