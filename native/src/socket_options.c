@@ -18,17 +18,29 @@
 
 #include <aws/io/socket.h>
 
-AWS_DOTNET_API
-struct aws_socket_options *aws_dotnet_socket_options_new(void) {
+AWS_DOTNET_API struct aws_socket_options *aws_dotnet_socket_options_new(
+    enum aws_socket_type type,
+    enum aws_socket_domain domain,
+    uint32_t connect_timeout_ms,
+    uint16_t keep_alive_interval_sec,
+    uint16_t keep_alive_timeout_sec,
+    uint16_t keep_alive_max_failed_probes,
+    bool keepalive) {
+
     struct aws_allocator *allocator = aws_dotnet_get_allocator();
     struct aws_socket_options *options = aws_mem_acquire(allocator, sizeof(struct aws_socket_options));
     if (!options) {
         aws_dotnet_throw_exception("Failed to allocate new aws_socket_options");
         return NULL;
     }
-    AWS_ZERO_STRUCT(*options);
-    options->connect_timeout_ms = 3000;
-    options->type = AWS_SOCKET_STREAM;
+
+    options->type = type;
+    options->domain = domain;
+    options->connect_timeout_ms = connect_timeout_ms;
+    options->keep_alive_interval_sec = keep_alive_interval_sec;
+    options->keep_alive_timeout_sec = keep_alive_timeout_sec;
+    options->keep_alive_max_failed_probes = keep_alive_max_failed_probes;
+    options->keepalive = keepalive;
 
     return options;
 }
