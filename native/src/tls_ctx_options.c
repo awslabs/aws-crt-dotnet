@@ -17,6 +17,115 @@
 
 #include <aws/io/tls_channel_handler.h>
 
+struct aws_tls_ctx_options s_tls_args_to_options(
+    enum aws_tls_versions min_tls_version,
+    const char *ca_file,
+    const char *ca_path,
+    const char *alpn_list,
+    const char *cert_path,
+    const char *key_path,
+    const char *pkcs12_path,
+    const char *pkcs12_password,
+    uint32_t max_fragment_size,
+    uint8_t verify_peer) {
+    struct aws_allocator *allocator = aws_dotnet_get_allocator();
+    struct aws_tls_ctx_options options;
+    AWS_ZERO_STRUCT(options);
+    aws_tls_ctx_options_init_default_client(&options, allocator);
+    if (ca_path || ca_file) {
+        printf("CA_FILE: %s CA_PATH: %s\n", ca_file ? ca_file : "null", ca_path ? ca_path : "null");
+        aws_tls_ctx_options_override_default_trust_store_from_path(&options, ca_path, ca_file);
+    }
+    if (cert_path && key_path) {
+        aws_tls_ctx_options_init_client_mtls_from_path(&options, allocator, cert_path, key_path);
+    }
+    if (pkcs12_path && pkcs12_password) {
+        struct aws_byte_cursor password = aws_byte_cursor_from_c_str(pkcs12_password);
+        aws_tls_ctx_options_init_client_mtls_pkcs12_from_path(&options, allocator, pkcs12_path, &password);
+    }
+    if (alpn_list) {
+        aws_tls_ctx_options_set_alpn_list(&options, alpn_list);
+    }
+    options.minimum_tls_version = min_tls_version;
+    options.max_fragment_size = max_fragment_size;
+    options.verify_peer = verify_peer != 0;
+    return options;
+}
+
+AWS_DOTNET_API struct aws_tls_ctx *aws_dotnet_tls_ctx_new_client(
+    enum aws_tls_versions min_tls_version,
+    const char *ca_file,
+    const char *ca_path,
+    const char *alpn_list,
+    const char *cert_path,
+    const char *key_path,
+    const char *pkcs12_path,
+    const char *pkcs12_password,
+    uint32_t max_fragment_size,
+    uint8_t verify_peer) {
+    
+    struct aws_allocator *allocator = aws_dotnet_get_allocator();
+    struct aws_tls_ctx_options options = s_tls_args_to_options(
+        min_tls_version,
+        ca_file,
+        ca_path,
+        alpn_list,
+        cert_path,
+        key_path,
+        pkcs12_path,
+        pkcs12_password,
+        max_fragment_size,
+        verify_peer);
+    struct aws_tls_ctx *tls = aws_tls_client_ctx_new(allocator, &options);
+    if (!tls) {
+        aws_dotnet_throw_exception("Unable to create aws_tls_context");
+        return NULL;
+    }
+    return tls;
+}
+
+AWS_DOTNET_API
+struct aws_tls_ctx *aws_dotnet_tls_ctx_new_server(
+    enum aws_tls_versions min_tls_version,
+    const char *ca_file,
+    const char *ca_path,
+    const char *alpn_list,
+    const char *cert_path,
+    const char *key_path,
+    const char *pkcs12_path,
+    const char *pkcs12_password,
+    uint32_t max_fragment_size,
+    uint8_t verify_peer) {
+    
+    struct aws_allocator *allocator = aws_dotnet_get_allocator();
+    struct aws_tls_ctx_options options = s_tls_args_to_options(
+        min_tls_version,
+        ca_file,
+        ca_path,
+        alpn_list,
+        cert_path,
+        key_path,
+        pkcs12_path,
+        pkcs12_password,
+        max_fragment_size,
+        verify_peer);
+    struct aws_tls_ctx *tls = aws_tls_server_ctx_new(allocator, &options);
+    if (!tls) {
+        aws_dotnet_throw_exception("Unable to create aws_tls_context");
+        return NULL;
+    }
+    return tls;
+}
+
+AWS_DOTNET_API
+void aws_dotnet_tls_ctx_destroy(struct aws_tls_ctx *tls) {
+    if (tls == NULL) {
+        return;
+    }
+
+    aws_tls_ctx_destroy(tls);
+}
+
 struct aws_tls_ctx_options *s_tls_ctx_options_new() {
     struct aws_allocator *allocator = aws_dotnet_get_allocator();
     struct aws_tls_ctx_options *options = aws_mem_acquire(allocator, sizeof(struct aws_tls_ctx_options));

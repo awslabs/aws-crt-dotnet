@@ -22,35 +22,21 @@ namespace tests
     public class TlsContextOptionsTest
     {
         [Fact]
-        public void MinimumTlsVersionTest()
+        public void ClientMtlsTest()
         {
-            var options = new TlsContextOptions();
-            options.MinimumTlsVersion = TlsVersions.TLSv1_3;
-            Assert.Equal(TlsVersions.TLSv1_3, options.MinimumTlsVersion);
+            var options = TlsContextOptions.ClientMtlsFromPath(
+                "/Users/boswej/Downloads/d97cec9e7f-certificate.pem.crt", 
+                "/Users/boswej/Downloads/d97cec9e7f-private.pem.key");
+            var tls = new ClientTlsContext(options);
         }
 
         [Fact]
-        public void AlpnListTest()
+        public void ServerMtlsTest()
         {
-            var options = new TlsContextOptions();
-            options.AlpnList = "h2;x-amazon-mqtt";
-            Assert.Equal("h2;x-amazon-mqtt", options.AlpnList);
-        }
-
-        [Fact]
-        public void MaxFragmentSizeTest()
-        {
-            var options = new TlsContextOptions();
-            options.MaxFragmentSize = 16 * 1024;
-            Assert.Equal<uint>(16 * 1024, options.MaxFragmentSize);
-        }
-
-        [Fact]
-        public void VerifyPeerTest()
-        {
-            var options = new TlsContextOptions();
-            options.VerifyPeer = true;
-            Assert.True(options.VerifyPeer);
+            var options = TlsContextOptions.ClientMtlsFromPath(
+                "/Users/boswej/Downloads/d97cec9e7f-certificate.pem.crt",
+                "/Users/boswej/Downloads/d97cec9e7f-private.pem.key");
+            var tls = new ServerTlsContext(options);
         }
     }
 }
