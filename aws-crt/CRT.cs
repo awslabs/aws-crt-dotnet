@@ -117,12 +117,13 @@ namespace Aws.Crt
             private delegate void aws_dotnet_static_init();
             private delegate void aws_dotnet_static_shutdown();
 
+            // This must remain referenced through execution, or the delegate will be garbage collected
+            // and a crash will occur on the first exception thrown
+            private NativeException.NativeExceptionRecorder recordNativeException = NativeException.RecordNativeException;
             private void Init()
             {
                 var nativeInit = GetFunction<aws_dotnet_static_init>("aws_dotnet_static_init");
-                nativeInit();
-
-                NativeException.NativeExceptionRecorder recordNativeException = NativeException.RecordNativeException;
+                nativeInit();                
 
                 var setExceptionCallback = GetFunction<NativeException.SetExceptionCallback>("aws_dotnet_set_exception_callback");
                 setExceptionCallback(recordNativeException);
