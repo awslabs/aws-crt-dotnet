@@ -156,11 +156,7 @@ Temporary Items
 # Directories potentially created on remote AFP share
 
 ### VisualStudioCode ###
-.vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
+.vscode
 
 ### VisualStudioCode Patch ###
 # Ignore all local history of files
@@ -539,3 +535,4 @@ MigrationBackup/
 # End of https://www.gitignore.io/api/osx,cmake,linux,macos,clion,windows,visualstudio,visualstudiocode
 
 .idea
+build/
