@@ -39,10 +39,14 @@ struct aws_tls_ctx_options s_tls_args_to_options(
     if (cert_path && key_path) {
         aws_tls_ctx_options_init_client_mtls_from_path(&options, allocator, cert_path, key_path);
     }
+    (void)pkcs12_path;
+    (void)pkcs12_password;
+#if defined(__APPLE__)
     if (pkcs12_path && pkcs12_password) {
         struct aws_byte_cursor password = aws_byte_cursor_from_c_str(pkcs12_password);
         aws_tls_ctx_options_init_client_mtls_pkcs12_from_path(&options, allocator, pkcs12_path, &password);
     }
+#endif
     if (alpn_list) {
         aws_tls_ctx_options_set_alpn_list(&options, alpn_list);
     }
@@ -276,14 +280,13 @@ void aws_dotnet_tls_ctx_options_init_client_mtls_from_path(
     struct aws_tls_ctx_options *options,
     const char *cert_path,
     const char *key_path) {
-#if defined(__APPLE__)
+    
     if (options == NULL) {
         aws_dotnet_throw_exception(AWS_ERROR_INVALID_ARGUMENT, "Invalid TlsContextOptions");
         return;
     }
     struct aws_allocator *allocator = aws_dotnet_get_allocator();
     aws_tls_ctx_options_init_client_mtls_from_path(options, allocator, cert_path, key_path);
-#endif
 }
 
 AWS_DOTNET_API
@@ -291,14 +294,13 @@ void aws_dotnet_tls_ctx_options_init_default_server_from_path(
     struct aws_tls_ctx_options *options,
     const char *cert_path,
     const char *key_path) {
-#if defined(__APPLE__)
+
     if (options == NULL) {
         aws_dotnet_throw_exception(AWS_ERROR_INVALID_ARGUMENT, "Invalid TlsContextOptions");
         return;
     }
     struct aws_allocator *allocator = aws_dotnet_get_allocator();
     aws_tls_ctx_options_init_default_server_from_path(options, allocator, cert_path, key_path);
-#endif
 }
 
 AWS_DOTNET_API
@@ -306,6 +308,10 @@ void aws_dotnet_tls_ctx_options_init_client_mtls_pkcs12_from_path(
     struct aws_tls_ctx_options *options,
     const char *pkcs12_path,
     const char *pkcs12_password) {
+    
+    (void)options;
+    (void)pkcs12_path;
+    (void)pkcs12_password;
 #if defined(__APPLE__)
     if (options == NULL) {
         aws_dotnet_throw_exception(AWS_ERROR_INVALID_ARGUMENT, "Invalid TlsContextOptions");
@@ -322,6 +328,10 @@ void aws_dotnet_tls_ctx_options_init_server_pkcs12_from_path(
     struct aws_tls_ctx_options *options,
     const char *pkcs12_path,
     const char *pkcs12_password) {
+
+    (void)options;
+    (void)pkcs12_path;
+    (void)pkcs12_password;
 #if defined(__APPLE__)
     if (options == NULL) {
         aws_dotnet_throw_exception(AWS_ERROR_INVALID_ARGUMENT, "Invalid TlsContextOptions");
