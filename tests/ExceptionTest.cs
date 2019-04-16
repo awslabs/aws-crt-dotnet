@@ -15,7 +15,7 @@
 using System;
 using Xunit;
 
-using Aws.CRT;
+using Aws.Crt;
 
 namespace tests
 {

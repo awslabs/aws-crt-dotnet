@@ -33,6 +33,7 @@ struct aws_host_resolver *aws_dotnet_host_resolver_new_default(struct aws_event_
 
     if (aws_host_resolver_init_default(resolver, allocator, max_hosts, elg)) {
         aws_dotnet_throw_exception("Unable to initialize default host resolver");
+        aws_mem_release(allocator, resolver);
         return NULL;
     }
     return resolver;

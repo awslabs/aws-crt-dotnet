@@ -19,7 +19,7 @@ using System.Reflection.Emit;
 using System.Runtime.InteropServices;
 using System.Threading;
 
-namespace Aws.CRT {
+namespace Aws.Crt {
     // Unique exception only thrown by native code when something unrecoverable happens
     public class NativeException : Exception
     {

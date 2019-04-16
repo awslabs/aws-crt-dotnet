@@ -15,7 +15,7 @@
 using System;
 using Xunit;
 
-using Aws.CRT.IO;
+using Aws.Crt.IO;
 
 namespace tests
 {
@@ -26,7 +26,7 @@ namespace tests
         {
             var options = new SocketOptions();
             options.Domain = SocketDomain.IPv4;
-            options.Type = SocketType.STREAM;
+            options.Type = SocketType.Stream;
             options.ConnectTimeoutMs = 42;
             options.KeepAliveIntervalSeconds = 6;
             options.KeepAliveTimeoutSeconds = 12;

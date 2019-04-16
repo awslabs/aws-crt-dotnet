@@ -21,7 +21,7 @@ using System.Security;
 // Make internal classes and members in this assembly available to the unit tests
 [assembly: InternalsVisibleTo("tests")]
 
-namespace Aws.CRT
+namespace Aws.Crt
 {
     [SecuritySafeCritical]
     public static class CRT

@@ -16,17 +16,17 @@ using System;
 using System.Security;
 using System.Runtime.InteropServices;
 
-namespace Aws.CRT.IO
+namespace Aws.Crt.IO
 {
     public enum SocketDomain {
         IPv4 = 0,
         IPv6 = 1,
-        LOCAL = 2
+        Local = 2
     }
 
     public enum SocketType {
-        STREAM = 0,
-        DGRAM = 1
+        Stream = 0,
+        Dgram = 1
     }
 
     public class SocketOptions

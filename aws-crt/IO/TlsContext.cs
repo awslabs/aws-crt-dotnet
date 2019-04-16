@@ -17,7 +17,7 @@ using System.Collections.Generic;
 using System.Security;
 using System.Runtime.InteropServices;
 
-namespace Aws.CRT.IO
+namespace Aws.Crt.IO
 {
     public enum TlsVersions {
         SSLv3 = 0,

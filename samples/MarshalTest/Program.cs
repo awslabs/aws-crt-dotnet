@@ -1,6 +1,6 @@
 ﻿using System;
 
-using Aws.CRT.IO;
+using Aws.Crt.IO;
 
 namespace MarshalTest
 {

@@ -16,7 +16,7 @@ using System;
 using System.Security;
 using System.Runtime.InteropServices;
 
-namespace Aws.CRT.IO {
+namespace Aws.Crt.IO {
     public class EventLoopGroup {
 
         [SecuritySafeCritical]
@@ -44,3 +44,4 @@ namespace Aws.CRT.IO {
         }
     }
  }
+ 
