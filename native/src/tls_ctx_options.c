@@ -78,7 +78,7 @@ AWS_DOTNET_API struct aws_tls_ctx *aws_dotnet_tls_ctx_new_client(
         verify_peer);
     struct aws_tls_ctx *tls = aws_tls_client_ctx_new(allocator, &options);
     if (!tls) {
-        aws_dotnet_throw_exception("Unable to create aws_tls_context");
+        aws_dotnet_throw_exception(aws_last_error(), "Unable to create aws_tls_context");
         return NULL;
     }
     return tls;
@@ -111,7 +111,7 @@ struct aws_tls_ctx *aws_dotnet_tls_ctx_new_server(
         verify_peer);
     struct aws_tls_ctx *tls = aws_tls_server_ctx_new(allocator, &options);
     if (!tls) {
-        aws_dotnet_throw_exception("Unable to create aws_tls_context");
+        aws_dotnet_throw_exception(aws_last_error(), "Unable to create aws_tls_context");
         return NULL;
     }
     return tls;
@@ -130,7 +130,7 @@ struct aws_tls_ctx_options *s_tls_ctx_options_new() {
     struct aws_allocator *allocator = aws_dotnet_get_allocator();
     struct aws_tls_ctx_options *options = aws_mem_acquire(allocator, sizeof(struct aws_tls_ctx_options));
     if (!options) {
-        aws_dotnet_throw_exception("Failed to allocate new aws_tls_ctx_options");
+        aws_dotnet_throw_exception(aws_last_error(), "Failed to allocate new aws_tls_ctx_options");
         return NULL;
     }
     AWS_ZERO_STRUCT(*options);
@@ -154,11 +154,11 @@ AWS_DOTNET_API
 struct aws_tls_ctx_options *aws_dotnet_tls_ctx_options_new_default_server(const char *cert_path, const char *key_path) {
     struct aws_tls_ctx_options *options = s_tls_ctx_options_new();
     if (!options) {
-        aws_dotnet_throw_exception("Invalid TlsContextOptions");
+        aws_dotnet_throw_exception(AWS_ERROR_INVALID_ARGUMENT, "Invalid TlsContextOptions");
         return NULL;
     }
     if (cert_path == NULL || key_path == NULL) {
-        aws_dotnet_throw_exception("certPath and privateKeyPath must not be null");
+        aws_dotnet_throw_exception(AWS_ERROR_INVALID_ARGUMENT, "certPath and privateKeyPath must not be null");
         return NULL;
     }
 
@@ -183,7 +183,7 @@ void aws_dotnet_tls_ctx_options_destroy(struct aws_tls_ctx_options *options) {
 AWS_DOTNET_API
 void aws_dotnet_tls_ctx_options_set_minimum_tls_version(struct aws_tls_ctx_options *options, int32_t version) {
     if (options == NULL) {
-        aws_dotnet_throw_exception("Invalid TlsContextOptions");
+        aws_dotnet_throw_exception(AWS_ERROR_INVALID_ARGUMENT, "Invalid TlsContextOptions");
         return;
     }
     options->minimum_tls_version = (enum aws_tls_versions)version;
@@ -192,7 +192,7 @@ void aws_dotnet_tls_ctx_options_set_minimum_tls_version(struct aws_tls_ctx_optio
 AWS_DOTNET_API
 int32_t aws_dotnet_tls_ctx_options_get_minimum_tls_version(struct aws_tls_ctx_options *options) {
     if (options == NULL) {
-        aws_dotnet_throw_exception("Invalid TlsContextOptions");
+        aws_dotnet_throw_exception(AWS_ERROR_INVALID_ARGUMENT, "Invalid TlsContextOptions");
         return -1;
     }
     return (int32_t)options->minimum_tls_version;
@@ -201,11 +201,11 @@ int32_t aws_dotnet_tls_ctx_options_get_minimum_tls_version(struct aws_tls_ctx_op
 AWS_DOTNET_API
 void aws_dotnet_tls_ctx_options_set_alpn_list(struct aws_tls_ctx_options *options, const char *alpn) {
     if (options == NULL) {
-        aws_dotnet_throw_exception("Invalid TlsContextOptions");
+        aws_dotnet_throw_exception(AWS_ERROR_INVALID_ARGUMENT, "Invalid TlsContextOptions");
         return;
     }
     if (alpn == NULL) {
-        aws_dotnet_throw_exception("Invalid alpn list: must not be null");
+        aws_dotnet_throw_exception(AWS_ERROR_INVALID_ARGUMENT, "Invalid alpn list: must not be null");
         return;
     }
     aws_tls_ctx_options_set_alpn_list(options, alpn);
@@ -214,7 +214,7 @@ void aws_dotnet_tls_ctx_options_set_alpn_list(struct aws_tls_ctx_options *option
 AWS_DOTNET_API
 const char *aws_dotnet_tls_ctx_options_get_alpn_list(struct aws_tls_ctx_options *options) {
     if (options == NULL) {
-        aws_dotnet_throw_exception("Invalid TlsContextOptions");
+        aws_dotnet_throw_exception(AWS_ERROR_INVALID_ARGUMENT, "Invalid TlsContextOptions");
         return "";
     }
     if (!options->alpn_list) {
@@ -226,7 +226,7 @@ const char *aws_dotnet_tls_ctx_options_get_alpn_list(struct aws_tls_ctx_options 
 AWS_DOTNET_API
 void aws_dotnet_tls_ctx_options_set_max_fragment_size(struct aws_tls_ctx_options *options, intptr_t max_fragment_size) {
     if (options == NULL) {
-        aws_dotnet_throw_exception("Invalid TlsContextOptions");
+        aws_dotnet_throw_exception(AWS_ERROR_INVALID_ARGUMENT, "Invalid TlsContextOptions");
         return;
     }
     options->max_fragment_size = (size_t)max_fragment_size;
@@ -235,7 +235,7 @@ void aws_dotnet_tls_ctx_options_set_max_fragment_size(struct aws_tls_ctx_options
 AWS_DOTNET_API
 intptr_t aws_dotnet_tls_ctx_options_get_max_fragment_size(struct aws_tls_ctx_options *options) {
     if (options == NULL) {
-        aws_dotnet_throw_exception("Invalid TlsContextOptions");
+        aws_dotnet_throw_exception(AWS_ERROR_INVALID_ARGUMENT, "Invalid TlsContextOptions");
         return 0;
     }
     return (intptr_t)options->max_fragment_size;
@@ -244,7 +244,7 @@ intptr_t aws_dotnet_tls_ctx_options_get_max_fragment_size(struct aws_tls_ctx_opt
 AWS_DOTNET_API
 void aws_dotnet_tls_ctx_options_set_verify_peer(struct aws_tls_ctx_options *options, bool verify) {
     if (options == NULL) {
-        aws_dotnet_throw_exception("Invalid TlsContextOptions");
+        aws_dotnet_throw_exception(AWS_ERROR_INVALID_ARGUMENT, "Invalid TlsContextOptions");
         return;
     }
     options->verify_peer = verify;
@@ -253,7 +253,7 @@ void aws_dotnet_tls_ctx_options_set_verify_peer(struct aws_tls_ctx_options *opti
 AWS_DOTNET_API
 bool aws_dotnet_tls_ctx_options_get_verify_peer(struct aws_tls_ctx_options *options) {
     if (options == NULL) {
-        aws_dotnet_throw_exception("Invalid TlsContextOptions");
+        aws_dotnet_throw_exception(AWS_ERROR_INVALID_ARGUMENT, "Invalid TlsContextOptions");
         return false;
     }
     return options->verify_peer;
@@ -265,7 +265,7 @@ void aws_dotnet_tls_ctx_options_override_default_trust_store_from_path(
     const char *ca_path,
     const char *ca_file) {
     if (options == NULL) {
-        aws_dotnet_throw_exception("Invalid TlsContextOptions");
+        aws_dotnet_throw_exception(AWS_ERROR_INVALID_ARGUMENT, "Invalid TlsContextOptions");
         return;
     }
     aws_tls_ctx_options_override_default_trust_store_from_path(options, ca_path, ca_file);
@@ -278,7 +278,7 @@ void aws_dotnet_tls_ctx_options_init_client_mtls_from_path(
     const char *key_path) {
 #if defined(__APPLE__)
     if (options == NULL) {
-        aws_dotnet_throw_exception("Invalid TlsContextOptions");
+        aws_dotnet_throw_exception(AWS_ERROR_INVALID_ARGUMENT, "Invalid TlsContextOptions");
         return;
     }
     struct aws_allocator *allocator = aws_dotnet_get_allocator();
@@ -293,7 +293,7 @@ void aws_dotnet_tls_ctx_options_init_default_server_from_path(
     const char *key_path) {
 #if defined(__APPLE__)
     if (options == NULL) {
-        aws_dotnet_throw_exception("Invalid TlsContextOptions");
+        aws_dotnet_throw_exception(AWS_ERROR_INVALID_ARGUMENT, "Invalid TlsContextOptions");
         return;
     }
     struct aws_allocator *allocator = aws_dotnet_get_allocator();
@@ -308,7 +308,7 @@ void aws_dotnet_tls_ctx_options_init_client_mtls_pkcs12_from_path(
     const char *pkcs12_password) {
 #if defined(__APPLE__)
     if (options == NULL) {
-        aws_dotnet_throw_exception("Invalid TlsContextOptions");
+        aws_dotnet_throw_exception(AWS_ERROR_INVALID_ARGUMENT, "Invalid TlsContextOptions");
         return;
     }
     struct aws_byte_cursor password = aws_byte_cursor_from_c_str(pkcs12_password);
@@ -324,7 +324,7 @@ void aws_dotnet_tls_ctx_options_init_server_pkcs12_from_path(
     const char *pkcs12_password) {
 #if defined(__APPLE__)
     if (options == NULL) {
-        aws_dotnet_throw_exception("Invalid TlsContextOptions");
+        aws_dotnet_throw_exception(AWS_ERROR_INVALID_ARGUMENT, "Invalid TlsContextOptions");
         return;
     }
     struct aws_byte_cursor password = aws_byte_cursor_from_c_str(pkcs12_password);

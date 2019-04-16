@@ -36,7 +36,7 @@ void aws_dotnet_set_exception_callback(dotnet_exception_callback callback) {
     s_throw_exception = callback;
 }
 
-void aws_dotnet_throw_exception(const char *message, ...) {
+void aws_dotnet_throw_exception(int error_code, const char *message, ...) {
     AWS_FATAL_ASSERT(s_throw_exception != NULL);
     va_list args;
     va_start(args, message);
@@ -45,7 +45,6 @@ void aws_dotnet_throw_exception(const char *message, ...) {
     va_end(args);
 
     char exception[1280];
-    int error_code = aws_last_error();
     snprintf(exception, sizeof(exception), "%s (aws_last_error: %s)", buf, aws_error_str(error_code));
     s_throw_exception(error_code, aws_error_name(error_code), exception);
 }
@@ -67,11 +66,11 @@ void aws_dotnet_static_shutdown(void) {
 
 AWS_DOTNET_API
 int aws_test_exception(int a, int b) {
-    aws_dotnet_throw_exception("TEST EXCEPTION");
+    aws_dotnet_throw_exception(AWS_ERROR_UNSUPPORTED_OPERATION, "TEST EXCEPTION");
     return a * b;
 }
 
 AWS_DOTNET_API
 void aws_test_exception_void(void) {
-    aws_dotnet_throw_exception("TEST EXCEPTION VOID");
+    aws_dotnet_throw_exception(AWS_ERROR_UNSUPPORTED_OPERATION, "TEST EXCEPTION VOID");
 }

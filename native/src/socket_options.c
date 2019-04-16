@@ -30,7 +30,7 @@ AWS_DOTNET_API struct aws_socket_options *aws_dotnet_socket_options_new(
     struct aws_allocator *allocator = aws_dotnet_get_allocator();
     struct aws_socket_options *options = aws_mem_acquire(allocator, sizeof(struct aws_socket_options));
     if (!options) {
-        aws_dotnet_throw_exception("Failed to allocate new aws_socket_options");
+        aws_dotnet_throw_exception(aws_last_error(), "Failed to allocate new aws_socket_options");
         return NULL;
     }
 
