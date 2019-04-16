@@ -67,7 +67,7 @@ AWS_DOTNET_API struct aws_tls_ctx *aws_dotnet_tls_ctx_new_client(
     const char *pkcs12_password,
     uint32_t max_fragment_size,
     uint8_t verify_peer) {
-    
+
     struct aws_allocator *allocator = aws_dotnet_get_allocator();
     struct aws_tls_ctx_options options = s_tls_args_to_options(
         min_tls_version,
@@ -100,7 +100,7 @@ struct aws_tls_ctx *aws_dotnet_tls_ctx_new_server(
     const char *pkcs12_password,
     uint32_t max_fragment_size,
     uint8_t verify_peer) {
-    
+
     struct aws_allocator *allocator = aws_dotnet_get_allocator();
     struct aws_tls_ctx_options options = s_tls_args_to_options(
         min_tls_version,
@@ -280,7 +280,7 @@ void aws_dotnet_tls_ctx_options_init_client_mtls_from_path(
     struct aws_tls_ctx_options *options,
     const char *cert_path,
     const char *key_path) {
-    
+
     if (options == NULL) {
         aws_dotnet_throw_exception(AWS_ERROR_INVALID_ARGUMENT, "Invalid TlsContextOptions");
         return;
@@ -308,7 +308,7 @@ void aws_dotnet_tls_ctx_options_init_client_mtls_pkcs12_from_path(
     struct aws_tls_ctx_options *options,
     const char *pkcs12_path,
     const char *pkcs12_password) {
-    
+
     (void)options;
     (void)pkcs12_path;
     (void)pkcs12_password;
