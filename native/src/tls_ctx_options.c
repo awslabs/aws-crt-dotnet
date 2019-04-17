@@ -140,7 +140,7 @@ void aws_dotnet_tls_ctx_destroy(struct aws_tls_ctx *tls) {
     aws_tls_ctx_destroy(tls);
 }
 
-struct aws_tls_ctx_options *s_tls_ctx_options_new() {
+struct aws_tls_ctx_options *s_tls_ctx_options_new(void) {
     struct aws_allocator *allocator = aws_dotnet_get_allocator();
     struct aws_tls_ctx_options *options = aws_mem_acquire(allocator, sizeof(struct aws_tls_ctx_options));
     if (!options) {
