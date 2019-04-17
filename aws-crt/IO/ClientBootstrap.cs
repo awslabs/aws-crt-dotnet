@@ -41,8 +41,13 @@ namespace Aws.Crt.IO
 
         internal Handle NativeHandle { get; private set; }
 
+        private EventLoopGroup eventLoopGroup;
+        private HostResolver hostResolver;
+
         public ClientBootstrap(EventLoopGroup eventLoopGroup, HostResolver hostResolver)
         {
+            this.eventLoopGroup = eventLoopGroup;
+            this.hostResolver = hostResolver;
             NativeHandle = API.make_new(eventLoopGroup.NativeHandle.DangerousGetHandle(), hostResolver.NativeHandle.DangerousGetHandle());
         }
     }
