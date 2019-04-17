@@ -5,7 +5,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "aws-crt", "aws-crt.csproj",
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "tests", "..\tests\tests.csproj", "{AA1F9BF2-988F-43B2-9112-391258AA977C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MarshalTest", "..\samples\MarshalTest\MarshalTest.csproj", "{006F1257-404B-4AED-9381-D8A5640CA03F}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DebugApp", "..\tools\DebugApp\DebugApp.csproj", "{006F1257-404B-4AED-9381-D8A5640CA03F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

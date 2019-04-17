@@ -2,15 +2,15 @@
 
 using Aws.Crt.IO;
 
-namespace MarshalTest
+// Any code you put in Main() can be debugged natively by running
+// dotnet exec /path/to/DebugApp/bin/Debug/netcoreapp2.1/DebugApp.dll
+namespace DebugApp
 {
     class Program
     {
         static void Main(string[] args)
         {
             Console.WriteLine("HELLO WORLD");
-            TlsContextOptions options = new TlsContextOptions();
-            options.AlpnList = "h2;x-amazon-mqtt";
         }
     }
 }
