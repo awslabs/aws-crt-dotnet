@@ -1,7 +1,7 @@
 
 call RefreshEnv.Cmd
 
-dotnet test tests %* || goto :error
+dotnet test tests -v normal %* || goto :error
 
 goto :EOF
 
