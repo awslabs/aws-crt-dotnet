@@ -158,7 +158,9 @@ namespace Aws.Crt
             public override LibraryHandle LoadLibrary(string name)
             {
                 Assembly crtAsm = Assembly.GetAssembly(typeof(CRT));
+                Console.WriteLine("ASM LOCATION: {}", crtAsm.Location);
                 string path = crtAsm.Location.Replace(crtAsm.GetName().Name + ".dll", name);
+                Console.WriteLine("DLL LOCATION: {}", path);
                 return new LibraryHandle(kernel32.LoadLibrary(path));
             }
 
