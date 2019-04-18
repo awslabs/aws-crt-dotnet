@@ -7,8 +7,9 @@
 "%SystemRoot%\\System32\\WindowsPowerShell\\v1.0\\powershell.exe" -NoProfile -InputFormat None -ExecutionPolicy Bypass -Command "Invoke-WebRequest %1 -OutFile %TEMP%\dotnet-sdk-install.exe" || goto :error
 %TEMP%\dotnet-sdk-install.exe /install /quiet /norestart || goto :error
 
-"%SystemRoot%\\System32\\WindowsPowerShell\\v1.0\\powershell.exe" -NoProfile -InputFormat None -ExecutionPolicy Bypass -Command "Invoke-WebRequest http://www.dependencywalker.com/depends22_x64.zip -OutFile %TEMP%\depends.zip" || goto :error
-powershell Expand-Archive %TEMP%\depends.zip -DestinationPath %TEMP%\depends || goto :error
+:: If debugging, install dependency walker
+::powershell -NoProfile -InputFormat None -ExecutionPolicy Bypass -Command "Invoke-WebRequest http://www.dependencywalker.com/depends22_x64.zip -OutFile %TEMP%\depends.zip" || goto :error
+::powershell Expand-Archive %TEMP%\depends.zip -DestinationPath %TEMP%\depends || goto :error
 
 goto :EOF
 
