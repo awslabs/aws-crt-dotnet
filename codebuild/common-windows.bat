@@ -1,7 +1,7 @@
 
 call RefreshEnv.Cmd
 
-dotnet test tests -v normal %*
+dotnet test tests --configuration Release -v normal %*
 %TEMP%\depends\depends.exe /c /ot:%TEMP%\depends.log tests/bin/Debug/netcoreapp2.1/aws-crt-dotnet.dll
 type %TEMP%\depends.log
 
