@@ -10,6 +10,8 @@
 "%SystemRoot%\\System32\\WindowsPowerShell\\v1.0\\powershell.exe" -NoProfile -InputFormat None -ExecutionPolicy Bypass -Command "Invoke-WebRequest http://www.dependencywalker.com/depends22_x64.zip -OutFile %TEMP%\depends.zip" || goto :error
 powershell Expand-Archive %TEMP%\depends.zip -DestinationPath %TEMP%\depends || goto :error
 
+goto :EOF
+
 :error
 echo Failed with error #%errorlevel%.
 exit /b %errorlevel%
