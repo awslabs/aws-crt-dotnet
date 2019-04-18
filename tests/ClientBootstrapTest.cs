@@ -12,19 +12,22 @@
  * express or implied. See the License for the specific language governing
  * permissions and limitations under the License.
  */
+using System;
+using Xunit;
 
-#include <aws/common/common.h>
+using Aws.Crt.IO;
 
-/* Win32 .NET callbacks are __stdcall, everything else is __cdecl */
-#if defined(_MSC_VER) && !defined(_WIN64)
-#    define DOTNET_CALL __stdcall
-#else
-#    define DOTNET_CALL
-#endif
-
-struct aws_allocator *aws_dotnet_get_allocator(void);
-
-/* This will record an exception message via a callback into .NET. When the
- * native function returns, the exception will be thrown, which preserves the
- * .NET callstack */
-void aws_dotnet_throw_exception(int error_code, const char *message, ...);
+namespace tests
+{
+    public class ClientBootstrapTest
+    {
+        [Fact]
+        public void ClientBootstrapLifetime()
+        {
+            var elg = new EventLoopGroup(1);
+            var hostResolver = new DefaultHostResolver(elg);
+            var bootstrap = new ClientBootstrap(elg, hostResolver);
+            // When these go out of scope, the native handle will be released
+        }
+    }
+}

@@ -14,10 +14,16 @@
  */
 using System;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Security;
 
-namespace Aws.CRT
+// Make internal classes and members in this assembly available to the unit tests
+[assembly: InternalsVisibleTo("tests")]
+
+namespace Aws.Crt
 {
+    [SecuritySafeCritical]
     public static class CRT
     {
         // This will only ever be instantiated on dlopen platforms
@@ -51,17 +57,31 @@ namespace Aws.CRT
             public static extern int FreeLibrary(IntPtr module);
         }
 
-        public abstract class PlatformLoader
+        internal class LibraryHandle : Handle
         {
-            public abstract IntPtr LoadLibrary(string name);
+            public LibraryHandle(IntPtr value) 
+            {
+                SetHandle(value);
+            }
+
+            protected override bool ReleaseHandle()
+            {
+                CRT.Loader.FreeLibrary(handle);
+                return true;
+            }
+        }
+
+        internal abstract class PlatformLoader
+        {
+            public abstract LibraryHandle LoadLibrary(string name);
             public abstract void FreeLibrary(IntPtr handle);
             public abstract IntPtr GetFunction(IntPtr handle, string name);
             public abstract string GetLastError();
         }
 
-        public class PlatformBinding
+        internal class PlatformBinding
         {
-            private IntPtr crt;
+            private LibraryHandle crt;
 
             public PlatformBinding()
             {
@@ -80,13 +100,39 @@ namespace Aws.CRT
                 }
 
                 crt = CRT.Loader.LoadLibrary(libraryName);
-                if (crt == IntPtr.Zero)
+                if (crt.IsInvalid)
                 {
                     string error = CRT.Loader.GetLastError();
                     throw new InvalidOperationException($"Unable to load {libraryName}: error={error}");
                 }
+
+                Init();
+            }
+
+            ~PlatformBinding()
+            {
+                Shutdown();
+            }
+
+            private delegate void aws_dotnet_static_init();
+            private delegate void aws_dotnet_static_shutdown();
+
+            // This must remain referenced through execution, or the delegate will be garbage collected
+            // and a crash will occur on the first exception thrown
+            private NativeException.NativeExceptionRecorder recordNativeException = NativeException.RecordNativeException;
+            private void Init()
+            {
+                var nativeInit = GetFunction<aws_dotnet_static_init>("aws_dotnet_static_init");
+                nativeInit();                
+
                 var setExceptionCallback = GetFunction<NativeException.SetExceptionCallback>("aws_dotnet_set_exception_callback");
-                setExceptionCallback(NativeException.RecordNativeException);
+                setExceptionCallback(recordNativeException);
+            }
+
+            private void Shutdown()
+            {
+                var nativeShutdown = GetFunction<aws_dotnet_static_shutdown>("aws_dotnet_static_shutdown");
+                nativeShutdown();
             }
 
             public DT GetFunction<DT>(string name)
@@ -101,30 +147,21 @@ namespace Aws.CRT
             }
 
             public IntPtr GetFunctionAddress(string name) {
-                return CRT.Loader.GetFunction(crt, name);
+                return CRT.Loader.GetFunction(crt.DangerousGetHandle(), name);
             }
         }
 
-        private static PlatformBinding s_binding;
-        public static PlatformBinding Binding
-        {
-            get
-            {
-                if (s_binding != null)
-                {
-                    return s_binding;
-                }
-                return s_binding = new PlatformBinding();
-            }
-        }
+        internal static PlatformBinding Binding { get; private set; } = new PlatformBinding();
 
         private class WindowsLoader : PlatformLoader
         {
-            public override IntPtr LoadLibrary(string name)
+            public override LibraryHandle LoadLibrary(string name)
             {
                 Assembly crtAsm = Assembly.GetAssembly(typeof(CRT));
+                Console.WriteLine("ASM LOCATION: {0}", crtAsm.Location);
                 string path = crtAsm.Location.Replace(crtAsm.GetName().Name + ".dll", name);
-                return kernel32.LoadLibrary(path);
+                Console.WriteLine("DLL LOCATION: {0}", path);
+                return new LibraryHandle(kernel32.LoadLibrary(path));
             }
 
             public override void FreeLibrary(IntPtr handle)
@@ -145,11 +182,11 @@ namespace Aws.CRT
 
         private class DlopenLoader : PlatformLoader
         {
-            public override IntPtr LoadLibrary(string name)
+            public override LibraryHandle LoadLibrary(string name)
             {
                 Assembly crtAsm = Assembly.GetAssembly(typeof(CRT));
                 string path = crtAsm.Location.Replace(crtAsm.GetName().Name + ".dll", name);
-                return dl.dlopen(path, dl.RTLD_NOW);
+                return new LibraryHandle(dl.dlopen(path, dl.RTLD_NOW));
             }
 
             public override void FreeLibrary(IntPtr handle)
@@ -168,23 +205,22 @@ namespace Aws.CRT
             }
         }
 
-        private static PlatformLoader s_loaderInstance;
-        public static PlatformLoader Loader
+        private static PlatformLoader s_loader = null;
+        internal static PlatformLoader Loader 
         {
-            get
-            {
-                if (s_loaderInstance != null)
+            get {
+                if (s_loader != null)
                 {
-                    return s_loaderInstance;
+                    return s_loader;
                 }
 
                 if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 {
-                    return s_loaderInstance = new WindowsLoader();
+                    return s_loader = new WindowsLoader();
                 }
                 else
                 {
-                    return s_loaderInstance = new DlopenLoader();
+                    return s_loader = new DlopenLoader();
                 }
             }
         }
@@ -197,7 +233,6 @@ namespace Aws.CRT
             protected Handle()
             : base((IntPtr)0, true)
             {
-
             }
 
             public override bool IsInvalid
@@ -207,16 +242,6 @@ namespace Aws.CRT
                     return handle == (IntPtr)0;
                 }
             }
-        }
-
-        public static void Init()
-        {
-
-        }
-
-        public static void Shutdown()
-        {
-
         }
     }
 }

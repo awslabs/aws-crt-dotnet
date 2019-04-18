@@ -15,6 +15,11 @@
 #include "crt.h"
 #include "exports.h"
 
+#include <aws/common/error.h>
+#include <aws/io/io.h>
+#include <aws/io/tls_channel_handler.h>
+#include <aws/mqtt/mqtt.h>
+
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -31,8 +36,8 @@ void aws_dotnet_set_exception_callback(dotnet_exception_callback callback) {
     s_throw_exception = callback;
 }
 
-void aws_dotnet_throw_exception(const char *message, ...) {
-    AWS_FATAL_ASSERT(s_throw_exception != NULL && "Exception handler not installed");
+void aws_dotnet_throw_exception(int error_code, const char *message, ...) {
+    AWS_FATAL_ASSERT(s_throw_exception != NULL);
     va_list args;
     va_start(args, message);
     char buf[1024];
@@ -40,18 +45,32 @@ void aws_dotnet_throw_exception(const char *message, ...) {
     va_end(args);
 
     char exception[1280];
-    int error_code = aws_last_error();
     snprintf(exception, sizeof(exception), "%s (aws_last_error: %s)", buf, aws_error_str(error_code));
     s_throw_exception(error_code, aws_error_name(error_code), exception);
 }
 
 AWS_DOTNET_API
+void aws_dotnet_static_init(void) {
+    aws_load_error_strings();
+    aws_io_load_error_strings();
+    aws_mqtt_load_error_strings();
+
+    struct aws_allocator *allocator = aws_dotnet_get_allocator();
+    aws_tls_init_static_state(allocator);
+}
+
+AWS_DOTNET_API
+void aws_dotnet_static_shutdown(void) {
+    aws_tls_clean_up_static_state();
+}
+
+AWS_DOTNET_API
 int aws_test_exception(int a, int b) {
-    aws_dotnet_throw_exception("TEST EXCEPTION");
+    aws_dotnet_throw_exception(AWS_ERROR_UNSUPPORTED_OPERATION, "TEST EXCEPTION");
     return a * b;
 }
 
 AWS_DOTNET_API
 void aws_test_exception_void(void) {
-    aws_dotnet_throw_exception("TEST EXCEPTION VOID");
+    aws_dotnet_throw_exception(AWS_ERROR_UNSUPPORTED_OPERATION, "TEST EXCEPTION VOID");
 }
