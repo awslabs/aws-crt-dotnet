@@ -1,7 +1,7 @@
 
 call RefreshEnv.Cmd
 
-dotnet test tests -v normal %* || goto :error
+dotnet test tests -v normal --configuration=RelWithDebInfo %* || goto :error
 
 goto :EOF
 
