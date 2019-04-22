@@ -2,7 +2,7 @@
 
 namespace Aws.Crt.Http
 {
-    public class Class1
+    public class HttpConnection
     {
     }
 }
