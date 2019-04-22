@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace aws_crt_http
+namespace Aws.Crt.Http
 {
     public class Class1
     {

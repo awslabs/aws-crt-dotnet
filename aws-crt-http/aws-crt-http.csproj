@@ -1,8 +1,12 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
+  <ItemGroup>
+    <ProjectReference Include="..\aws-crt\aws-crt.csproj" />
+  </ItemGroup>
+
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <RootNamespace>aws_crt_http</RootNamespace>
+    <RootNamespace>Aws.Crt.Http</RootNamespace>
   </PropertyGroup>
 
 </Project>
