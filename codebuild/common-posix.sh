@@ -2,4 +2,4 @@
 
 set -e
 
-dotnet test tests -v normal
+dotnet test -v normal

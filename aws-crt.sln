@@ -1,11 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "aws-crt", "aws-crt.csproj", "{2D9DD49D-3291-4B8D-BC3D-0F59132EB5CA}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "aws-crt", "aws-crt\aws-crt.csproj", "{2D9DD49D-3291-4B8D-BC3D-0F59132EB5CA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "tests", "..\tests\tests.csproj", "{AA1F9BF2-988F-43B2-9112-391258AA977C}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "tests", "tests\tests.csproj", "{AA1F9BF2-988F-43B2-9112-391258AA977C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DebugApp", "..\tools\DebugApp\DebugApp.csproj", "{006F1257-404B-4AED-9381-D8A5640CA03F}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DebugApp", "tools\DebugApp\DebugApp.csproj", "{006F1257-404B-4AED-9381-D8A5640CA03F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "aws-crt-http", "aws-crt-http\aws-crt-http.csproj", "{FF79114F-07DA-40D5-99C8-3161F69407A7}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -25,5 +27,9 @@ Global
 		{006F1257-404B-4AED-9381-D8A5640CA03F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{006F1257-404B-4AED-9381-D8A5640CA03F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{006F1257-404B-4AED-9381-D8A5640CA03F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FF79114F-07DA-40D5-99C8-3161F69407A7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FF79114F-07DA-40D5-99C8-3161F69407A7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FF79114F-07DA-40D5-99C8-3161F69407A7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FF79114F-07DA-40D5-99C8-3161F69407A7}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

@@ -131,4 +131,6 @@ target_include_directories(${CMAKE_PROJECT_NAME} PUBLIC
         $<INSTALL_INTERFACE:include>)
 
 find_package(aws-c-mqtt REQUIRED)
+find_package(aws-c-http REQUIRED)
 target_link_libraries(${CMAKE_PROJECT_NAME} AWS::aws-c-mqtt)
+target_link_libraries(${CMAKE_PROJECT_NAME} AWS::aws-c-http)
