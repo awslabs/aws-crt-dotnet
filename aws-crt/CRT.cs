@@ -20,6 +20,8 @@ using System.Security;
 
 // Make internal classes and members in this assembly available to the unit tests
 [assembly: InternalsVisibleTo("tests")]
+[assembly: InternalsVisibleTo("aws-crt-http")]
+[assembly: InternalsVisibleTo("aws-crt-mqtt")]
 
 namespace Aws.Crt
 {
