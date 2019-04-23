@@ -48,7 +48,7 @@ namespace Aws.Crt.IO
         {
             this.eventLoopGroup = eventLoopGroup;
             this.hostResolver = hostResolver != null ? hostResolver : new DefaultHostResolver(eventLoopGroup);
-            NativeHandle = API.make_new(eventLoopGroup.NativeHandle.DangerousGetHandle(), hostResolver.NativeHandle.DangerousGetHandle());
+            NativeHandle = API.make_new(eventLoopGroup.NativeHandle.DangerousGetHandle(), this.hostResolver.NativeHandle.DangerousGetHandle());
         }
     }
 }
