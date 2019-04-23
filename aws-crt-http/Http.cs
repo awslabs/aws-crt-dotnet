@@ -26,4 +26,24 @@ namespace Aws.Crt.Http
         public delegate string aws_dotnet_http_status_text(int statusCode);
         public static aws_dotnet_http_status_text GetStatusText = NativeAPI.Bind<aws_dotnet_http_status_text>();
     }
+
+    [SecuritySafeCritical]
+    internal class LibraryHandle
+    {
+        delegate void aws_dotnet_http_library_init();
+        delegate void aws_dotnet_http_library_clean_up();
+
+        private aws_dotnet_http_library_init Init = NativeAPI.Bind<aws_dotnet_http_library_init>();
+        private aws_dotnet_http_library_clean_up CleanUp = NativeAPI.Bind<aws_dotnet_http_library_clean_up>();
+
+        internal LibraryHandle()
+        {
+            Init();
+        }
+
+        ~LibraryHandle()
+        {
+            CleanUp();
+        }
+    }
 }

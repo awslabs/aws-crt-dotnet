@@ -19,13 +19,13 @@
 #include <aws/http/http.h>
 
 AWS_DOTNET_API
-void aws_dotnet_http_init(void) {
+void aws_dotnet_http_library_init(void) {
     struct aws_allocator *allocator = aws_dotnet_get_allocator();
     aws_http_library_init(allocator);
 }
 
 AWS_DOTNET_API
-void aws_dotnet_http_clean_up(void) {
+void aws_dotnet_http_library_clean_up(void) {
     aws_http_library_clean_up();
 }
 

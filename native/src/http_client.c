@@ -17,6 +17,7 @@
 #include "exports.h"
 
 #include <aws/http/connection.h>
+#include <aws/io/socket.h>
 
 typedef void(
     aws_dotnet_http_on_client_connection_setup_fn)(int error_code);
@@ -42,6 +43,10 @@ static void s_http_connection_on_shutdown(struct aws_http_connection *connection
     dotnet_connection->on_shutdown(error_code);
 }
 
+static struct aws_socket_options s_default_socket_options = {.type = AWS_SOCKET_STREAM,
+                                                           .domain = AWS_SOCKET_IPV4,
+                                                           .connect_timeout_ms = 3000};
+
 AWS_DOTNET_API
 struct aws_dotnet_http_connection *
     aws_dotnet_http_connection_new(
@@ -65,6 +70,9 @@ struct aws_dotnet_http_connection *
     }
     options.host_name = aws_byte_cursor_from_c_str(host_name);
     options.port = port;
+    if (!socket_options) {
+        socket_options = &s_default_socket_options;
+    }
     options.socket_options = socket_options;
     options.tls_options = tls_connection_options;
     options.on_setup = s_http_connection_on_setup;

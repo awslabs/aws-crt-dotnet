@@ -46,6 +46,7 @@ namespace Aws.Crt.Http
         [SecuritySafeCritical]
         internal static class API
         {
+            static LibraryHandle library = new LibraryHandle();
             public delegate Handle aws_dotnet_http_stream_new(IntPtr connection);
             public delegate void aws_dotnet_http_stream_destroy(IntPtr stream);
             public delegate void aws_dotnet_http_stream_update_window(IntPtr stream, UInt64 incrementSize);
@@ -98,6 +99,7 @@ namespace Aws.Crt.Http
         [SecuritySafeCritical]
         internal static class API
         {
+            static LibraryHandle library = new LibraryHandle();
             public delegate Handle aws_dotnet_http_connection_new(
                                     IntPtr clientBootstrap,
                                     UInt64 initialWindowSize,
