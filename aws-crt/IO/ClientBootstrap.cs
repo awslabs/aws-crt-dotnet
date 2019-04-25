@@ -44,11 +44,11 @@ namespace Aws.Crt.IO
         private EventLoopGroup eventLoopGroup;
         private HostResolver hostResolver;
 
-        public ClientBootstrap(EventLoopGroup eventLoopGroup, HostResolver hostResolver)
+        public ClientBootstrap(EventLoopGroup eventLoopGroup, HostResolver hostResolver = null)
         {
             this.eventLoopGroup = eventLoopGroup;
-            this.hostResolver = hostResolver;
-            NativeHandle = API.make_new(eventLoopGroup.NativeHandle.DangerousGetHandle(), hostResolver.NativeHandle.DangerousGetHandle());
+            this.hostResolver = hostResolver != null ? hostResolver : new DefaultHostResolver(eventLoopGroup);
+            NativeHandle = API.make_new(eventLoopGroup.NativeHandle.DangerousGetHandle(), this.hostResolver.NativeHandle.DangerousGetHandle());
         }
     }
 }

@@ -44,6 +44,11 @@ namespace Aws.Crt.IO
         public TlsContextOptions() {
         }
 
+        public static TlsContextOptions DefaultClient() {
+            TlsContextOptions options = new TlsContextOptions();
+            return options;
+        }
+
         public static TlsContextOptions ClientMtlsFromPath(string certPath, string privateKeyPath) {
             TlsContextOptions options = new TlsContextOptions();
             options.InitClientMTlsFromPath(certPath, privateKeyPath);
@@ -162,6 +167,51 @@ namespace Aws.Crt.IO
                 options.pkcs12Password,
                 options.MaxFragmentSize,
                 (byte)(options.VerifyPeer ? 1 : 0));
+        }
+    }
+
+    public class TlsConnectionOptions
+    {
+        [SecuritySafeCritical]
+        internal static class API
+        {
+            public delegate Handle aws_dotnet_tls_connection_options_new(
+                                    IntPtr tlsContext,
+                                    [MarshalAs(UnmanagedType.LPStr)] string serverName,
+                                    [MarshalAs(UnmanagedType.LPStr)] string alpnList);
+            public delegate void aws_dotnet_tls_connection_options_destroy(IntPtr options);
+
+            public static aws_dotnet_tls_connection_options_new make_new = NativeAPI.Bind<aws_dotnet_tls_connection_options_new>();
+            public static aws_dotnet_tls_connection_options_destroy destroy = NativeAPI.Bind<aws_dotnet_tls_connection_options_destroy>();
+        }
+
+        internal class Handle : CRT.Handle
+        {
+            protected override bool ReleaseHandle()
+            {
+                API.destroy(handle);
+                return true;
+            }
+        }
+
+        internal Handle NativeHandle
+        {
+            get
+            {
+                return API.make_new(
+                    Context.NativeHandle.DangerousGetHandle(),
+                    ServerName, 
+                    AlpnList);
+            }
+        }
+
+        public TlsContext Context { get; set; }
+        public string ServerName { get; set; }
+        public string AlpnList { get; set; }
+
+        public TlsConnectionOptions(TlsContext context)
+        {
+            this.Context = context;
         }
     }
 }

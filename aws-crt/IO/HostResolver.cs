@@ -19,7 +19,7 @@ using System.Runtime.InteropServices;
 
 namespace Aws.Crt.IO
 {
-    public class HostResolver
+    public abstract class HostResolver
     {
         [SecuritySafeCritical]
         internal static class API
@@ -40,22 +40,22 @@ namespace Aws.Crt.IO
             }
         }
 
-        internal Handle NativeHandle { get; set; }
+        internal Handle NativeHandle { get; private set; }
 
         private EventLoopGroup eventLoopGroup;
 
-        protected HostResolver(EventLoopGroup eventLoopGroup) 
+        internal HostResolver(EventLoopGroup eventLoopGroup, Handle handle) 
         {
             this.eventLoopGroup = eventLoopGroup;
+            this.NativeHandle = handle;
         }
     }
 
-    public class DefaultHostResolver : HostResolver
+    public sealed class DefaultHostResolver : HostResolver
     {
         public DefaultHostResolver(EventLoopGroup eventLoopGroup, int maxHosts=64)
-            : base(eventLoopGroup)
+            : base(eventLoopGroup, API.make_new_default(eventLoopGroup.NativeHandle.DangerousGetHandle(), maxHosts))
         {
-            NativeHandle = API.make_new_default(eventLoopGroup.NativeHandle.DangerousGetHandle(), maxHosts);
         }
     }
 }
