@@ -17,6 +17,7 @@ namespace DebugApp
         static void Main(string[] args)
         {
             Console.WriteLine("HELLO WORLD");
+            Logger.EnableLogging(LogLevel.TRACE);
             var elg = new EventLoopGroup(1);
             var clientBootstrap = new ClientBootstrap(elg);
 
@@ -58,11 +59,12 @@ namespace DebugApp
             streamOptions.Method = "GET";
             streamOptions.Uri = URI;
             streamOptions.Headers = new HttpHeader[] {
-                new HttpHeader("Test-Header", "Test-Value"),
+                new HttpHeader("Host", URI.Host),
                 new HttpHeader("Additional-Header", "Additional-Value")
             };
             streamOptions.OnIncomingHeaders = (s, headers) =>
             {
+                Console.WriteLine("RESPONSE: {0}", s.ResponseStatusCode);
                 foreach (var header in headers) {
                     Console.WriteLine("HEADER: {0}: {1}", header.Name, header.Value);
                 }
