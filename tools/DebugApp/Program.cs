@@ -11,7 +11,8 @@ namespace DebugApp
 {
     class Program
     {
-        static readonly Uri URI = new Uri("https://aws-crt-test-stuff.s3.amazonaws.com/http_test_doc.txt");
+        //static readonly Uri URI = new Uri("https://aws-crt-test-stuff.s3.amazonaws.com/http_test_doc.txt");
+        static readonly Uri URI = new Uri("http://www.amazon.com");
 
         static void Main(string[] args)
         {
@@ -39,7 +40,7 @@ namespace DebugApp
             {
                 Console.WriteLine("DISCONNECTED");
             };
-            options.TlsConnectionOptions = tlsConnectionOptions;
+            options.TlsConnectionOptions = (URI.Scheme == "https") ? tlsConnectionOptions : null;
             connection = new HttpClientConnection(options);
             CreateStream(promise.Task.Result);
             Console.WriteLine("DONE");
