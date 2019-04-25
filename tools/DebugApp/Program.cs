@@ -81,7 +81,7 @@ namespace DebugApp
                 Console.WriteLine("COMPLETE: {0}", errorCode);
                 promise.SetResult(VoidTaskResult.Value);
             };
-            var stream = new HttpClientStream(connection, streamOptions);
+            var stream = connection.SendRequest(streamOptions);
             promise.Task.Wait();
         }
     }

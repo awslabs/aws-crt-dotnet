@@ -24,11 +24,11 @@ namespace Aws.Crt.Http
 {
     public delegate void OnConnectionSetup(int errorCode);
     public delegate void OnConnectionShutdown(int errorCode);
-    public delegate void OnStreamOutgoingBody(HttpStream stream, out byte[] buffer);
-    public delegate void OnIncomingHeaders(HttpStream stream, HttpHeader[] headers);
-    public delegate void OnIncomingHeaderBlockDone(HttpStream stream, bool hasBody);
-    public delegate void OnIncomingBody(HttpStream stream, byte[] data);
-    public delegate void OnStreamComplete(HttpStream stream, int errorCode);
+    public delegate void OnStreamOutgoingBody(HttpClientStream stream, out byte[] buffer);
+    public delegate void OnIncomingHeaders(HttpClientStream stream, HttpHeader[] headers);
+    public delegate void OnIncomingHeaderBlockDone(HttpClientStream stream, bool hasBody);
+    public delegate void OnIncomingBody(HttpClientStream stream, byte[] data);
+    public delegate void OnStreamComplete(HttpClientStream stream, int errorCode);
 
     internal delegate void OnStreamOutgoingBodyNative(
         [Out, MarshalAs(UnmanagedType.LPArray, SizeParamIndex=1)] out byte[] buffer, 
@@ -104,24 +104,37 @@ namespace Aws.Crt.Http
             }
         }
 
-        internal Handle NativeHandle { get; private set; }
+        internal Handle NativeHandle { get; set; }
 
         public HttpClientConnection Connection { get; protected set; }
-        public int ResponseStatusCode { get; protected set; }
+
+        public HttpStream(HttpClientConnection connection) 
+        {
+            this.Connection = connection;
+        }
+
+        public void UpdateWindow(uint incrementSize)
+        {
+            API.update_window(NativeHandle.DangerousGetHandle(), incrementSize);
+        }
+    }
+
+    public sealed class HttpClientStream : HttpStream
+    {
+        public int ResponseStatusCode { get; private set; }
 
         // reference to options used to create this stream, which keeps the callbacks alive
         // for the duration of the stream
         private HttpRequestOptions options;
 
-        public HttpStream(HttpClientConnection connection, HttpRequestOptions options) 
-        {
+        public HttpClientStream(HttpClientConnection connection, HttpRequestOptions options)
+            : base(connection)
+        {            
             if (options.OnIncomingHeaders == null)
                 throw new ArgumentNullException("OnIncomingHeaders");
             if (options.OnStreamComplete == null)
                 throw new ArgumentNullException("OnStreamComplete");
-
-            this.Connection = connection;
-
+            
             // Wrap the native callbacks to bind this stream to them as the first argument
             OnStreamOutgoingBodyNative onStreamOutgoingBody = (out byte[] buffer, out UInt64 size) =>
             {
@@ -156,19 +169,6 @@ namespace Aws.Crt.Http
                 options.OnIncomingBody != null ? onIncomingBody : null,
                 onStreamComplete);
             this.options = options;
-        }
-
-        public void UpdateWindow(uint incrementSize)
-        {
-            API.update_window(NativeHandle.DangerousGetHandle(), incrementSize);
-        }
-    }
-
-    public sealed class HttpClientStream : HttpStream
-    {
-        public HttpClientStream(HttpClientConnection connection, HttpRequestOptions options)
-            : base(connection, options)
-        {            
         }
     }
 
@@ -240,6 +240,11 @@ namespace Aws.Crt.Http
                 options.TlsConnectionOptions?.NativeHandle.DangerousGetHandle() ?? IntPtr.Zero,
                 options.OnConnectionSetup,
                 options.OnConnectionShutdown);
+        }
+
+        public HttpClientStream SendRequest(HttpRequestOptions options)
+        {
+            return new HttpClientStream(this, options);
         }
     }
 }
