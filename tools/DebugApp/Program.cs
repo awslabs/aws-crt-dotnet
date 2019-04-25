@@ -57,7 +57,7 @@ namespace DebugApp
             var promise = new TaskCompletionSource<VoidTaskResult>();
             HttpRequestOptions streamOptions = new HttpRequestOptions();
             streamOptions.Method = "GET";
-            streamOptions.Uri = URI;
+            streamOptions.Uri = URI.PathAndQuery;
             streamOptions.Headers = new HttpHeader[] {
                 new HttpHeader("Host", URI.Host),
                 new HttpHeader("Additional-Header", "Additional-Value")

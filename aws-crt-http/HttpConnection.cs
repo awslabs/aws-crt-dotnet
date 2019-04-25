@@ -45,7 +45,7 @@ namespace Aws.Crt.Http
     public sealed class HttpRequestOptions
     {
         public string Method { get; set; }
-        public Uri Uri { get; set; }
+        public string Uri { get; set; }
         public HttpHeader[] Headers { get; set; }
         public OnStreamOutgoingBody OnStreamOutgoingBody { get; set; }
         public OnStreamComplete OnStreamComplete { get; set; }
@@ -160,7 +160,7 @@ namespace Aws.Crt.Http
             NativeHandle = API.make_new(
                 connection.NativeHandle.DangerousGetHandle(),
                 options.Method,
-                options.Uri.PathAndQuery,
+                options.Uri,
                 options.Headers,
                 (UInt32)(options.Headers?.Length ?? 0),
                 options.OnStreamOutgoingBody != null ? onStreamOutgoingBody : null,
