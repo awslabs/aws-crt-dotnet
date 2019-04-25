@@ -352,3 +352,45 @@ void aws_dotnet_tls_ctx_options_init_server_pkcs12_from_path(
     aws_tls_ctx_options_init_server_pkcs12_from_path(options, allocator, pkcs12_path, &password);
 #endif
 }
+
+AWS_DOTNET_API
+struct aws_tls_connection_options *aws_dotnet_tls_connection_options_new(
+    struct aws_tls_ctx *tls_ctx,
+    const char *server_name,
+    const char *alpn_list) {
+
+    struct aws_allocator *allocator = aws_dotnet_get_allocator();
+    struct aws_tls_connection_options *options = aws_mem_acquire(allocator, sizeof(struct aws_tls_connection_options));
+    if (!options) {
+        aws_dotnet_throw_exception(aws_last_error(), "Unable to allocate aws_tls_connection_options");
+        return NULL;
+    }
+    aws_tls_connection_options_init_from_ctx(options, tls_ctx);
+    if (server_name) {
+        struct aws_byte_cursor server = aws_byte_cursor_from_c_str(server_name);
+        if (aws_tls_connection_options_set_server_name(options, allocator, &server)) {
+            goto error;
+        }
+    }
+    if (alpn_list && aws_tls_connection_options_set_alpn_list(options, allocator, alpn_list)) {
+        goto error;
+    }
+
+    return options;
+
+error:
+    if (options) {
+        aws_mem_release(allocator, options);
+    }
+    return NULL;
+}
+
+AWS_DOTNET_API
+void aws_dotnet_tls_connection_options_destroy(struct aws_tls_connection_options *options) {
+    if (!options) {
+        return;
+    }
+    struct aws_allocator *allocator = aws_dotnet_get_allocator();
+    aws_tls_connection_options_clean_up(options);
+    aws_mem_release(allocator, options);
+}

@@ -44,6 +44,11 @@ namespace Aws.Crt.IO
         public TlsContextOptions() {
         }
 
+        public static TlsContextOptions DefaultClient() {
+            TlsContextOptions options = new TlsContextOptions();
+            return options;
+        }
+
         public static TlsContextOptions ClientMtlsFromPath(string certPath, string privateKeyPath) {
             TlsContextOptions options = new TlsContextOptions();
             options.InitClientMTlsFromPath(certPath, privateKeyPath);
