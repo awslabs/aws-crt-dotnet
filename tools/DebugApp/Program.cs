@@ -48,9 +48,10 @@ namespace DebugApp
             HttpRequestOptions streamOptions = new HttpRequestOptions();
             streamOptions.Method = "GET";
             streamOptions.Uri = new Uri("http://www.amazon.com");
-            streamOptions.Headers = new OrderedDictionary();
-            streamOptions.Headers.Add("Test-Header", "Test-Value");
-            streamOptions.Headers.Add("Additional-Header", "Additional-Value");
+            streamOptions.Headers = new HttpHeader[] {
+                new HttpHeader("Test-Header", "Test-Value"),
+                new HttpHeader("Additional-Header", "Additional-Value")
+            };
             streamOptions.OnIncomingHeaders = (s, headers) =>
             {
                 foreach (var header in headers) {
@@ -59,11 +60,11 @@ namespace DebugApp
             };
             streamOptions.OnStreamComplete = (s, errorCode) =>
             {
-                Console.WriteLine("COMPLETE");
+                Console.WriteLine("COMPLETE: {0}", errorCode);
                 promise.SetResult(VoidTaskResult.Value);
             };
             var stream = new HttpClientStream(connection, streamOptions);
-            promise.Task.Wait(3000);
+            promise.Task.Wait();
         }
     }
 }

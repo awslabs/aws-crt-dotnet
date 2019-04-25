@@ -31,7 +31,9 @@ namespace Aws.Crt.Http
     public delegate void OnStreamComplete(HttpStream stream, int errorCode);
 
     internal delegate void OnStreamOutgoingBodyNative([Out] out byte[] buffer, [Out] out UInt32 size);
-    internal delegate void OnIncomingHeadersNative([In] HttpHeader[] headers);
+    internal delegate void OnIncomingHeadersNative(
+        [In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex=1)] HttpHeader[] headers, 
+        UInt32 header_count);
     internal delegate void OnIncomingHeaderBlockDoneNative(bool hasBody);
     internal delegate void OnIncomingBodyNative([In] byte[] buffer, UInt64 size);
     internal delegate void OnStreamCompleteNative(int errorCode);
@@ -40,7 +42,7 @@ namespace Aws.Crt.Http
     {
         public string Method { get; set; }
         public Uri Uri { get; set; }
-        public OrderedDictionary Headers { get; set; }
+        public HttpHeader[] Headers { get; set; }
         public OnStreamOutgoingBody OnStreamOutgoingBody { get; set; }
         public OnStreamComplete OnStreamComplete { get; set; }
         public OnIncomingHeaders OnIncomingHeaders { get; set; }
@@ -115,12 +117,6 @@ namespace Aws.Crt.Http
                 throw new ArgumentNullException("OnStreamComplete");
 
             this.Connection = connection;
-            HttpHeader[] headers = new HttpHeader[options.Headers.Count];
-            int headerIdx = 0;
-            foreach (DictionaryEntry header in options.Headers)
-            {
-                headers[headerIdx++] = new HttpHeader((string)header.Key, (string)header.Value);
-            }
 
             // Wrap the native callbacks to bind this stream to them as the first argument
             OnStreamOutgoingBodyNative onStreamOutgoingBody = (out byte[] buffer, out UInt32 size) =>
@@ -128,9 +124,9 @@ namespace Aws.Crt.Http
                 options.OnStreamOutgoingBody(this, out buffer);
                 size = (UInt32)buffer.Length;
             };
-            OnIncomingHeadersNative onIncomingHeaders = (incHeaders) =>
+            OnIncomingHeadersNative onIncomingHeaders = (headers, headerCount) =>
             {
-                options.OnIncomingHeaders(this, incHeaders);
+                options.OnIncomingHeaders(this, headers);
             };
             OnIncomingHeaderBlockDoneNative onIncomingHeaderBlockDone = (hasBody) =>
             {
@@ -148,8 +144,8 @@ namespace Aws.Crt.Http
                 connection.NativeHandle.DangerousGetHandle(),
                 options.Method,
                 options.Uri.ToString(),
-                headers,
-                (UInt32)headers.Length,
+                options.Headers,
+                (UInt32)(options.Headers?.Length ?? 0),
                 options.OnStreamOutgoingBody != null ? onStreamOutgoingBody : null,
                 onIncomingHeaders,
                 options.OnIncomingHeaderBlockDone != null ? onIncomingHeaderBlockDone : null,

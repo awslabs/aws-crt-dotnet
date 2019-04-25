@@ -19,6 +19,7 @@
 #include <aws/http/connection.h>
 #include <aws/http/request_response.h>
 #include <aws/io/socket.h>
+#include <aws/common/string.h>
 
 typedef void(aws_dotnet_http_on_client_connection_setup_fn)(int error_code);
 
@@ -98,18 +99,16 @@ void aws_dotnet_http_connection_destroy(struct aws_dotnet_http_connection *conne
     aws_mem_release(allocator, connection);
 }
 
-struct aws_dotnet_http_header;
-
-typedef void(aws_dotnet_http_stream_outgoing_body_fn)(uint8_t **buffer, uint32_t *size);
-typedef void(aws_dotnet_http_on_incoming_headers_fn)(struct aws_dotnet_http_header *headers, size_t header_count);
-typedef void(aws_dotnet_http_on_incoming_header_block_done_fn)(bool has_body);
-typedef void(aws_dotnet_http_on_incoming_body_fn)(uint8_t *data, uint32_t size);
-typedef void(aws_dotnet_http_on_stream_complete_fn)(int error_code);
-
 struct aws_dotnet_http_header {
     const char *name;
     const char *value;
 };
+
+typedef void(aws_dotnet_http_stream_outgoing_body_fn)(uint8_t **buffer, uint32_t *size);
+typedef void(aws_dotnet_http_on_incoming_headers_fn)(struct aws_dotnet_http_header headers[], size_t header_count);
+typedef void(aws_dotnet_http_on_incoming_header_block_done_fn)(bool has_body);
+typedef void(aws_dotnet_http_on_incoming_body_fn)(uint8_t *data, uint32_t size);
+typedef void(aws_dotnet_http_on_stream_complete_fn)(int error_code);
 
 struct aws_dotnet_http_stream {
     struct aws_dotnet_http_connection *connection;
@@ -132,12 +131,22 @@ static enum aws_http_outgoing_body_state s_stream_stream_outgoing_body(struct aw
 static void s_stream_on_incoming_headers(struct aws_http_stream *s, const struct aws_http_header *headers, size_t header_count, void *user_data) {
     (void)s;
     struct aws_dotnet_http_stream *stream = user_data;
+    struct aws_allocator *allocator = aws_dotnet_get_allocator();
     AWS_VARIABLE_LENGTH_ARRAY(struct aws_dotnet_http_header, dotnet_headers, header_count);
+    AWS_VARIABLE_LENGTH_ARRAY(struct aws_string*, header_strings, header_count * 2);
     for (size_t header_idx = 0; header_idx < header_count; ++header_idx) {
-        dotnet_headers[header_idx].name = (const char*)headers[header_idx].name.ptr;
-        dotnet_headers[header_idx].value = (const char*)headers[header_idx].value.ptr;
+        header_strings[header_idx] =
+            aws_string_new_from_array(allocator, headers[header_idx].name.ptr, headers[header_idx].name.len);
+        header_strings[header_idx+1] =
+            aws_string_new_from_array(allocator, headers[header_idx].value.ptr, headers[header_idx].value.len);
+        dotnet_headers[header_idx].name = (const char*)header_strings[header_idx]->bytes;
+        dotnet_headers[header_idx].value = (const char*)header_strings[header_idx+1]->bytes;
     }
+
     stream->on_incoming_headers(dotnet_headers, header_count);
+    for (size_t idx = 0; idx < header_count * 2; ++idx) {
+        aws_string_destroy(header_strings[idx]);
+    }
 }
 
 static void s_stream_on_incoming_header_block_done(struct aws_http_stream *s, bool has_body, void *user_data) {
