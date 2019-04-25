@@ -11,11 +11,18 @@ namespace DebugApp
 {
     class Program
     {
+        static readonly Uri URI = new Uri("https://aws-crt-test-stuff.s3.amazonaws.com/http_test_doc.txt");
+
         static void Main(string[] args)
         {
             Console.WriteLine("HELLO WORLD");
             var elg = new EventLoopGroup(1);
             var clientBootstrap = new ClientBootstrap(elg);
+
+            var tlsCtxOptions = TlsContextOptions.DefaultClient();
+            var tlsContext = new ClientTlsContext(tlsCtxOptions);
+            var tlsConnectionOptions = new TlsConnectionOptions(tlsContext);
+            tlsConnectionOptions.ServerName = URI.Host;
 
             var promise = new TaskCompletionSource<HttpClientConnection>();
             HttpClientConnection connection = null;
@@ -32,6 +39,7 @@ namespace DebugApp
             {
                 Console.WriteLine("DISCONNECTED");
             };
+            options.TlsConnectionOptions = tlsConnectionOptions;
             connection = new HttpClientConnection(options);
             CreateStream(promise.Task.Result);
             Console.WriteLine("DONE");
@@ -47,7 +55,7 @@ namespace DebugApp
             var promise = new TaskCompletionSource<VoidTaskResult>();
             HttpRequestOptions streamOptions = new HttpRequestOptions();
             streamOptions.Method = "GET";
-            streamOptions.Uri = new Uri("http://www.amazon.com");
+            streamOptions.Uri = URI;
             streamOptions.Headers = new HttpHeader[] {
                 new HttpHeader("Test-Header", "Test-Value"),
                 new HttpHeader("Additional-Header", "Additional-Value")
@@ -57,6 +65,13 @@ namespace DebugApp
                 foreach (var header in headers) {
                     Console.WriteLine("HEADER: {0}: {1}", header.Name, header.Value);
                 }
+            };
+            streamOptions.OnIncomingHeaderBlockDone = (s, hasBody) => {
+                Console.WriteLine("HEADERS DONE, {0}", hasBody ? "EXPECTING BODY" : "NO BODY");   
+            };
+            streamOptions.OnIncomingBody = (s, data) => {
+                Console.WriteLine("BODY: (size={0})", data.Length);
+                Console.WriteLine(System.Text.Encoding.UTF8.GetString(data));
             };
             streamOptions.OnStreamComplete = (s, errorCode) =>
             {

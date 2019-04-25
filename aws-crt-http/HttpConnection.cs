@@ -30,12 +30,16 @@ namespace Aws.Crt.Http
     public delegate void OnIncomingBody(HttpStream stream, byte[] data);
     public delegate void OnStreamComplete(HttpStream stream, int errorCode);
 
-    internal delegate void OnStreamOutgoingBodyNative([Out] out byte[] buffer, [Out] out UInt32 size);
+    internal delegate void OnStreamOutgoingBodyNative(
+        [Out, MarshalAs(UnmanagedType.LPArray, SizeParamIndex=1)] out byte[] buffer, 
+        [Out] out UInt64 size);
     internal delegate void OnIncomingHeadersNative(
         [In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex=1)] HttpHeader[] headers, 
-        UInt32 header_count);
+        UInt32 count);
     internal delegate void OnIncomingHeaderBlockDoneNative(bool hasBody);
-    internal delegate void OnIncomingBodyNative([In] byte[] buffer, UInt64 size);
+    internal delegate void OnIncomingBodyNative(
+        [In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex=1)] byte[] buffer, 
+        UInt64 size);
     internal delegate void OnStreamCompleteNative(int errorCode);
 
     public sealed class HttpRequestOptions
@@ -119,7 +123,7 @@ namespace Aws.Crt.Http
             this.Connection = connection;
 
             // Wrap the native callbacks to bind this stream to them as the first argument
-            OnStreamOutgoingBodyNative onStreamOutgoingBody = (out byte[] buffer, out UInt32 size) =>
+            OnStreamOutgoingBodyNative onStreamOutgoingBody = (out byte[] buffer, out UInt64 size) =>
             {
                 options.OnStreamOutgoingBody(this, out buffer);
                 size = (UInt32)buffer.Length;
@@ -143,7 +147,7 @@ namespace Aws.Crt.Http
             NativeHandle = API.make_new(
                 connection.NativeHandle.DangerousGetHandle(),
                 options.Method,
-                options.Uri.ToString(),
+                options.Uri.PathAndQuery,
                 options.Headers,
                 (UInt32)(options.Headers?.Length ?? 0),
                 options.OnStreamOutgoingBody != null ? onStreamOutgoingBody : null,
@@ -232,8 +236,8 @@ namespace Aws.Crt.Http
                 options.InitialWindowSize,
                 options.HostName,
                 options.Port,
-                options.SocketOptions != null ? options.SocketOptions.NativeHandle.DangerousGetHandle() : IntPtr.Zero,
-                options.TlsConnectionOptions != null ? options.TlsConnectionOptions.NativeHandle.DangerousGetHandle() : IntPtr.Zero,
+                options.SocketOptions?.NativeHandle.DangerousGetHandle() ?? IntPtr.Zero,
+                options.TlsConnectionOptions?.NativeHandle.DangerousGetHandle() ?? IntPtr.Zero,
                 options.OnConnectionSetup,
                 options.OnConnectionShutdown);
         }

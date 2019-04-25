@@ -104,10 +104,10 @@ struct aws_dotnet_http_header {
     const char *value;
 };
 
-typedef void(aws_dotnet_http_stream_outgoing_body_fn)(uint8_t **buffer, uint32_t *size);
-typedef void(aws_dotnet_http_on_incoming_headers_fn)(struct aws_dotnet_http_header headers[], size_t header_count);
+typedef void(aws_dotnet_http_stream_outgoing_body_fn)(uint8_t **buffer, uint64_t *size);
+typedef void(aws_dotnet_http_on_incoming_headers_fn)(struct aws_dotnet_http_header headers[], uint32_t header_count);
 typedef void(aws_dotnet_http_on_incoming_header_block_done_fn)(bool has_body);
-typedef void(aws_dotnet_http_on_incoming_body_fn)(uint8_t *data, uint32_t size);
+typedef void(aws_dotnet_http_on_incoming_body_fn)(uint8_t *data, uint64_t size);
 typedef void(aws_dotnet_http_on_stream_complete_fn)(int error_code);
 
 struct aws_dotnet_http_stream {
@@ -143,7 +143,7 @@ static void s_stream_on_incoming_headers(struct aws_http_stream *s, const struct
         dotnet_headers[header_idx].value = (const char*)header_strings[header_idx+1]->bytes;
     }
 
-    stream->on_incoming_headers(dotnet_headers, header_count);
+    stream->on_incoming_headers(dotnet_headers, (uint32_t)header_count);
     for (size_t idx = 0; idx < header_count * 2; ++idx) {
         aws_string_destroy(header_strings[idx]);
     }
@@ -152,17 +152,17 @@ static void s_stream_on_incoming_headers(struct aws_http_stream *s, const struct
 static void s_stream_on_incoming_header_block_done(struct aws_http_stream *s, bool has_body, void *user_data) {
     (void)s;
     struct aws_dotnet_http_stream *stream = user_data;
-    (void)stream;
-    (void)has_body;
+    if (stream->on_incoming_headers_block_done) {
+        stream->on_incoming_headers_block_done(has_body);
+    }
 }
 
 static void s_stream_on_incoming_body(struct aws_http_stream *s, const struct aws_byte_cursor *data, size_t *out_window_update_size, void *user_data) {
     (void)s;
+    (void)out_window_update_size;
     struct aws_dotnet_http_stream *stream = user_data;
-    (void)stream;
-    (void)data;
-    if (out_window_update_size) {
-        out_window_update_size = 0;
+    if (stream->on_incoming_body) {
+        stream->on_incoming_body(data->ptr, data->len);
     }
 }
 
@@ -183,6 +183,16 @@ AWS_DOTNET_API struct aws_dotnet_http_stream *aws_dotnet_http_stream_new(
     aws_dotnet_http_on_incoming_header_block_done_fn *on_incoming_headers_block_done,
     aws_dotnet_http_on_incoming_body_fn *on_incoming_body,
     aws_dotnet_http_on_stream_complete_fn *on_stream_complete) {
+
+    if (on_incoming_headers == NULL) {
+        aws_dotnet_throw_exception(AWS_ERROR_INVALID_ARGUMENT, "on_incoming_headers must be provided");
+        return NULL;
+    }
+
+    if (on_stream_complete == NULL) {
+        aws_dotnet_throw_exception(AWS_ERROR_INVALID_ARGUMENT, "on_stream_complete must be provided");
+        return NULL;
+    }
 
     struct aws_allocator *allocator = aws_dotnet_get_allocator();
     struct aws_http_request_options options = AWS_HTTP_REQUEST_OPTIONS_INIT;
