@@ -11,8 +11,8 @@ namespace DebugApp
 {
     class Program
     {
-        //static readonly Uri URI = new Uri("https://aws-crt-test-stuff.s3.amazonaws.com/http_test_doc.txt");
-        static readonly Uri URI = new Uri("http://www.amazon.com");
+        static readonly Uri URI = new Uri("https://aws-crt-test-stuff.s3.amazonaws.com/http_test_doc.txt");
+        //static readonly Uri URI = new Uri("http://www.amazon.com");
 
         static void Main(string[] args)
         {
@@ -26,16 +26,16 @@ namespace DebugApp
             var tlsConnectionOptions = new TlsConnectionOptions(tlsContext);
             tlsConnectionOptions.ServerName = URI.Host;
 
-            var promise = new TaskCompletionSource<HttpClientConnection>();
+            var promise = new TaskCompletionSource<int>();
             HttpClientConnection connection = null;
             var options = new HttpClientConnectionOptions();
             options.ClientBootstrap = clientBootstrap;
-            options.HostName = "www.amazon.com";
-            options.Port = 80;
+            options.HostName = URI.Host;
+            options.Port = (UInt16)URI.Port;
             options.OnConnectionSetup = (int errorCode) =>
             {
-                Console.WriteLine("CONNECTED");
-                promise.SetResult(connection);
+                Console.WriteLine(errorCode == 0 ? "CONNECTED" : "FAILED");
+                promise.SetResult(errorCode);
             };
             options.OnConnectionShutdown = (int errorCode) =>
             {
@@ -43,7 +43,11 @@ namespace DebugApp
             };
             options.TlsConnectionOptions = (URI.Scheme == "https") ? tlsConnectionOptions : null;
             connection = new HttpClientConnection(options);
-            CreateStream(promise.Task.Result);
+
+            if (promise.Task.Result == 0)
+            {
+                CreateStream(connection);
+            }
             Console.WriteLine("DONE");
         }
 
@@ -73,8 +77,10 @@ namespace DebugApp
                 Console.WriteLine("HEADERS DONE, {0}", hasBody ? "EXPECTING BODY" : "NO BODY");   
             };
             streamOptions.OnIncomingBody = (s, data) => {
-                Console.WriteLine("BODY: (size={0})", data.Length);
-                Console.WriteLine(System.Text.Encoding.UTF8.GetString(data));
+                if (data != null) {
+                    Console.WriteLine("BODY: (size={0})", data.Length);
+                    Console.WriteLine(System.Text.Encoding.UTF8.GetString(data));
+                }
             };
             streamOptions.OnStreamComplete = (s, errorCode) =>
             {
