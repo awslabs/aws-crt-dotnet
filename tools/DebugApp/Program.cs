@@ -12,12 +12,10 @@ namespace DebugApp
     class Program
     {
         static readonly Uri URI = new Uri("https://aws-crt-test-stuff.s3.amazonaws.com/http_test_doc.txt");
-        //static readonly Uri URI = new Uri("http://www.amazon.com");
 
         static void Main(string[] args)
         {
             Console.WriteLine("HELLO WORLD");
-            Logger.EnableLogging(LogLevel.TRACE);
             var elg = new EventLoopGroup(1);
             var clientBootstrap = new ClientBootstrap(elg);
 
@@ -58,6 +56,7 @@ namespace DebugApp
         static void CreateStream(HttpClientConnection connection)
         {
             Console.WriteLine("NEW STREAM");
+            int totalSize = 0;
             var promise = new TaskCompletionSource<VoidTaskResult>();
             HttpRequestOptions streamOptions = new HttpRequestOptions();
             streamOptions.Method = "GET";
@@ -77,14 +76,12 @@ namespace DebugApp
                 Console.WriteLine("HEADERS DONE, {0}", hasBody ? "EXPECTING BODY" : "NO BODY");   
             };
             streamOptions.OnIncomingBody = (s, data) => {
-                if (data != null) {
-                    Console.WriteLine("BODY: (size={0})", data.Length);
-                    Console.WriteLine(System.Text.Encoding.UTF8.GetString(data));
-                }
+                totalSize += data.Length;
+                Console.WriteLine("BODY CHUNK: (size={0})", data.Length);
             };
             streamOptions.OnStreamComplete = (s, errorCode) =>
             {
-                Console.WriteLine("COMPLETE: {0}", errorCode);
+                Console.WriteLine("COMPLETE: rc={0}, total body size={1}", errorCode, totalSize);
                 promise.SetResult(VoidTaskResult.Value);
             };
             var stream = connection.SendRequest(streamOptions);
