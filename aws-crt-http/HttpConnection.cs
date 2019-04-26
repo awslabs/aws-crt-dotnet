@@ -14,7 +14,7 @@
  */
 using System;
 using System.Collections;
-using System.Collections.Specialized;
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Security;
 
@@ -123,9 +123,11 @@ namespace Aws.Crt.Http
     {
         public int ResponseStatusCode { get; private set; }
 
-        // reference to options used to create this stream, which keeps the callbacks alive
+        // Reference to options used to create this stream, which keeps the callbacks alive
         // for the duration of the stream
         private HttpRequestOptions options;
+        // References to native callbacks to keep them alive for the duration of the stream
+        private List<Delegate> nativeCallbacks = new List<Delegate>();
 
         public HttpClientStream(HttpClientConnection connection, HttpRequestOptions options)
             : base(connection)
@@ -157,6 +159,14 @@ namespace Aws.Crt.Http
             {
                 options.OnStreamComplete(this, errorCode);
             };
+            this.options = options;
+            nativeCallbacks.AddRange(new Delegate[] {
+                onStreamOutgoingBody,
+                onIncomingHeaders,
+                onIncomingHeaderBlockDone,
+                onIncomingBody,
+                onStreamComplete
+            });
             NativeHandle = API.make_new(
                 connection.NativeHandle.DangerousGetHandle(),
                 options.Method,
@@ -168,7 +178,6 @@ namespace Aws.Crt.Http
                 options.OnIncomingHeaderBlockDone != null ? onIncomingHeaderBlockDone : null,
                 options.OnIncomingBody != null ? onIncomingBody : null,
                 onStreamComplete);
-            this.options = options;
         }
     }
 
@@ -215,7 +224,7 @@ namespace Aws.Crt.Http
         }
 
         internal Handle NativeHandle { get; private set; }
-        private HttpClientConnectionOptions Options;
+        private HttpClientConnectionOptions options;
 
         public HttpClientConnection(HttpClientConnectionOptions options)
         {
@@ -230,7 +239,7 @@ namespace Aws.Crt.Http
             if (options.Port == 0)
                 throw new ArgumentOutOfRangeException("Port", options.Port, "Port must be between 1 and 65535");
 
-            this.Options = options;
+            this.options = options;
             NativeHandle = API.make_new(
                 options.ClientBootstrap.NativeHandle.DangerousGetHandle(),
                 options.InitialWindowSize,
