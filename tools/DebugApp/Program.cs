@@ -63,7 +63,7 @@ namespace DebugApp
             streamOptions.Uri = URI.PathAndQuery;
             streamOptions.Headers = new HttpHeader[] {
                 new HttpHeader("Host", URI.Host),
-                new HttpHeader("Additional-Header", "Additional-Value")
+                new HttpHeader("Content-Length", "42")
             };
             streamOptions.OnIncomingHeaders = (s, headers) =>
             {
@@ -78,6 +78,11 @@ namespace DebugApp
             streamOptions.OnIncomingBody = (s, data) => {
                 totalSize += data.Length;
                 Console.WriteLine("BODY CHUNK: (size={0})", data.Length);
+            };
+            streamOptions.OnStreamOutgoingBody = (HttpClientStream s, byte[] buffer, out UInt64 bytesWritten) => {
+                buffer[0] = (byte)'Z';
+                bytesWritten = 1;
+                return OutgoingBodyStreamState.Done;
             };
             streamOptions.OnStreamComplete = (s, errorCode) =>
             {

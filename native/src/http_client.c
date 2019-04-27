@@ -108,7 +108,7 @@ struct aws_dotnet_http_header {
     const char *value;
 };
 
-typedef void(aws_dotnet_http_stream_outgoing_body_fn)(uint8_t **buffer, uint64_t *size);
+typedef int(aws_dotnet_http_stream_outgoing_body_fn)(uint8_t *buffer, uint64_t buffer_size, uint64_t *bytes_written);
 typedef void(aws_dotnet_http_on_incoming_headers_fn)(struct aws_dotnet_http_header headers[], uint32_t header_count);
 typedef void(aws_dotnet_http_on_incoming_header_block_done_fn)(bool has_body);
 typedef void(aws_dotnet_http_on_incoming_body_fn)(uint8_t *data, uint64_t size);
@@ -130,9 +130,13 @@ static enum aws_http_outgoing_body_state s_stream_stream_outgoing_body(
     void *user_data) {
     (void)s;
     struct aws_dotnet_http_stream *stream = user_data;
-    (void)stream;
-    (void)buf;
-    return AWS_HTTP_OUTGOING_BODY_DONE;
+    uint64_t buf_size = buf->capacity - buf->len;
+    uint8_t *buf_ptr = buf->buffer + buf->len;
+    uint64_t bytes_written = 0;
+    enum aws_http_outgoing_body_state state = stream->stream_outgoing_body(buf_ptr, buf_size, &bytes_written);
+    AWS_FATAL_ASSERT(bytes_written <= buf_size && "Buffer overflow detected streaming outgoing body");
+    buf->len += bytes_written;
+    return state;
 }
 
 static void s_stream_on_incoming_headers(
