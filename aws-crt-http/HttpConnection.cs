@@ -33,7 +33,7 @@ namespace Aws.Crt.Http
     public delegate OutgoingBodyStreamState OnStreamOutgoingBody(HttpClientStream stream, byte[] buffer, out UInt64 bytesWritten);
     public delegate void OnIncomingHeaders(HttpClientStream stream, HttpHeader[] headers);
     public delegate void OnIncomingHeaderBlockDone(HttpClientStream stream, bool hasBody);
-    public delegate void OnIncomingBody(HttpClientStream stream, byte[] data);
+    public delegate void OnIncomingBody(HttpClientStream stream, byte[] data, ref UInt64 windowSize);
     public delegate void OnStreamComplete(HttpClientStream stream, int errorCode);
 
     internal delegate int OnStreamOutgoingBodyNative(
@@ -46,7 +46,8 @@ namespace Aws.Crt.Http
     internal delegate void OnIncomingHeaderBlockDoneNative(bool hasBody);
     internal delegate void OnIncomingBodyNative(
         [In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex=1)] byte[] buffer, 
-        UInt64 size);
+        UInt64 size,
+        ref UInt64 windowSize);
     internal delegate void OnStreamCompleteNative(int errorCode);
 
     public sealed class HttpRequestOptions
@@ -157,9 +158,9 @@ namespace Aws.Crt.Http
             {
                 options.OnIncomingHeaderBlockDone(this, hasBody);
             };
-            OnIncomingBodyNative onIncomingBody = (data, size) =>
+            OnIncomingBodyNative onIncomingBody = (byte[] data, UInt64 size, ref UInt64 windowSize) =>
             {
-                options.OnIncomingBody(this, data);
+                options.OnIncomingBody(this, data, ref windowSize);
             };
             OnStreamCompleteNative onStreamComplete = (errorCode) =>
             {

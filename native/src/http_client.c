@@ -111,7 +111,7 @@ struct aws_dotnet_http_header {
 typedef int(aws_dotnet_http_stream_outgoing_body_fn)(uint8_t *buffer, uint64_t buffer_size, uint64_t *bytes_written);
 typedef void(aws_dotnet_http_on_incoming_headers_fn)(struct aws_dotnet_http_header headers[], uint32_t header_count);
 typedef void(aws_dotnet_http_on_incoming_header_block_done_fn)(bool has_body);
-typedef void(aws_dotnet_http_on_incoming_body_fn)(uint8_t *data, uint64_t size);
+typedef void(aws_dotnet_http_on_incoming_body_fn)(uint8_t *data, uint64_t size, uint64_t *window_size);
 typedef void(aws_dotnet_http_on_stream_complete_fn)(int error_code);
 
 struct aws_dotnet_http_stream {
@@ -181,7 +181,9 @@ static void s_stream_on_incoming_body(
     (void)out_window_update_size;
     struct aws_dotnet_http_stream *stream = user_data;
     if (stream->on_incoming_body) {
-        stream->on_incoming_body(data->ptr, data->len);
+        uint64_t window_update_size = *out_window_update_size;
+        stream->on_incoming_body(data->ptr, data->len, &window_update_size);
+        *out_window_update_size = window_update_size;
     }
 }
 
