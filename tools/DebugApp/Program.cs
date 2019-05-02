@@ -75,7 +75,7 @@ namespace DebugApp
             streamOptions.OnIncomingHeaderBlockDone = (s, hasBody) => {
                 Console.WriteLine("HEADERS DONE, {0}", hasBody ? "EXPECTING BODY" : "NO BODY");   
             };
-            streamOptions.OnIncomingBody = (s, data) => {
+            streamOptions.OnIncomingBody = (HttpClientStream s, byte[] data, ref UInt64 windowSize) => {
                 totalSize += data.Length;
                 Console.WriteLine("BODY CHUNK: (size={0})", data.Length);
             };

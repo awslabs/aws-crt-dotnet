@@ -9,6 +9,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DebugApp", "tools\DebugApp\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "aws-crt-http", "aws-crt-http\aws-crt-http.csproj", "{FF79114F-07DA-40D5-99C8-3161F69407A7}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tools", "tools", "{DCA7D1E1-91A5-46B9-8940-5595BB6314C0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Elasticurl.NET", "tools\Elasticurl\Elasticurl.NET.csproj", "{E68B24E9-0B97-4223-91CA-DDB05363679A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -31,5 +35,12 @@ Global
 		{FF79114F-07DA-40D5-99C8-3161F69407A7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{FF79114F-07DA-40D5-99C8-3161F69407A7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{FF79114F-07DA-40D5-99C8-3161F69407A7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E68B24E9-0B97-4223-91CA-DDB05363679A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E68B24E9-0B97-4223-91CA-DDB05363679A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E68B24E9-0B97-4223-91CA-DDB05363679A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E68B24E9-0B97-4223-91CA-DDB05363679A}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{E68B24E9-0B97-4223-91CA-DDB05363679A} = {DCA7D1E1-91A5-46B9-8940-5595BB6314C0}
 	EndGlobalSection
 EndGlobal
