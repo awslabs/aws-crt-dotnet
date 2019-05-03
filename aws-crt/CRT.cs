@@ -28,6 +28,25 @@ namespace Aws.Crt
     [SecuritySafeCritical]
     public static class CRT
     {
+        [SecuritySafeCritical]
+        internal static class API
+        {
+            public delegate IntPtr aws_dotnet_error_string(int errorCode);
+            public delegate IntPtr aws_dotnet_error_name(int errorCode);
+            public static aws_dotnet_error_string error_string = NativeAPI.Bind<aws_dotnet_error_string>();
+            public static aws_dotnet_error_name error_name = NativeAPI.Bind<aws_dotnet_error_name>();
+        }
+
+        public static string ErrorString(int errorCode)
+        {
+            return Marshal.PtrToStringAnsi(API.error_string(errorCode));
+        }
+
+        public static string ErrorName(int errorCode)
+        {
+            return Marshal.PtrToStringAnsi(API.error_name(errorCode));
+        }
+
         // This will only ever be instantiated on dlopen platforms
         internal static class dl
         {
@@ -125,7 +144,7 @@ namespace Aws.Crt
             private void Init()
             {
                 var nativeInit = GetFunction<aws_dotnet_static_init>("aws_dotnet_static_init");
-                nativeInit();                
+                nativeInit();
 
                 var setExceptionCallback = GetFunction<NativeException.SetExceptionCallback>("aws_dotnet_set_exception_callback");
                 setExceptionCallback(recordNativeException);
