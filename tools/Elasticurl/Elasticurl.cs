@@ -210,7 +210,8 @@ namespace Aws.Crt.Elasticurl
         {
             if (ctx.OutputFilename != null)
             {
-                try {
+                try 
+                {
                     ctx.OutputStream = File.OpenWrite(ctx.OutputFilename);
                 }
                 catch (Exception ex)
@@ -233,7 +234,8 @@ namespace Aws.Crt.Elasticurl
                 TlsContextOptions tlsOptions = null;
                 if (ctx.Certificate != null && ctx.PrivateKey != null)
                 {
-                    try {
+                    try 
+                    {
                         tlsOptions = TlsContextOptions.ClientMtlsFromPath(ctx.Certificate, ctx.PrivateKey);
                     }
                     catch (NativeException nex)
