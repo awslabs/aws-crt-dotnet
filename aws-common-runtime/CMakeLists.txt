@@ -38,7 +38,7 @@ set(AWS_C_MQTT_SHA "v0.3.4")
 include(BuildAwsCMqtt)
 
 set(AWS_C_HTTP_URL "https://github.com/awslabs/aws-c-http.git")
-set(AWS_C_HTTP_SHA "62d55944086fedb0157179072a2cb22f8ed80f93")
+set(AWS_C_HTTP_SHA "07cabb926fcbb9b50a2a5faab4975fc4e6bfd8d0")
 include(BuildAwsCHttp)
 
 add_dependencies(AwsCMqtt AwsCIO)
