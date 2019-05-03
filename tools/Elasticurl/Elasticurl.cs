@@ -408,6 +408,11 @@ namespace Aws.Crt.Elasticurl
                 var connection = connectionTask.Result;
                 var streamTask = InitStream(connection);
                 var result = streamTask.Result;
+                if (ctx.OutputStream != null)
+                {
+                    ctx.OutputStream.Flush();
+                    ctx.OutputStream.Close();
+                }
                 if (result != 0)
                 {
                     Console.WriteLine("Stream failed: {0}", CRT.ErrorString(result));
