@@ -187,7 +187,7 @@ static void s_stream_on_incoming_body(
     if (stream->on_incoming_body) {
         uint64_t window_update_size = *out_window_update_size;
         stream->on_incoming_body(data->ptr, data->len, &window_update_size);
-        *out_window_update_size = window_update_size;
+        *out_window_update_size = window_update_size < SIZE_MAX ? window_update_size : SIZE_MAX;
     }
 }
 
