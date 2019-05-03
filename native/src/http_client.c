@@ -109,7 +109,10 @@ struct aws_dotnet_http_header {
 };
 
 typedef int(aws_dotnet_http_stream_outgoing_body_fn)(uint8_t *buffer, uint64_t buffer_size, uint64_t *bytes_written);
-typedef void(aws_dotnet_http_on_incoming_headers_fn)(int32_t response_code, struct aws_dotnet_http_header headers[], uint32_t header_count);
+typedef void(aws_dotnet_http_on_incoming_headers_fn)(
+    int32_t response_code,
+    struct aws_dotnet_http_header headers[],
+    uint32_t header_count);
 typedef void(aws_dotnet_http_on_incoming_header_block_done_fn)(bool has_body);
 typedef void(aws_dotnet_http_on_incoming_body_fn)(uint8_t *data, uint64_t size, uint64_t *window_size);
 typedef void(aws_dotnet_http_on_stream_complete_fn)(int error_code);

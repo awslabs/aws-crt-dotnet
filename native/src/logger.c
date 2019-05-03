@@ -33,10 +33,7 @@ AWS_DOTNET_API void aws_dotnet_logger_enable(int level, const char *filename) {
     struct aws_allocator *allocator = aws_dotnet_get_allocator();
     FILE *file = (filename) ? NULL : stdout;
     struct aws_logger_standard_options options = {
-        .level = (enum aws_log_level)level, 
-        .file = file,
-        .filename = filename
-    };
+        .level = (enum aws_log_level)level, .file = file, .filename = filename};
     if (aws_logger_init_standard(&s_logger, allocator, &options)) {
         aws_dotnet_throw_exception(aws_last_error(), "Unable to initialize logging");
         return;
