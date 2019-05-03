@@ -180,7 +180,6 @@ static void s_stream_on_incoming_body(
     size_t *out_window_update_size,
     void *user_data) {
     (void)s;
-    (void)out_window_update_size;
     struct aws_dotnet_http_stream *stream = user_data;
     if (stream->on_incoming_body) {
         uint64_t window_update_size = *out_window_update_size;

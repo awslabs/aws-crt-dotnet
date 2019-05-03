@@ -409,6 +409,7 @@ namespace Aws.Crt.Elasticurl
                 if (result != 0)
                 {
                     Console.WriteLine("Stream failed: {0}", CRT.ErrorString(result));
+                    Environment.Exit(-1);
                 }
             }
             catch (AggregateException agg) // thrown by TaskCompletionSource
@@ -418,6 +419,7 @@ namespace Aws.Crt.Elasticurl
                 {
                     Console.WriteLine(ex.Message);
                 }
+                Environment.Exit(-1);
             }
         }
     }
