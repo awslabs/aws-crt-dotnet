@@ -35,14 +35,14 @@ namespace Aws.Crt.IO
         [SecuritySafeCritical]
         internal static class API
         {
-            public delegate void aws_dotnet_logger_enable(int level);
+            public delegate void aws_dotnet_logger_enable(int level, string filename);
 
             public static aws_dotnet_logger_enable enable = NativeAPI.Bind<aws_dotnet_logger_enable>();
         }
 
-        public static void EnableLogging(LogLevel level)
+        public static void EnableLogging(LogLevel level, string filename = null)
         {
-            API.enable((int)level);
+            API.enable((int)level, filename);
         }
     }
 }

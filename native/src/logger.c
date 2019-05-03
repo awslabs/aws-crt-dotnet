@@ -20,7 +20,7 @@
 
 static struct aws_logger s_logger;
 
-AWS_DOTNET_API void aws_dotnet_logger_enable(int level) {
+AWS_DOTNET_API void aws_dotnet_logger_enable(int level, const char *filename) {
     if (aws_logger_get() == &s_logger) {
         aws_logger_set(NULL);
         aws_logger_clean_up(&s_logger);
@@ -31,7 +31,9 @@ AWS_DOTNET_API void aws_dotnet_logger_enable(int level) {
     }
 
     struct aws_allocator *allocator = aws_dotnet_get_allocator();
-    struct aws_logger_standard_options options = {.level = (enum aws_log_level)level, .file = stdout};
+    FILE *file = (filename) ? NULL : stdout;
+    struct aws_logger_standard_options options = {
+        .level = (enum aws_log_level)level, .file = file, .filename = filename};
     if (aws_logger_init_standard(&s_logger, allocator, &options)) {
         aws_dotnet_throw_exception(aws_last_error(), "Unable to initialize logging");
         return;

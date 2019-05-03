@@ -22,24 +22,33 @@ using Aws.Crt.IO;
 
 namespace Aws.Crt.Http
 {
+    public enum OutgoingBodyStreamState 
+    {
+        InProgress = 0,
+        Done = 1,
+    }
+
     public delegate void OnConnectionSetup(int errorCode);
     public delegate void OnConnectionShutdown(int errorCode);
-    public delegate void OnStreamOutgoingBody(HttpClientStream stream, out byte[] buffer);
+    public delegate OutgoingBodyStreamState OnStreamOutgoingBody(HttpClientStream stream, byte[] buffer, out UInt64 bytesWritten);
     public delegate void OnIncomingHeaders(HttpClientStream stream, HttpHeader[] headers);
     public delegate void OnIncomingHeaderBlockDone(HttpClientStream stream, bool hasBody);
-    public delegate void OnIncomingBody(HttpClientStream stream, byte[] data);
+    public delegate void OnIncomingBody(HttpClientStream stream, byte[] data, ref UInt64 windowSize);
     public delegate void OnStreamComplete(HttpClientStream stream, int errorCode);
 
-    internal delegate void OnStreamOutgoingBodyNative(
-        [Out, MarshalAs(UnmanagedType.LPArray, SizeParamIndex=1)] out byte[] buffer, 
-        [Out] out UInt64 size);
+    internal delegate int OnStreamOutgoingBodyNative(
+        [In, Out, MarshalAs(UnmanagedType.LPArray, SizeParamIndex=1)] byte[] buffer, 
+        UInt64 size,
+        out UInt64 bytesWritten);
     internal delegate void OnIncomingHeadersNative(
-        [In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex=1)] HttpHeader[] headers, 
+        Int32 responseCode,
+        [In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex=2)] HttpHeader[] headers, 
         UInt32 count);
     internal delegate void OnIncomingHeaderBlockDoneNative(bool hasBody);
     internal delegate void OnIncomingBodyNative(
         [In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex=1)] byte[] buffer, 
-        UInt64 size);
+        UInt64 size,
+        ref UInt64 windowSize);
     internal delegate void OnStreamCompleteNative(int errorCode);
 
     public sealed class HttpRequestOptions
@@ -138,22 +147,24 @@ namespace Aws.Crt.Http
                 throw new ArgumentNullException("OnStreamComplete");
             
             // Wrap the native callbacks to bind this stream to them as the first argument
-            OnStreamOutgoingBodyNative onStreamOutgoingBody = (out byte[] buffer, out UInt64 size) =>
+            OnStreamOutgoingBodyNative onStreamOutgoingBody = (byte[] buffer, UInt64 size, out UInt64 bytesWritten) =>
             {
-                options.OnStreamOutgoingBody(this, out buffer);
-                size = (UInt32)buffer.Length;
+                return (int)options.OnStreamOutgoingBody(this, buffer, out bytesWritten);
             };
-            OnIncomingHeadersNative onIncomingHeaders = (headers, headerCount) =>
+            OnIncomingHeadersNative onIncomingHeaders = (responseCode, headers, headerCount) =>
             {
+                if (ResponseStatusCode == 0) {
+                    ResponseStatusCode = responseCode;
+                }
                 options.OnIncomingHeaders(this, headers);
             };
             OnIncomingHeaderBlockDoneNative onIncomingHeaderBlockDone = (hasBody) =>
             {
                 options.OnIncomingHeaderBlockDone(this, hasBody);
             };
-            OnIncomingBodyNative onIncomingBody = (data, size) =>
+            OnIncomingBodyNative onIncomingBody = (byte[] data, UInt64 size, ref UInt64 windowSize) =>
             {
-                options.OnIncomingBody(this, data);
+                options.OnIncomingBody(this, data, ref windowSize);
             };
             OnStreamCompleteNative onStreamComplete = (errorCode) =>
             {

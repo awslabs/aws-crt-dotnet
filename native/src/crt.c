@@ -74,3 +74,13 @@ AWS_DOTNET_API
 void aws_test_exception_void(void) {
     aws_dotnet_throw_exception(AWS_ERROR_UNSUPPORTED_OPERATION, "TEST EXCEPTION VOID");
 }
+
+AWS_DOTNET_API
+const char *aws_dotnet_error_string(int error_code) {
+    return aws_error_str(error_code);
+}
+
+AWS_DOTNET_API
+const char *aws_dotnet_error_name(int error_code) {
+    return aws_error_name(error_code);
+}
