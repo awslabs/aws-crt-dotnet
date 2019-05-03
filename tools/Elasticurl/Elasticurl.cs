@@ -196,7 +196,7 @@ namespace Aws.Crt.Elasticurl
             }
             catch (UriFormatException ufe)
             {
-                Console.WriteLine("Invalid URI: {0}: {1}", args[args.Length - 1], ufe);
+                Console.WriteLine("Invalid URI: {0}: {1}", args[args.Length - 1], ufe.Message);
                 Environment.Exit(-1);
             }
         }
@@ -228,7 +228,7 @@ namespace Aws.Crt.Elasticurl
         static TlsConnectionOptions InitTls()
         {
             TlsConnectionOptions tlsConnectionOptions = null;
-            if (ctx.Uri.Scheme == "https" || (ctx.Uri.Port != 80 && ctx.Uri.Port != 8080))
+            if (ctx.Uri.Scheme == Uri.UriSchemeHttps || (ctx.Uri.Port != 80 && ctx.Uri.Port != 8080))
             {
                 TlsContextOptions tlsOptions = null;
                 if (ctx.Certificate != null && ctx.PrivateKey != null)
