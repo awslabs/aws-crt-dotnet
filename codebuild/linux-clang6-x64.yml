@@ -7,7 +7,7 @@ phases:
       - sudo add-apt-repository ppa:ubuntu-toolchain-r/test
       - sudo apt-add-repository "deb http://apt.llvm.org/trusty/ llvm-toolchain-trusty-6.0 main"
       - sudo apt-get update -y
-      - sudo apt-get install clang-6.0 cmake3 dpkg -y -f
+      - sudo apt-get install clang-6.0 cmake3 dpkg python3 -y -f
       # .NET Core install instructions taken from: https://dotnet.microsoft.com/download/linux-package-manager/ubuntu14-04/sdk-current
       - curl -L https://packages.microsoft.com/config/ubuntu/14.04/packages-microsoft-prod.deb --output /tmp/packages-microsoft-prod.deb
       - sudo dpkg -i /tmp/packages-microsoft-prod.deb
@@ -18,6 +18,7 @@ phases:
   pre_build:
     commands:
       - export CC=clang-6.0
+      - export AWS_DOTNET_RUNTIME=linux-x64
   build:
     commands:
       - echo Build started on `date`
