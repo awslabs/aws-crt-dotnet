@@ -41,7 +41,8 @@ namespace Aws.Crt.Http
         UInt64 size,
         out UInt64 bytesWritten);
     internal delegate void OnIncomingHeadersNative(
-        [In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex=1)] HttpHeader[] headers, 
+        Int32 responseCode,
+        [In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex=2)] HttpHeader[] headers, 
         UInt32 count);
     internal delegate void OnIncomingHeaderBlockDoneNative(bool hasBody);
     internal delegate void OnIncomingBodyNative(
@@ -150,8 +151,11 @@ namespace Aws.Crt.Http
             {
                 return (int)options.OnStreamOutgoingBody(this, buffer, out bytesWritten);
             };
-            OnIncomingHeadersNative onIncomingHeaders = (headers, headerCount) =>
+            OnIncomingHeadersNative onIncomingHeaders = (responseCode, headers, headerCount) =>
             {
+                if (ResponseStatusCode == 0) {
+                    ResponseStatusCode = responseCode;
+                }
                 options.OnIncomingHeaders(this, headers);
             };
             OnIncomingHeaderBlockDoneNative onIncomingHeaderBlockDone = (hasBody) =>

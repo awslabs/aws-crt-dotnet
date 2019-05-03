@@ -109,7 +109,7 @@ struct aws_dotnet_http_header {
 };
 
 typedef int(aws_dotnet_http_stream_outgoing_body_fn)(uint8_t *buffer, uint64_t buffer_size, uint64_t *bytes_written);
-typedef void(aws_dotnet_http_on_incoming_headers_fn)(struct aws_dotnet_http_header headers[], uint32_t header_count);
+typedef void(aws_dotnet_http_on_incoming_headers_fn)(int32_t response_code, struct aws_dotnet_http_header headers[], uint32_t header_count);
 typedef void(aws_dotnet_http_on_incoming_header_block_done_fn)(bool has_body);
 typedef void(aws_dotnet_http_on_incoming_body_fn)(uint8_t *data, uint64_t size, uint64_t *window_size);
 typedef void(aws_dotnet_http_on_stream_complete_fn)(int error_code);
@@ -158,7 +158,9 @@ static void s_stream_on_incoming_headers(
         dotnet_headers[header_idx].value = (const char *)header_strings[header_idx + 1]->bytes;
     }
 
-    stream->on_incoming_headers(dotnet_headers, (uint32_t)header_count);
+    int status = 0;
+    aws_http_stream_get_incoming_response_status(stream->stream, &status);
+    stream->on_incoming_headers(status, dotnet_headers, (uint32_t)header_count);
     for (size_t idx = 0; idx < header_count * 2; ++idx) {
         aws_string_destroy(header_strings[idx]);
     }
