@@ -273,6 +273,7 @@ namespace Aws.Crt.Elasticurl
                 {
                     TlsContext tls = new ClientTlsContext(tlsOptions);
                     tlsConnectionOptions = new TlsConnectionOptions(tls);
+                    tlsConnectionOptions.ServerName = ctx.Uri.Host;
                 }
                 catch (NativeException nex)
                 {
