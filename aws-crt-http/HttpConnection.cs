@@ -28,8 +28,6 @@ namespace Aws.Crt.Http
         Done = 1,
     }
 
-    public delegate void OnConnectionSetup(int errorCode);
-    public delegate void OnConnectionShutdown(int errorCode);
     public delegate OutgoingBodyStreamState OnStreamOutgoingBody(HttpClientStream stream, byte[] buffer, out UInt64 bytesWritten);
     public delegate void OnIncomingHeaders(HttpClientStream stream, HttpHeader[] headers);
     public delegate void OnIncomingHeaderBlockDone(HttpClientStream stream, bool hasBody);
@@ -192,6 +190,26 @@ namespace Aws.Crt.Http
         }
     }
 
+    public sealed class ConnectionSetupEventArgs : EventArgs
+    {
+        public int ErrorCode { get; set; }
+
+        internal ConnectionSetupEventArgs(int errorCode)
+        {
+            ErrorCode = errorCode;
+        }
+    }
+
+    public sealed class ConnectionShutdownEventArgs : EventArgs
+    {
+        public int ErrorCode { get; set; }
+
+        internal ConnectionShutdownEventArgs(int errorCode)
+        {
+            ErrorCode = errorCode;
+        }
+    }
+
     public sealed class HttpClientConnectionOptions
     {
         public ClientBootstrap ClientBootstrap { get; set; }
@@ -200,8 +218,32 @@ namespace Aws.Crt.Http
         public UInt16 Port { get; set; }
         public SocketOptions SocketOptions { get; set; }
         public TlsConnectionOptions TlsConnectionOptions { get; set; }
-        public OnConnectionSetup OnConnectionSetup { get; set; }
-        public OnConnectionShutdown OnConnectionShutdown { get; set; }
+        public event EventHandler<ConnectionSetupEventArgs> ConnectionSetup;
+        public event EventHandler<ConnectionShutdownEventArgs> ConnectionShutdown;
+
+        internal void Validate()
+        {
+            if (ClientBootstrap == null)
+                throw new ArgumentNullException("ClientBootstrap");
+            if (ConnectionSetup == null)
+                throw new ArgumentNullException("OnConnectionSetup");
+            if (ConnectionShutdown == null)
+                throw new ArgumentNullException("OnConnectionShutdown");
+            if (HostName == null)
+                throw new ArgumentNullException("HostName");
+            if (Port == 0)
+                throw new ArgumentOutOfRangeException("Port", Port, "Port must be between 1 and 65535");
+        }
+
+        internal void OnConnectionSetup(HttpClientConnection sender, int errorCode)
+        {
+            ConnectionSetup?.Invoke(sender, new ConnectionSetupEventArgs(errorCode));
+        }
+
+        internal void OnConnectionShutdown(HttpClientConnection sender, int errorCode)
+        {
+            ConnectionShutdown?.Invoke(sender, new ConnectionShutdownEventArgs(errorCode));
+        }
     }
 
     public sealed class HttpClientConnection
@@ -209,7 +251,10 @@ namespace Aws.Crt.Http
         [SecuritySafeCritical]
         internal static class API
         {
-            static LibraryHandle library = new LibraryHandle();
+            public delegate void OnConnectionSetup(int errorCode);
+            public delegate void OnConnectionShutdown(int errorCode);
+
+            static private LibraryHandle library = new LibraryHandle();
             public delegate Handle aws_dotnet_http_connection_new(
                                     IntPtr clientBootstrap,
                                     UInt64 initialWindowSize,
@@ -239,16 +284,7 @@ namespace Aws.Crt.Http
 
         public HttpClientConnection(HttpClientConnectionOptions options)
         {
-            if (options.ClientBootstrap == null)
-                throw new ArgumentNullException("ClientBootstrap");
-            if (options.OnConnectionSetup == null)
-                throw new ArgumentNullException("OnConnectionSetup");
-            if (options.OnConnectionShutdown == null)
-                throw new ArgumentNullException("OnConnectionShutdown");
-            if (options.HostName == null)
-                throw new ArgumentNullException("HostName");
-            if (options.Port == 0)
-                throw new ArgumentOutOfRangeException("Port", options.Port, "Port must be between 1 and 65535");
+            options.Validate();
 
             this.options = options;
             NativeHandle = API.make_new(
@@ -258,13 +294,23 @@ namespace Aws.Crt.Http
                 options.Port,
                 options.SocketOptions?.NativeHandle.DangerousGetHandle() ?? IntPtr.Zero,
                 options.TlsConnectionOptions?.NativeHandle.DangerousGetHandle() ?? IntPtr.Zero,
-                options.OnConnectionSetup,
-                options.OnConnectionShutdown);
+                OnConnectionSetup,
+                OnConnectionShutdown);
         }
 
         public HttpClientStream MakeRequest(HttpRequestOptions options)
         {
             return new HttpClientStream(this, options);
+        }
+
+        private void OnConnectionSetup(int errorCode)
+        {
+            options.OnConnectionSetup(this, errorCode);
+        }
+
+        private void OnConnectionShutdown(int errorCode)
+        {
+            options.OnConnectionShutdown(this, errorCode);
         }
     }
 }

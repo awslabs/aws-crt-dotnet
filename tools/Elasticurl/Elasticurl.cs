@@ -286,11 +286,11 @@ namespace Aws.Crt.Elasticurl
             return tlsConnectionOptions;
         }
 
-        static void OnConnectionSetup(int errorCode)
+        static void OnConnectionSetup(object sender, ConnectionSetupEventArgs e)
         {
-            if (errorCode != 0)
+            if (e.ErrorCode != 0)
             {
-                var message = CRT.ErrorString(errorCode);
+                var message = CRT.ErrorString(e.ErrorCode);
                 _connectionSource.SetException(new WebException(String.Format("Failed to connect: {0}", message)));
             }
             else
@@ -299,7 +299,7 @@ namespace Aws.Crt.Elasticurl
             }
         }
 
-        static void OnConnectionShutdown(int errorCode)
+        static void OnConnectionShutdown(object sender, ConnectionShutdownEventArgs e)
         {
             Console.WriteLine("Disconnected");
         }
@@ -314,8 +314,8 @@ namespace Aws.Crt.Elasticurl
             options.TlsConnectionOptions = tlsOptions;
             options.HostName = ctx.Uri.Host;
             options.Port = (UInt16)ctx.Uri.Port;
-            options.OnConnectionSetup = OnConnectionSetup;
-            options.OnConnectionShutdown = OnConnectionShutdown;
+            options.ConnectionSetup += OnConnectionSetup;
+            options.ConnectionShutdown += OnConnectionShutdown;
             if (ctx.ConnectTimeoutMs != 0)
             {
                 var socketOptions = new SocketOptions();
