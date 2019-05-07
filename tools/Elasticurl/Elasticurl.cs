@@ -388,7 +388,7 @@ namespace Aws.Crt.Elasticurl
             options.OnIncomingBody = OnIncomingBody;
             options.OnStreamOutgoingBody = StreamOutgoingBody;
             options.OnStreamComplete = OnStreamComplete;
-            _stream = connection.SendRequest(options);
+            _stream = connection.MakeRequest(options);
             return _streamSource.Task;
         }
 

@@ -262,7 +262,7 @@ namespace Aws.Crt.Http
                 options.OnConnectionShutdown);
         }
 
-        public HttpClientStream SendRequest(HttpRequestOptions options)
+        public HttpClientStream MakeRequest(HttpRequestOptions options)
         {
             return new HttpClientStream(this, options);
         }
