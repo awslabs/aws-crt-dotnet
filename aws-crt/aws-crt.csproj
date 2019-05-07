@@ -32,6 +32,8 @@
       <None Include="@(NativeLibraries)">
         <Link>%(RecursiveDir)%(FileName)%(Extension)</Link>
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        <PackagePath>lib/$(TargetFramework)/</PackagePath>
+        <Pack>true</Pack>
       </None>
     </ItemGroup>
   </Target>
