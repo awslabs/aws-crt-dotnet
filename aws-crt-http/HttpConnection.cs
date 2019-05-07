@@ -15,8 +15,10 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Net;
 using System.Runtime.InteropServices;
 using System.Security;
+using System.Threading.Tasks;
 
 using Aws.Crt.IO;
 
@@ -26,6 +28,16 @@ namespace Aws.Crt.Http
     {
         InProgress = 0,
         Done = 1,
+    }
+
+    public class StreamResult
+    {
+        public int ErrorCode { get; internal set; }
+
+        internal StreamResult(int errorCode)
+        {
+            ErrorCode = errorCode;
+        }
     }
 
     public abstract class HttpClientStreamEventArgs : EventArgs
@@ -318,15 +330,13 @@ namespace Aws.Crt.Http
         public UInt16 Port { get; set; }
         public SocketOptions SocketOptions { get; set; }
         public TlsConnectionOptions TlsConnectionOptions { get; set; }
-        public event EventHandler<ConnectionSetupEventArgs> ConnectionSetup;
+        internal event EventHandler<ConnectionSetupEventArgs> ConnectionSetup;
         public event EventHandler<ConnectionShutdownEventArgs> ConnectionShutdown;
 
         internal void Validate()
         {
             if (ClientBootstrap == null)
                 throw new ArgumentNullException("ClientBootstrap");
-            if (ConnectionSetup == null)
-                throw new ArgumentNullException("ConnectionSetup");
             if (ConnectionShutdown == null)
                 throw new ArgumentNullException("ConnectionShutdown");
             if (HostName == null)
@@ -382,7 +392,7 @@ namespace Aws.Crt.Http
         internal Handle NativeHandle { get; private set; }
         private HttpClientConnectionOptions options;
 
-        public HttpClientConnection(HttpClientConnectionOptions options)
+        private HttpClientConnection(HttpClientConnectionOptions options)
         {
             options.Validate();
 
@@ -398,9 +408,54 @@ namespace Aws.Crt.Http
                 OnConnectionShutdown);
         }
 
-        public HttpClientStream MakeRequest(HttpRequestOptions options)
+        private class ConnectionBootstrap
         {
-            return new HttpClientStream(this, options);
+            public TaskCompletionSource<HttpClientConnection> TaskSource = new TaskCompletionSource<HttpClientConnection>();
+            public HttpClientConnection Connection;
+        }
+        public static Task<HttpClientConnection> NewConnection(HttpClientConnectionOptions options)
+        {
+            options.Validate();
+
+            var bootstrap = new ConnectionBootstrap();
+            options.ConnectionSetup += (sender, e) => {
+                if (e.ErrorCode != 0)
+                {
+                    var message = CRT.ErrorString(e.ErrorCode);
+                    bootstrap.TaskSource.SetException(new WebException(String.Format("Failed to connect: {0}", message)));
+                }
+                else
+                {
+                    bootstrap.TaskSource.SetResult(bootstrap.Connection);
+                }
+            };
+
+            bootstrap.Connection = new HttpClientConnection(options);
+            return bootstrap.TaskSource.Task;
+        }
+
+        private class StreamBootstrap
+        {
+            public TaskCompletionSource<StreamResult> TaskSource = new TaskCompletionSource<StreamResult>();
+            public HttpClientStream Stream;
+        }
+        public Task<StreamResult> MakeRequest(HttpRequestOptions options)
+        {
+            var bootstrap = new StreamBootstrap();
+            options.StreamComplete += (sender, e) => {
+                if (e.ErrorCode != 0)
+                {
+                    var message = CRT.ErrorString(e.ErrorCode);
+                    bootstrap.TaskSource.SetException(new WebException(String.Format("Stream failed: {0}", message)));
+                }
+                else
+                {
+                    bootstrap.TaskSource.SetResult(new StreamResult(e.ErrorCode));
+                }
+            };
+
+            bootstrap.Stream = new HttpClientStream(this, options);
+            return bootstrap.TaskSource.Task;
         }
 
         private void OnConnectionSetup(int errorCode)

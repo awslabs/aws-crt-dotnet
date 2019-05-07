@@ -286,35 +286,18 @@ namespace Aws.Crt.Elasticurl
             return tlsConnectionOptions;
         }
 
-        static void OnConnectionSetup(object sender, ConnectionSetupEventArgs e)
-        {
-            if (e.ErrorCode != 0)
-            {
-                var message = CRT.ErrorString(e.ErrorCode);
-                _connectionSource.SetException(new WebException(String.Format("Failed to connect: {0}", message)));
-            }
-            else
-            {
-                _connectionSource.SetResult(_connection);
-            }
-        }
-
         static void OnConnectionShutdown(object sender, ConnectionShutdownEventArgs e)
         {
             Console.WriteLine("Disconnected");
         }
 
-        private static HttpClientConnection _connection;
-        private static TaskCompletionSource<HttpClientConnection> _connectionSource;
         static Task<HttpClientConnection> InitHttp(ClientBootstrap client, TlsConnectionOptions tlsOptions)
         {
-            _connectionSource = new TaskCompletionSource<HttpClientConnection>();
             var options = new HttpClientConnectionOptions();
             options.ClientBootstrap = client;
             options.TlsConnectionOptions = tlsOptions;
             options.HostName = ctx.Uri.Host;
             options.Port = (UInt16)ctx.Uri.Port;
-            options.ConnectionSetup += OnConnectionSetup;
             options.ConnectionShutdown += OnConnectionShutdown;
             if (ctx.ConnectTimeoutMs != 0)
             {
@@ -322,8 +305,7 @@ namespace Aws.Crt.Elasticurl
                 socketOptions.ConnectTimeoutMs = ctx.ConnectTimeoutMs;
                 options.SocketOptions = socketOptions;
             }
-            _connection = new HttpClientConnection(options);
-            return _connectionSource.Task;
+            return HttpClientConnection.NewConnection(options);
         }
 
         static bool responseCodeWritten = false;
@@ -368,15 +350,11 @@ namespace Aws.Crt.Elasticurl
 
         static void OnStreamComplete(object sender, StreamCompleteEventArgs e)
         {
-            _streamSource.SetResult(e.ErrorCode);
+            Console.WriteLine("Completed with code {0}", e.ErrorCode);
         }
         
-        private static TaskCompletionSource<int> _streamSource;
-        private static HttpClientStream _stream;
-        static Task<int> InitStream(HttpClientConnection connection)
+        static Task<StreamResult> InitStream(HttpClientConnection connection)
         {
-            _streamSource = new TaskCompletionSource<int>();
-
             var headers = new List<HttpHeader>();
             headers.Add(new HttpHeader("Host", ctx.Uri.Host));
 
@@ -388,8 +366,7 @@ namespace Aws.Crt.Elasticurl
             options.IncomingBody += OnIncomingBody;
             options.StreamOutgoingBody += StreamOutgoingBody;
             options.StreamComplete += OnStreamComplete;
-            _stream = connection.MakeRequest(options);
-            return _streamSource.Task;
+            return connection.MakeRequest(options);
         }
 
         private static Context ctx = new Context();
@@ -402,22 +379,13 @@ namespace Aws.Crt.Elasticurl
             var tlsOptions = InitTls();
             var elg = new EventLoopGroup();
             var client = new ClientBootstrap(elg);
-            var connectionTask = InitHttp(client, tlsOptions);
+
             try 
             {
-                var connection = connectionTask.Result;
-                var streamTask = InitStream(connection);
+                var connectionTask = InitHttp(client, tlsOptions);
+                var streamTask = InitStream(connectionTask.Result);
                 var result = streamTask.Result;
-                if (ctx.OutputStream != null)
-                {
-                    ctx.OutputStream.Flush();
-                    ctx.OutputStream.Close();
-                }
-                if (result != 0)
-                {
-                    Console.WriteLine("Stream failed: {0}", CRT.ErrorString(result));
-                    Environment.Exit(-1);
-                }
+                Console.WriteLine("Completed with code {0}", result.ErrorCode);
             }
             catch (AggregateException agg) // thrown by TaskCompletionSource
             {
@@ -427,6 +395,14 @@ namespace Aws.Crt.Elasticurl
                     Console.WriteLine(ex.Message);
                 }
                 Environment.Exit(-1);
+            }
+            finally
+            {
+                if (ctx.OutputStream != null)
+                {
+                    ctx.OutputStream.Flush();
+                    ctx.OutputStream.Close();
+                }
             }
         }
     }
