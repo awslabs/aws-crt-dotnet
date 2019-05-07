@@ -28,37 +28,125 @@ namespace Aws.Crt.Http
         Done = 1,
     }
 
-    public delegate OutgoingBodyStreamState OnStreamOutgoingBody(HttpClientStream stream, byte[] buffer, out UInt64 bytesWritten);
-    public delegate void OnIncomingHeaders(HttpClientStream stream, HttpHeader[] headers);
-    public delegate void OnIncomingHeaderBlockDone(HttpClientStream stream, bool hasBody);
-    public delegate void OnIncomingBody(HttpClientStream stream, byte[] data, ref UInt64 windowSize);
-    public delegate void OnStreamComplete(HttpClientStream stream, int errorCode);
+    public abstract class HttpClientStreamEventArgs : EventArgs
+    {
+        public HttpClientStream Stream { get; private set; }
 
-    internal delegate int OnStreamOutgoingBodyNative(
-        [In, Out, MarshalAs(UnmanagedType.LPArray, SizeParamIndex=1)] byte[] buffer, 
-        UInt64 size,
-        out UInt64 bytesWritten);
-    internal delegate void OnIncomingHeadersNative(
-        Int32 responseCode,
-        [In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex=2)] HttpHeader[] headers, 
-        UInt32 count);
-    internal delegate void OnIncomingHeaderBlockDoneNative(bool hasBody);
-    internal delegate void OnIncomingBodyNative(
-        [In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex=1)] byte[] buffer, 
-        UInt64 size,
-        ref UInt64 windowSize);
-    internal delegate void OnStreamCompleteNative(int errorCode);
+        public HttpClientStreamEventArgs(HttpClientStream stream)
+        {
+            Stream = stream;
+        }
+    }
+
+    public class IncomingHeadersEventArgs : HttpClientStreamEventArgs
+    {
+        public HttpHeader[] Headers { get; private set; }
+
+        internal IncomingHeadersEventArgs(HttpClientStream stream, HttpHeader[] headers)
+            : base(stream)
+        {
+            Headers = headers;
+        }
+    }
+
+    public class IncomingHeadersDoneEventArgs : HttpClientStreamEventArgs
+    {
+        public bool HasBody { get; private set; }
+
+        internal IncomingHeadersDoneEventArgs(HttpClientStream stream, bool hasBody)
+            : base(stream)
+        {
+            HasBody = hasBody;
+        }
+    }
+
+    public class IncomingBodyEventArgs : HttpClientStreamEventArgs
+    {
+        public byte[] Data { get; private set; }
+        public UInt64 WindowSize { get; private set; }
+
+        internal IncomingBodyEventArgs(HttpClientStream stream, byte[] data, UInt64 windowSize)
+            : base(stream)
+        {
+            Data = data;
+            WindowSize = windowSize;
+        }
+    }
+
+    public class StreamOutgoingBodyEventArgs : HttpClientStreamEventArgs
+    {
+        public byte[] Buffer { get; private set; }
+        public OutgoingBodyStreamState State { get; set; } = OutgoingBodyStreamState.InProgress;
+        public UInt64 BytesWritten { get; set; } = UInt64.MaxValue;
+
+        internal StreamOutgoingBodyEventArgs(HttpClientStream stream, byte[] buffer)
+            : base(stream)
+        {
+            Buffer = buffer;
+        }
+    }
+
+    public class StreamCompleteEventArgs : HttpClientStreamEventArgs
+    {
+        public int ErrorCode { get; private set; }
+
+        internal StreamCompleteEventArgs(HttpClientStream stream, int errorCode)
+            : base(stream)
+        {
+            ErrorCode = errorCode;
+        }
+    }
 
     public sealed class HttpRequestOptions
     {
         public string Method { get; set; }
         public string Uri { get; set; }
         public HttpHeader[] Headers { get; set; }
-        public OnStreamOutgoingBody OnStreamOutgoingBody { get; set; }
-        public OnStreamComplete OnStreamComplete { get; set; }
-        public OnIncomingHeaders OnIncomingHeaders { get; set; }
-        public OnIncomingHeaderBlockDone OnIncomingHeaderBlockDone { get; set; }
-        public OnIncomingBody OnIncomingBody { get; set; }
+        public event EventHandler<StreamOutgoingBodyEventArgs> StreamOutgoingBody;
+        public event EventHandler<StreamCompleteEventArgs> StreamComplete;
+        public event EventHandler<IncomingHeadersEventArgs> IncomingHeaders;
+        public event EventHandler<IncomingHeadersDoneEventArgs> IncomingHeadersDone;
+        public event EventHandler<IncomingBodyEventArgs> IncomingBody;
+
+        internal void Validate()
+        {
+            if (IncomingHeaders == null)
+                throw new ArgumentNullException("IncomingHeaders");
+            if (StreamComplete == null)
+                throw new ArgumentNullException("StreamComplete");
+        }
+
+        internal OutgoingBodyStreamState OnStreamOutgoingBody(HttpClientStream stream, byte[] buffer, out UInt64 bytesWritten)
+        {
+            var e = new StreamOutgoingBodyEventArgs(stream, buffer);
+            StreamOutgoingBody?.Invoke(stream, e);
+            if (e.BytesWritten > (UInt64)buffer.Length)
+                throw new ArgumentOutOfRangeException("BytesWritten should be set to the number of bytes written to the buffer");
+            bytesWritten = e.BytesWritten;
+            return e.State;
+        }
+
+        internal void OnStreamComplete(HttpClientStream stream, int errorCode)
+        {
+            StreamComplete?.Invoke(stream, new StreamCompleteEventArgs(stream, errorCode));
+        }
+
+        internal void OnIncomingHeaders(HttpClientStream stream, HttpHeader[] headers)
+        {
+            IncomingHeaders?.Invoke(stream, new IncomingHeadersEventArgs(stream, headers));
+        }
+
+        internal void OnIncomingHeadersDone(HttpClientStream stream, bool hasBody)
+        {
+            IncomingHeadersDone?.Invoke(stream, new IncomingHeadersDoneEventArgs(stream, hasBody));
+        }
+
+        internal void OnIncomingBody(HttpClientStream stream, byte[] data, ref UInt64 windowSize)
+        {
+            var e = new IncomingBodyEventArgs(stream, data, windowSize);
+            IncomingBody?.Invoke(stream, e);
+            windowSize = e.WindowSize;
+        }
     }
 
     [StructLayout(LayoutKind.Sequential, CharSet=CharSet.Ansi)]
@@ -82,7 +170,22 @@ namespace Aws.Crt.Http
         [SecuritySafeCritical]
         internal static class API
         {
-            static LibraryHandle library = new LibraryHandle();
+            internal delegate int OnStreamOutgoingBodyNative(
+                                    [In, Out, MarshalAs(UnmanagedType.LPArray, SizeParamIndex=1)] byte[] buffer, 
+                                    UInt64 size,
+                                    out UInt64 bytesWritten);
+            internal delegate void OnIncomingHeadersNative(
+                                    Int32 responseCode,
+                                    [In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex=2)] HttpHeader[] headers, 
+                                    UInt32 count);
+            internal delegate void OnIncomingHeaderBlockDoneNative(bool hasBody);
+            internal delegate void OnIncomingBodyNative(
+                                    [In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex=1)] byte[] buffer, 
+                                    UInt64 size,
+                                    ref UInt64 windowSize);
+            internal delegate void OnStreamCompleteNative(int errorCode);
+
+            private static LibraryHandle library = new LibraryHandle();
             public delegate Handle aws_dotnet_http_stream_new(
                                     IntPtr connection,
                                     [MarshalAs(UnmanagedType.LPStr)] string method,
@@ -136,35 +239,32 @@ namespace Aws.Crt.Http
         // References to native callbacks to keep them alive for the duration of the stream
         private List<Delegate> nativeCallbacks = new List<Delegate>();
 
-        public HttpClientStream(HttpClientConnection connection, HttpRequestOptions options)
+        internal HttpClientStream(HttpClientConnection connection, HttpRequestOptions options)
             : base(connection)
         {            
-            if (options.OnIncomingHeaders == null)
-                throw new ArgumentNullException("OnIncomingHeaders");
-            if (options.OnStreamComplete == null)
-                throw new ArgumentNullException("OnStreamComplete");
+            options.Validate();
             
             // Wrap the native callbacks to bind this stream to them as the first argument
-            OnStreamOutgoingBodyNative onStreamOutgoingBody = (byte[] buffer, UInt64 size, out UInt64 bytesWritten) =>
+            API.OnStreamOutgoingBodyNative onStreamOutgoingBody = (byte[] buffer, UInt64 size, out UInt64 bytesWritten) =>
             {
                 return (int)options.OnStreamOutgoingBody(this, buffer, out bytesWritten);
             };
-            OnIncomingHeadersNative onIncomingHeaders = (responseCode, headers, headerCount) =>
+            API.OnIncomingHeadersNative onIncomingHeaders = (responseCode, headers, headerCount) =>
             {
                 if (ResponseStatusCode == 0) {
                     ResponseStatusCode = responseCode;
                 }
                 options.OnIncomingHeaders(this, headers);
             };
-            OnIncomingHeaderBlockDoneNative onIncomingHeaderBlockDone = (hasBody) =>
+            API.OnIncomingHeaderBlockDoneNative onIncomingHeaderBlockDone = (hasBody) =>
             {
-                options.OnIncomingHeaderBlockDone(this, hasBody);
+                options.OnIncomingHeadersDone(this, hasBody);
             };
-            OnIncomingBodyNative onIncomingBody = (byte[] data, UInt64 size, ref UInt64 windowSize) =>
+            API.OnIncomingBodyNative onIncomingBody = (byte[] data, UInt64 size, ref UInt64 windowSize) =>
             {
                 options.OnIncomingBody(this, data, ref windowSize);
             };
-            OnStreamCompleteNative onStreamComplete = (errorCode) =>
+            API.OnStreamCompleteNative onStreamComplete = (errorCode) =>
             {
                 options.OnStreamComplete(this, errorCode);
             };
@@ -182,17 +282,17 @@ namespace Aws.Crt.Http
                 options.Uri,
                 options.Headers,
                 (UInt32)(options.Headers?.Length ?? 0),
-                options.OnStreamOutgoingBody != null ? onStreamOutgoingBody : null,
+                onStreamOutgoingBody,
                 onIncomingHeaders,
-                options.OnIncomingHeaderBlockDone != null ? onIncomingHeaderBlockDone : null,
-                options.OnIncomingBody != null ? onIncomingBody : null,
+                onIncomingHeaderBlockDone,
+                onIncomingBody,
                 onStreamComplete);
         }
     }
 
     public sealed class ConnectionSetupEventArgs : EventArgs
     {
-        public int ErrorCode { get; set; }
+        public int ErrorCode { get; private set; }
 
         internal ConnectionSetupEventArgs(int errorCode)
         {
@@ -202,7 +302,7 @@ namespace Aws.Crt.Http
 
     public sealed class ConnectionShutdownEventArgs : EventArgs
     {
-        public int ErrorCode { get; set; }
+        public int ErrorCode { get; private set; }
 
         internal ConnectionShutdownEventArgs(int errorCode)
         {
@@ -226,9 +326,9 @@ namespace Aws.Crt.Http
             if (ClientBootstrap == null)
                 throw new ArgumentNullException("ClientBootstrap");
             if (ConnectionSetup == null)
-                throw new ArgumentNullException("OnConnectionSetup");
+                throw new ArgumentNullException("ConnectionSetup");
             if (ConnectionShutdown == null)
-                throw new ArgumentNullException("OnConnectionShutdown");
+                throw new ArgumentNullException("ConnectionShutdown");
             if (HostName == null)
                 throw new ArgumentNullException("HostName");
             if (Port == 0)

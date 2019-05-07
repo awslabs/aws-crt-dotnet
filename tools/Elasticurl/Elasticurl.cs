@@ -327,48 +327,48 @@ namespace Aws.Crt.Elasticurl
         }
 
         static bool responseCodeWritten = false;
-        static void OnIncomingHeaders(HttpClientStream stream, HttpHeader[] headers)
+        static void OnIncomingHeaders(object sender, IncomingHeadersEventArgs e)
         {
             if (ctx.IncludeHeaders)
             {
                 if (!responseCodeWritten)
                 {
-                    Console.WriteLine("Response Status: {0}", stream.ResponseStatusCode);
+                    Console.WriteLine("Response Status: {0}", e.Stream.ResponseStatusCode);
                     responseCodeWritten = true;
                 }
 
-                foreach (var header in headers)
+                foreach (var header in e.Headers)
                 {
                     Console.WriteLine("{0}:{1}", header.Name, header.Value);
                 }
             }
         }
 
-        static void OnIncomingBody(HttpClientStream stream, byte[] data, ref UInt64 windowSize)
+        static void OnIncomingBody(object sender, IncomingBodyEventArgs e)
         {
-            ctx.OutputStream.Write(data, 0, data.Length);
+            ctx.OutputStream.Write(e.Data, 0, e.Data.Length);
         }
 
-        static OutgoingBodyStreamState StreamOutgoingBody(HttpClientStream stream, byte[] buffer, out UInt64 bytesWritten)
+        static void StreamOutgoingBody(object sender, StreamOutgoingBodyEventArgs e)
         {
-            bytesWritten = 0;
             if (ctx.PayloadStream != null)
             {
-                var bufferStream = new MemoryStream(buffer);
+                var bufferStream = new MemoryStream(e.Buffer);
                 long prevPosition = ctx.PayloadStream.Position;
-                ctx.PayloadStream.CopyTo(bufferStream, buffer.Length);
-                bytesWritten = (UInt64)(ctx.PayloadStream.Position - prevPosition);
+                ctx.PayloadStream.CopyTo(bufferStream, e.Buffer.Length);
+                e.BytesWritten = (UInt64)(ctx.PayloadStream.Position - prevPosition);
                 if (ctx.PayloadStream.Position != ctx.PayloadStream.Length)
                 {
-                    return OutgoingBodyStreamState.InProgress;
+                    e.State = OutgoingBodyStreamState.InProgress;
+                    return;
                 }
             }
-            return OutgoingBodyStreamState.Done;
+            e.State = OutgoingBodyStreamState.Done;
         }
 
-        static void OnStreamComplete(HttpClientStream stream, int errorCode)
+        static void OnStreamComplete(object sender, StreamCompleteEventArgs e)
         {
-            _streamSource.SetResult(errorCode);
+            _streamSource.SetResult(e.ErrorCode);
         }
         
         private static TaskCompletionSource<int> _streamSource;
@@ -384,10 +384,10 @@ namespace Aws.Crt.Elasticurl
             options.Method = ctx.Verb;
             options.Uri = ctx.Uri.PathAndQuery;
             options.Headers = headers.ToArray();
-            options.OnIncomingHeaders = OnIncomingHeaders;
-            options.OnIncomingBody = OnIncomingBody;
-            options.OnStreamOutgoingBody = StreamOutgoingBody;
-            options.OnStreamComplete = OnStreamComplete;
+            options.IncomingHeaders += OnIncomingHeaders;
+            options.IncomingBody += OnIncomingBody;
+            options.StreamOutgoingBody += StreamOutgoingBody;
+            options.StreamComplete += OnStreamComplete;
             _stream = connection.MakeRequest(options);
             return _streamSource.Task;
         }
