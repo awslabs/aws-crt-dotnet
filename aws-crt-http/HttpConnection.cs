@@ -75,7 +75,7 @@ namespace Aws.Crt.Http
     public class IncomingBodyEventArgs : HttpClientStreamEventArgs
     {
         public byte[] Data { get; private set; }
-        public UInt64 WindowSize { get; private set; }
+        public UInt64 WindowSize { get; set; }
 
         internal IncomingBodyEventArgs(HttpClientStream stream, byte[] data, UInt64 windowSize)
             : base(stream)
