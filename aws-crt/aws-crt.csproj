@@ -5,6 +5,15 @@
     <PlatformTarget Condition="$(PlatformTarget) == '' AND $(OS) == 'Windows_NT' AND ($(CMakeGenerator) == 'Visual Studio 14 2015' OR $(CMakeGenerator) == 'Visual Studio 15 2017')">x86</PlatformTarget>
     <PlatformTarget Condition="$(PlatformTarget) == ''">x64</PlatformTarget>
     <RootNamespace>Aws.CRT</RootNamespace>
+    <PackageId>AWSCRT</PackageId>
+    <Title>AWS CRT - AWS Common Runtime</Title>
+    <Version>0.2.0</Version>
+    <Authors>aws-sdk-common-runtime</Authors>
+    <Company>Amazon</Company>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <PackageTags>AWS,native,Amazon</PackageTags>
+    <RepositoryUrl>https://github.com/awslabs/aws-crt-dotnet.git</RepositoryUrl>
+    <Copyright>Amazon Web Services, 2019</Copyright>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="CMake" Version="3.5.2" />
@@ -27,24 +36,9 @@
     <Exec Command="cmake --build . --config $(Configuration)" WorkingDirectory="$(ProjectDir)../build" ConsoleToMSBuild="true">
       <Output TaskParameter="ConsoleOutput" PropertyName="OutputOfExec" />
     </Exec>
-    <ItemGroup>
-      <NativeLibraries Include="$(ProjectDir)../build/lib/*aws-crt-dotnet.*"/>
-      <None Include="@(NativeLibraries)">
-        <Link>%(RecursiveDir)%(FileName)%(Extension)</Link>
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        <PackagePath>lib/$(TargetFramework)/</PackagePath>
-        <Pack>true</Pack>
-      </None>
-    </ItemGroup>
   </Target>
 
-  <ProjectExtensions>
-    <MonoDevelop>
-      <Properties>
-        <Policies>
-          <StandardHeader IncludeInNewFiles="True" Text="/*&#xA; * Copyright 2010-2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.&#xA; *&#xA; * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;).&#xA; * You may not use this file except in compliance with the License.&#xA; * A copy of the License is located at&#xA; *&#xA; *  http://aws.amazon.com/apache2.0&#xA; *&#xA; * or in the &quot;license&quot; file accompanying this file. This file is distributed&#xA; * on an &quot;AS IS&quot; BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either&#xA; * express or implied. See the License for the specific language governing&#xA; * permissions and limitations under the License.&#xA; */" />
-        </Policies>
-      </Properties>
-    </MonoDevelop>
-  </ProjectExtensions>
+  <ItemGroup>
+    <EmbeddedResource Include="$(ProjectDir)../build/lib/*aws-crt-dotnet.*" />
+  </ItemGroup>
 </Project>

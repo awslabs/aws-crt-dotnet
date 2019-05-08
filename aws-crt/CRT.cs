@@ -13,6 +13,7 @@
  * permissions and limitations under the License.
  */
 using System;
+using System.IO;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -80,7 +81,9 @@ namespace Aws.Crt
 
         internal class LibraryHandle : Handle
         {
-            public LibraryHandle(IntPtr value) 
+            public string Path { get; set; }
+
+            public LibraryHandle(IntPtr value)
             {
                 SetHandle(value);
             }
@@ -88,6 +91,8 @@ namespace Aws.Crt
             protected override bool ReleaseHandle()
             {
                 CRT.Loader.FreeLibrary(handle);
+                // attempt to clean up the extracted library
+                try { File.Delete(Path); } catch {}
                 return true;
             }
         }
@@ -120,12 +125,14 @@ namespace Aws.Crt
                     libraryName = "libaws-crt-dotnet.dylib";
                 }
 
-                crt = CRT.Loader.LoadLibrary(libraryName);
+                string libraryPath = ExtractLibrary(libraryName);
+                crt = CRT.Loader.LoadLibrary(libraryPath);
                 if (crt.IsInvalid)
                 {
                     string error = CRT.Loader.GetLastError();
-                    throw new InvalidOperationException($"Unable to load {libraryName}: error={error}");
+                    throw new InvalidOperationException($"Unable to load {libraryPath}: error={error}");
                 }
+                crt.Path = libraryPath;
 
                 Init();
             }
@@ -133,6 +140,20 @@ namespace Aws.Crt
             ~PlatformBinding()
             {
                 Shutdown();
+            }
+
+            private string ExtractLibrary(string libraryName)
+            {
+                var crtAsm = Assembly.GetExecutingAssembly();
+                using (var resourceStream = crtAsm.GetManifestResourceStream(libraryName))
+                {
+                    var extractedLibraryPath = Path.GetTempPath() + libraryName;
+                    using (var libStream = File.OpenWrite(extractedLibraryPath))
+                    {
+                        resourceStream.CopyTo(libStream);
+                    }
+                    return extractedLibraryPath;
+                }
             }
 
             private delegate void aws_dotnet_static_init();

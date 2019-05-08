@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
-    <ProjectReference Include="..\..\aws-crt-http\aws-crt-http.csproj" />
+    <PackageReference Include="aws-crt-http" Version="1.0.0" />
   </ItemGroup>
 
   <PropertyGroup>
