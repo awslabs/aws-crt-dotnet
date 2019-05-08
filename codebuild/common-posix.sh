@@ -2,6 +2,7 @@
 
 set -ex
 
+dotnet pack --output=`pwd`/packages
 dotnet test -v normal
 
 if [ "$AWS_DOTNET_RUNTIME" == "" ]; then
