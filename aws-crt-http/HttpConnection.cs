@@ -44,7 +44,7 @@ namespace Aws.Crt.Http
     {
         public HttpClientStream Stream { get; private set; }
 
-        public HttpClientStreamEventArgs(HttpClientStream stream)
+        internal HttpClientStreamEventArgs(HttpClientStream stream)
         {
             Stream = stream;
         }
