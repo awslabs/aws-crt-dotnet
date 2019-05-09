@@ -32,7 +32,7 @@ namespace Aws.Crt.Http
 
     public class StreamResult
     {
-        public int ErrorCode { get; internal set; }
+        public int ErrorCode { get; private set; }
 
         internal StreamResult(int errorCode)
         {
@@ -249,7 +249,11 @@ namespace Aws.Crt.Http
         // for the duration of the stream
         private HttpRequestOptions options;
         // References to native callbacks to keep them alive for the duration of the stream
-        private List<Delegate> nativeCallbacks = new List<Delegate>();
+        private API.OnStreamOutgoingBodyNative onStreamOutgoingBody;
+        private API.OnIncomingHeadersNative onIncomingHeaders;
+        private API.OnIncomingHeaderBlockDoneNative onIncomingHeaderBlockDone;
+        private API.OnIncomingBodyNative onIncomingBody;
+        private API.OnStreamCompleteNative onStreamComplete;
 
         internal HttpClientStream(HttpClientConnection connection, HttpRequestOptions options)
             : base(connection)
@@ -257,37 +261,30 @@ namespace Aws.Crt.Http
             options.Validate();
             
             // Wrap the native callbacks to bind this stream to them as the first argument
-            API.OnStreamOutgoingBodyNative onStreamOutgoingBody = (byte[] buffer, UInt64 size, out UInt64 bytesWritten) =>
+            onStreamOutgoingBody = (byte[] buffer, UInt64 size, out UInt64 bytesWritten) =>
             {
                 return (int)options.OnStreamOutgoingBody(this, buffer, out bytesWritten);
             };
-            API.OnIncomingHeadersNative onIncomingHeaders = (responseCode, headers, headerCount) =>
+            onIncomingHeaders = (responseCode, headers, headerCount) =>
             {
                 if (ResponseStatusCode == 0) {
                     ResponseStatusCode = responseCode;
                 }
                 options.OnIncomingHeaders(this, headers);
             };
-            API.OnIncomingHeaderBlockDoneNative onIncomingHeaderBlockDone = (hasBody) =>
+            onIncomingHeaderBlockDone = (hasBody) =>
             {
                 options.OnIncomingHeadersDone(this, hasBody);
             };
-            API.OnIncomingBodyNative onIncomingBody = (byte[] data, UInt64 size, ref UInt64 windowSize) =>
+            onIncomingBody = (byte[] data, UInt64 size, ref UInt64 windowSize) =>
             {
                 options.OnIncomingBody(this, data, ref windowSize);
             };
-            API.OnStreamCompleteNative onStreamComplete = (errorCode) =>
+            onStreamComplete = (errorCode) =>
             {
                 options.OnStreamComplete(this, errorCode);
             };
             this.options = options;
-            nativeCallbacks.AddRange(new Delegate[] {
-                onStreamOutgoingBody,
-                onIncomingHeaders,
-                onIncomingHeaderBlockDone,
-                onIncomingBody,
-                onStreamComplete
-            });
             NativeHandle = API.make_new(
                 connection.NativeHandle.DangerousGetHandle(),
                 options.Method,
@@ -391,6 +388,9 @@ namespace Aws.Crt.Http
 
         internal Handle NativeHandle { get; private set; }
         private HttpClientConnectionOptions options;
+        // Keep track of streams created by this connection until they complete to
+        // keep them from being GC'ed
+        private HashSet<HttpClientStream> streams = new HashSet<HttpClientStream>();
 
         private HttpClientConnection(HttpClientConnectionOptions options)
         {
@@ -443,10 +443,11 @@ namespace Aws.Crt.Http
         {
             var bootstrap = new StreamBootstrap();
             options.StreamComplete += (sender, e) => {
+                streams.Remove(bootstrap.Stream);
                 if (e.ErrorCode != 0)
                 {
                     var message = CRT.ErrorString(e.ErrorCode);
-                    bootstrap.TaskSource.SetException(new WebException(String.Format("Stream failed: {0}", message)));
+                    bootstrap.TaskSource.SetException(new WebException($"Stream {bootstrap.Stream} failed: {message}"));
                 }
                 else
                 {
@@ -455,6 +456,7 @@ namespace Aws.Crt.Http
             };
 
             bootstrap.Stream = new HttpClientStream(this, options);
+            streams.Add(bootstrap.Stream);
             return bootstrap.TaskSource.Task;
         }
 
