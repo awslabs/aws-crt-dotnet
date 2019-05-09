@@ -81,19 +81,14 @@ namespace Aws.Crt
 
         internal class LibraryHandle : Handle
         {
-            public string Path { get; private set; }
-
-            public LibraryHandle(IntPtr value, string path=null)
+            public LibraryHandle(IntPtr value)
             {
-                Path = path;
                 SetHandle(value);
             }
 
             protected override bool ReleaseHandle()
             {
                 CRT.Loader.FreeLibrary(handle);
-                // attempt to clean up the extracted library
-                try { File.Delete(Path); } catch {}
                 return true;
             }
         }
@@ -126,12 +121,14 @@ namespace Aws.Crt
                     libraryName = "libaws-crt-dotnet.dylib";
                 }
 
-                string libraryPath = ExtractLibrary(libraryName);
-                crt = CRT.Loader.LoadLibrary(libraryPath);
-                if (crt.IsInvalid)
+                using (FileStream libraryStream = ExtractLibrary(libraryName))
                 {
-                    string error = CRT.Loader.GetLastError();
-                    throw new InvalidOperationException($"Unable to load {libraryPath}: error={error}");
+                    crt = CRT.Loader.LoadLibrary(libraryStream.Name);
+                    if (crt.IsInvalid)
+                    {
+                        string error = CRT.Loader.GetLastError();
+                        throw new InvalidOperationException($"Unable to load {libraryStream.Name}: error={error}");
+                    }
                 }
 
                 Init();
@@ -142,19 +139,17 @@ namespace Aws.Crt
                 Shutdown();
             }
 
-            private string ExtractLibrary(string libraryName)
+            private FileStream ExtractLibrary(string libraryName)
             {
                 var crtAsm = Assembly.GetAssembly(typeof(CRT));
-                foreach (var name in crtAsm.GetManifestResourceNames())
-                    Console.WriteLine($"RESOURCE: {name}");
                 using (var resourceStream = crtAsm.GetManifestResourceStream("Aws.CRT." + libraryName))
                 {
-                    var extractedLibraryPath = Path.GetTempPath() + libraryName;
-                    using (var libStream = File.OpenWrite(extractedLibraryPath))
-                    {
-                        resourceStream.CopyTo(libStream);
-                    }
-                    return extractedLibraryPath;
+                    string prefix = Path.GetRandomFileName();
+                    var extractedLibraryPath = Path.GetTempPath() + prefix + "." + libraryName;
+                    // Open the shared lib stream, write the embedded stream to it, and it will be deleted after the library is loaded
+                    var libStream = new FileStream(extractedLibraryPath, FileMode.Create, FileAccess.Write, FileShare.Read, 4096, FileOptions.DeleteOnClose);
+                    resourceStream.CopyTo(libStream);
+                    return libStream;
                 }
             }
 
@@ -207,7 +202,7 @@ namespace Aws.Crt
                     Assembly crtAsm = Assembly.GetAssembly(typeof(CRT));
                     path = crtAsm.Location.Replace(crtAsm.GetName().Name + ".dll", name);
                 }
-                return new LibraryHandle(kernel32.LoadLibrary(path), path);
+                return new LibraryHandle(kernel32.LoadLibrary(path));
             }
 
             public override void FreeLibrary(IntPtr handle)
@@ -236,7 +231,7 @@ namespace Aws.Crt
                     Assembly crtAsm = Assembly.GetAssembly(typeof(CRT));
                     path = crtAsm.Location.Replace(crtAsm.GetName().Name + ".dll", name);
                 }
-                return new LibraryHandle(dl.dlopen(path, dl.RTLD_NOW), path);
+                return new LibraryHandle(dl.dlopen(path, dl.RTLD_NOW));
             }
 
             public override void FreeLibrary(IntPtr handle)
