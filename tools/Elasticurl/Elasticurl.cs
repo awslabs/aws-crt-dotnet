@@ -286,97 +286,75 @@ namespace Aws.Crt.Elasticurl
             return tlsConnectionOptions;
         }
 
-        static void OnConnectionSetup(int errorCode)
-        {
-            if (errorCode != 0)
-            {
-                var message = CRT.ErrorString(errorCode);
-                _connectionSource.SetException(new WebException(String.Format("Failed to connect: {0}", message)));
-            }
-            else
-            {
-                _connectionSource.SetResult(_connection);
-            }
-        }
-
-        static void OnConnectionShutdown(int errorCode)
+        static void OnConnectionShutdown(object sender, ConnectionShutdownEventArgs e)
         {
             Console.WriteLine("Disconnected");
         }
 
-        private static HttpClientConnection _connection;
-        private static TaskCompletionSource<HttpClientConnection> _connectionSource;
         static Task<HttpClientConnection> InitHttp(ClientBootstrap client, TlsConnectionOptions tlsOptions)
         {
-            _connectionSource = new TaskCompletionSource<HttpClientConnection>();
             var options = new HttpClientConnectionOptions();
             options.ClientBootstrap = client;
             options.TlsConnectionOptions = tlsOptions;
             options.HostName = ctx.Uri.Host;
             options.Port = (UInt16)ctx.Uri.Port;
-            options.OnConnectionSetup = OnConnectionSetup;
-            options.OnConnectionShutdown = OnConnectionShutdown;
+            options.ConnectionShutdown += OnConnectionShutdown;
             if (ctx.ConnectTimeoutMs != 0)
             {
                 var socketOptions = new SocketOptions();
                 socketOptions.ConnectTimeoutMs = ctx.ConnectTimeoutMs;
                 options.SocketOptions = socketOptions;
             }
-            _connection = new HttpClientConnection(options);
-            return _connectionSource.Task;
+            return HttpClientConnection.NewConnection(options);
         }
 
         static bool responseCodeWritten = false;
-        static void OnIncomingHeaders(HttpClientStream stream, HttpHeader[] headers)
+        static void OnIncomingHeaders(object sender, IncomingHeadersEventArgs e)
         {
             if (ctx.IncludeHeaders)
             {
                 if (!responseCodeWritten)
                 {
-                    Console.WriteLine("Response Status: {0}", stream.ResponseStatusCode);
+                    Console.WriteLine("Response Status: {0}", e.Stream.ResponseStatusCode);
                     responseCodeWritten = true;
                 }
 
-                foreach (var header in headers)
+                foreach (var header in e.Headers)
                 {
                     Console.WriteLine("{0}:{1}", header.Name, header.Value);
                 }
             }
         }
 
-        static void OnIncomingBody(HttpClientStream stream, byte[] data, ref UInt64 windowSize)
+        static void OnIncomingBody(object sender, IncomingBodyEventArgs e)
         {
-            ctx.OutputStream.Write(data, 0, data.Length);
+            ctx.OutputStream.Write(e.Data, 0, e.Data.Length);
         }
 
-        static OutgoingBodyStreamState StreamOutgoingBody(HttpClientStream stream, byte[] buffer, out UInt64 bytesWritten)
+        static void StreamOutgoingBody(object sender, StreamOutgoingBodyEventArgs e)
         {
-            bytesWritten = 0;
             if (ctx.PayloadStream != null)
             {
-                var bufferStream = new MemoryStream(buffer);
+                var bufferStream = new MemoryStream(e.Buffer);
                 long prevPosition = ctx.PayloadStream.Position;
-                ctx.PayloadStream.CopyTo(bufferStream, buffer.Length);
-                bytesWritten = (UInt64)(ctx.PayloadStream.Position - prevPosition);
+                ctx.PayloadStream.CopyTo(bufferStream, e.Buffer.Length);
+                e.BytesWritten = (UInt64)(ctx.PayloadStream.Position - prevPosition);
                 if (ctx.PayloadStream.Position != ctx.PayloadStream.Length)
                 {
-                    return OutgoingBodyStreamState.InProgress;
+                    e.State = OutgoingBodyStreamState.InProgress;
+                    return;
                 }
             }
-            return OutgoingBodyStreamState.Done;
+            e.State = OutgoingBodyStreamState.Done;
         }
 
-        static void OnStreamComplete(HttpClientStream stream, int errorCode)
+        static void OnStreamComplete(object sender, StreamCompleteEventArgs e)
         {
-            _streamSource.SetResult(errorCode);
+            Console.WriteLine("Completed with code {0}", e.ErrorCode);
         }
         
-        private static TaskCompletionSource<int> _streamSource;
-        private static HttpClientStream _stream;
-        static Task<int> InitStream(HttpClientConnection connection)
+        static Task<StreamResult> InitStream(HttpClientConnection connection)
         {
-            _streamSource = new TaskCompletionSource<int>();
-
             var headers = new List<HttpHeader>();
             headers.Add(new HttpHeader("Host", ctx.Uri.Host));
 
@@ -384,12 +362,11 @@ namespace Aws.Crt.Elasticurl
             options.Method = ctx.Verb;
             options.Uri = ctx.Uri.PathAndQuery;
             options.Headers = headers.ToArray();
-            options.OnIncomingHeaders = OnIncomingHeaders;
-            options.OnIncomingBody = OnIncomingBody;
-            options.OnStreamOutgoingBody = StreamOutgoingBody;
-            options.OnStreamComplete = OnStreamComplete;
-            _stream = connection.SendRequest(options);
-            return _streamSource.Task;
+            options.IncomingHeaders += OnIncomingHeaders;
+            options.IncomingBody += OnIncomingBody;
+            options.StreamOutgoingBody += StreamOutgoingBody;
+            options.StreamComplete += OnStreamComplete;
+            return connection.MakeRequest(options);
         }
 
         private static Context ctx = new Context();
@@ -402,22 +379,13 @@ namespace Aws.Crt.Elasticurl
             var tlsOptions = InitTls();
             var elg = new EventLoopGroup();
             var client = new ClientBootstrap(elg);
-            var connectionTask = InitHttp(client, tlsOptions);
+
             try 
             {
-                var connection = connectionTask.Result;
-                var streamTask = InitStream(connection);
+                var connectionTask = InitHttp(client, tlsOptions);
+                var streamTask = InitStream(connectionTask.Result);
                 var result = streamTask.Result;
-                if (ctx.OutputStream != null)
-                {
-                    ctx.OutputStream.Flush();
-                    ctx.OutputStream.Close();
-                }
-                if (result != 0)
-                {
-                    Console.WriteLine("Stream failed: {0}", CRT.ErrorString(result));
-                    Environment.Exit(-1);
-                }
+                Console.WriteLine("Completed with code {0}", result.ErrorCode);
             }
             catch (AggregateException agg) // thrown by TaskCompletionSource
             {
@@ -427,6 +395,14 @@ namespace Aws.Crt.Elasticurl
                     Console.WriteLine(ex.Message);
                 }
                 Environment.Exit(-1);
+            }
+            finally
+            {
+                if (ctx.OutputStream != null)
+                {
+                    ctx.OutputStream.Flush();
+                    ctx.OutputStream.Close();
+                }
             }
         }
     }
