@@ -81,10 +81,11 @@ namespace Aws.Crt
 
         internal class LibraryHandle : Handle
         {
-            public string Path { get; set; }
+            public string Path { get; private set; }
 
-            public LibraryHandle(IntPtr value)
+            public LibraryHandle(IntPtr value, string path=null)
             {
+                Path = path;
                 SetHandle(value);
             }
 
@@ -132,7 +133,6 @@ namespace Aws.Crt
                     string error = CRT.Loader.GetLastError();
                     throw new InvalidOperationException($"Unable to load {libraryPath}: error={error}");
                 }
-                crt.Path = libraryPath;
 
                 Init();
             }
@@ -144,8 +144,10 @@ namespace Aws.Crt
 
             private string ExtractLibrary(string libraryName)
             {
-                var crtAsm = Assembly.GetExecutingAssembly();
-                using (var resourceStream = crtAsm.GetManifestResourceStream(libraryName))
+                var crtAsm = Assembly.GetAssembly(typeof(CRT));
+                foreach (var name in crtAsm.GetManifestResourceNames())
+                    Console.WriteLine($"RESOURCE: {name}");
+                using (var resourceStream = crtAsm.GetManifestResourceStream("Aws.CRT." + libraryName))
                 {
                     var extractedLibraryPath = Path.GetTempPath() + libraryName;
                     using (var libStream = File.OpenWrite(extractedLibraryPath))
@@ -199,11 +201,13 @@ namespace Aws.Crt
         {
             public override LibraryHandle LoadLibrary(string name)
             {
-                Assembly crtAsm = Assembly.GetAssembly(typeof(CRT));
-                Console.WriteLine("ASM LOCATION: {0}", crtAsm.Location);
-                string path = crtAsm.Location.Replace(crtAsm.GetName().Name + ".dll", name);
-                Console.WriteLine("DLL LOCATION: {0}", path);
-                return new LibraryHandle(kernel32.LoadLibrary(path));
+                string path = name;
+                if (!Path.IsPathRooted(name))
+                {
+                    Assembly crtAsm = Assembly.GetAssembly(typeof(CRT));
+                    path = crtAsm.Location.Replace(crtAsm.GetName().Name + ".dll", name);
+                }
+                return new LibraryHandle(kernel32.LoadLibrary(path), path);
             }
 
             public override void FreeLibrary(IntPtr handle)
@@ -226,9 +230,13 @@ namespace Aws.Crt
         {
             public override LibraryHandle LoadLibrary(string name)
             {
-                Assembly crtAsm = Assembly.GetAssembly(typeof(CRT));
-                string path = crtAsm.Location.Replace(crtAsm.GetName().Name + ".dll", name);
-                return new LibraryHandle(dl.dlopen(path, dl.RTLD_NOW));
+                string path = name;
+                if (!Path.IsPathRooted(name))
+                {
+                    Assembly crtAsm = Assembly.GetAssembly(typeof(CRT));
+                    path = crtAsm.Location.Replace(crtAsm.GetName().Name + ".dll", name);
+                }
+                return new LibraryHandle(dl.dlopen(path, dl.RTLD_NOW), path);
             }
 
             public override void FreeLibrary(IntPtr handle)

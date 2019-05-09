@@ -5,6 +5,11 @@
     <PlatformTarget Condition="$(PlatformTarget) == '' AND $(OS) == 'Windows_NT' AND ($(CMakeGenerator) == 'Visual Studio 14 2015' OR $(CMakeGenerator) == 'Visual Studio 15 2017')">x86</PlatformTarget>
     <PlatformTarget Condition="$(PlatformTarget) == ''">x64</PlatformTarget>
     <RootNamespace>Aws.CRT</RootNamespace>
+
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <PackageOutputPath>$(ProjectDir)../packages</PackageOutputPath>
+    <IncludeSymbols>True</IncludeSymbols>
+
     <PackageId>AWSCRT</PackageId>
     <Title>AWS CRT - AWS Common Runtime</Title>
     <Version>0.2.0</Version>
@@ -36,9 +41,8 @@
     <Exec Command="cmake --build . --config $(Configuration)" WorkingDirectory="$(ProjectDir)../build" ConsoleToMSBuild="true">
       <Output TaskParameter="ConsoleOutput" PropertyName="OutputOfExec" />
     </Exec>
+    <ItemGroup>
+      <EmbeddedResource Include="$(ProjectDir)../build/lib/*aws-crt-dotnet.*" />
+    </ItemGroup>
   </Target>
-
-  <ItemGroup>
-    <EmbeddedResource Include="$(ProjectDir)../build/lib/*aws-crt-dotnet.*" />
-  </ItemGroup>
 </Project>
