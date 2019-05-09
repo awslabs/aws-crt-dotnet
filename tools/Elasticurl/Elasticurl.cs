@@ -372,10 +372,6 @@ namespace Aws.Crt.Elasticurl
         private static Context ctx = new Context();
         static void Main(string[] args)
         {
-            AppDomain.CurrentDomain.UnhandledException += (sender, exArgs) => {
-                var msg = exArgs.ExceptionObject.ToString();
-                Console.WriteLine($"Exception caught: {msg}");
-            };
             ParseArgs(args);
             InitLogging();
             InitOutput();
