@@ -2,9 +2,6 @@
 
 set -ex
 
-mkdir -p packages
-dotnet pack aws-crt --output `pwd`/packages
-dotnet pack aws-crt-http --output `pwd`/packages
 dotnet test -v normal
 
 if [ "$AWS_DOTNET_RUNTIME" == "" ]; then
