@@ -16,10 +16,10 @@
 #include "exports.h"
 
 #include <aws/common/error.h>
+#include <aws/http/http.h>
 #include <aws/io/io.h>
 #include <aws/io/tls_channel_handler.h>
 #include <aws/mqtt/mqtt.h>
-#include <aws/http/http.h>
 
 #include <stdarg.h>
 #include <stdio.h>
