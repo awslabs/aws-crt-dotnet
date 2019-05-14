@@ -121,14 +121,14 @@ namespace Aws.Crt
                     libraryName = "libaws-crt-dotnet.dylib";
                 }
 
-                using (FileStream libraryStream = ExtractLibrary(libraryName))
+                var libraryPath = ExtractLibrary(libraryName);
+                crt = CRT.Loader.LoadLibrary(libraryPath);
+                // No longer need the library file, delete it
+                File.Delete(libraryPath);
+                if (crt.IsInvalid)
                 {
-                    crt = CRT.Loader.LoadLibrary(libraryStream.Name);
-                    if (crt.IsInvalid)
-                    {
-                        string error = CRT.Loader.GetLastError();
-                        throw new InvalidOperationException($"Unable to load {libraryStream.Name}: error={error}");
-                    }
+                    string error = CRT.Loader.GetLastError();
+                    throw new InvalidOperationException($"Unable to load {libraryPath}: error={error}");
                 }
 
                 Init();
@@ -139,7 +139,7 @@ namespace Aws.Crt
                 Shutdown();
             }
 
-            private FileStream ExtractLibrary(string libraryName)
+            private string ExtractLibrary(string libraryName)
             {
                 var crtAsm = Assembly.GetAssembly(typeof(CRT));
                 using (var resourceStream = crtAsm.GetManifestResourceStream("Aws.CRT." + libraryName))
@@ -147,9 +147,9 @@ namespace Aws.Crt
                     string prefix = Path.GetRandomFileName();
                     var extractedLibraryPath = Path.GetTempPath() + prefix + "." + libraryName;
                     // Open the shared lib stream, write the embedded stream to it, and it will be deleted after the library is loaded
-                    var libStream = new FileStream(extractedLibraryPath, FileMode.Create, FileAccess.Write, FileShare.Read, 4096, FileOptions.DeleteOnClose);
+                    var libStream = new FileStream(extractedLibraryPath, FileMode.Create, FileAccess.Write, FileShare.None, 4096, FileOptions.None);
                     resourceStream.CopyTo(libStream);
-                    return libStream;
+                    return libStream.Name;
                 }
             }
 
