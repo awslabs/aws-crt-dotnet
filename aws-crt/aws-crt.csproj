@@ -31,18 +31,20 @@
       <CMakeGenerator Condition="$(CMakeGenerator) == '' AND $(OS) == 'Windows_NT' AND $(PlatformTarget) == 'x64'">Visual Studio 15 2017 Win64</CMakeGenerator>
       <CMakeGenerator Condition="$(CMakeGenerator) == '' AND $(OS) == 'Windows_NT' AND $(PlatformTarget) == 'x86'">Visual Studio 15 2017</CMakeGenerator>
       <CMakeGenerator Condition="$(CMakeGenerator) == '' AND $(OS) == 'Unix'">Unix Makefiles</CMakeGenerator>
+      <CMakeBinaries Condition="$(OS) == 'Windows_NT'">$(TEMP)/build-$(MSBuildProjectName)</CMakeBinaries>
+      <CMakeBinaries Condition="$(OS) != 'Windows_NT'">/tmp/build-$(MSBuildProjectName)</CMakeBinaries>
     </PropertyGroup>
-    <MakeDir Directories="$(ProjectDir)../build" />
+    <MakeDir Directories="$(CMakeBinaries)" />
     <Message Text="Configuring CMake project" Importance="high"/>
-    <Exec Command="cmake -G&quot;$(CMakeGenerator)&quot; -DCMAKE_BUILD_TYPE=$(Configuration) -DCMAKE_PREFIX_PATH=$(ProjectDir)../build/deps/install -DCMAKE_EXPORT_COMPILE_COMMANDS=ON $(ProjectDir)../native" WorkingDirectory="$(ProjectDir)../build" ConsoleToMSBuild="true">
+    <Exec Command="cmake -G&quot;$(CMakeGenerator)&quot; -DCMAKE_BUILD_TYPE=$(Configuration) -DCMAKE_PREFIX_PATH=$(CMakeBinaries)/deps/install -DCMAKE_EXPORT_COMPILE_COMMANDS=ON $(ProjectDir)../native" WorkingDirectory="$(CMakeBinaries)" ConsoleToMSBuild="true">
       <Output TaskParameter="ConsoleOutput" PropertyName="OutputOfExec" />
     </Exec>
     <Message Text="Building native library" Importance="high"/>
-    <Exec Command="cmake --build . --config $(Configuration)" WorkingDirectory="$(ProjectDir)../build" ConsoleToMSBuild="true">
+    <Exec Command="cmake --build . --config $(Configuration)" WorkingDirectory="$(CMakeBinaries)" ConsoleToMSBuild="true">
       <Output TaskParameter="ConsoleOutput" PropertyName="OutputOfExec" />
     </Exec>
     <ItemGroup>
-      <EmbeddedResource Include="$(ProjectDir)../build/lib/*aws-crt-dotnet.*" />
+      <EmbeddedResource Include="$(CMakeBinaries)/lib/*aws-crt-dotnet.*" />
     </ItemGroup>
   </Target>
 </Project>
