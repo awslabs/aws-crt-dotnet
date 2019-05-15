@@ -80,7 +80,7 @@ namespace Aws.Crt.Elasticurl
                 {
                     if (arg.StartsWith("--"))
                     {
-                        expandedArgs.AddRange(arg.Split("="));
+                        expandedArgs.AddRange(arg.Split('='));
                     }
                     else
                     {
