@@ -13,6 +13,7 @@
  * permissions and limitations under the License.
  */
 using System;
+using System.ComponentModel;
 using System.IO;
 using System.Reflection;
 using System.Runtime.CompilerServices;
@@ -217,7 +218,8 @@ namespace Aws.Crt
 
             public override string GetLastError()
             {
-                return Marshal.GetLastWin32Error().ToString();
+                // Win32Exception will invoke FormatMessage to extract the error string from GetLastError()
+                return new Win32Exception(Marshal.GetLastWin32Error()).Message;
             }
         }
 
