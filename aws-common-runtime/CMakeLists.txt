@@ -15,6 +15,12 @@ set(AWS_DEPS_LIB_DIR "${AWS_DEPS_INSTALL_DIR}/lib" CACHE PATH "Dependencies libr
 set(AWS_DEPS_BUILD_DIR "${CMAKE_BINARY_DIR}/build" CACHE PATH "Dependencies build directory.")
 set(AWS_DEPS_DOWNLOAD_DIR "${AWS_DEPS_BUILD_DIR}/downloads" CACHE PATH "Dependencies download directory.")
 
+# disable "conditional expression is constant" when compiling on windows with newer compilers
+if (MSVC)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /wd4127")
+    message(STATUS "CMAKE_C_FLAGS=${CMAKE_C_FLAGS}")
+endif()
+
 set(AWS_C_COMMON_URL "https://github.com/awslabs/aws-c-common.git")
 set(AWS_C_COMMON_SHA "v0.3.9")
 include(BuildAwsCCommon)
