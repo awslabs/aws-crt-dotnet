@@ -1,12 +1,26 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <ItemGroup>
-    <ProjectReference Include="..\aws-crt\aws-crt.csproj" />
-  </ItemGroup>
-
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <RootNamespace>Aws.Crt.Http</RootNamespace>
+
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <PackageOutputPath>$(ProjectDir)../packages</PackageOutputPath>
+    <IncludeSymbols>True</IncludeSymbols>
+
+    <PackageId>AWSCRT-HTTP</PackageId>
+    <Title>AWS CRT - HTTP</Title>
+    <Version>0.2.0</Version>
+    <Authors>aws-sdk-common-runtime</Authors>
+    <Company>Amazon</Company>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <PackageTags>AWS,native,Amazon, HTTP</PackageTags>
+    <RepositoryUrl>https://github.com/awslabs/aws-crt-dotnet.git</RepositoryUrl>
+    <Copyright>Amazon Web Services, 2019</Copyright>
   </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\aws-crt\aws-crt.csproj" />
+  </ItemGroup>
 
 </Project>

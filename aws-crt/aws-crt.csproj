@@ -5,6 +5,20 @@
     <PlatformTarget Condition="$(PlatformTarget) == '' AND $(OS) == 'Windows_NT' AND ($(CMakeGenerator) == 'Visual Studio 14 2015' OR $(CMakeGenerator) == 'Visual Studio 15 2017')">x86</PlatformTarget>
     <PlatformTarget Condition="$(PlatformTarget) == ''">x64</PlatformTarget>
     <RootNamespace>Aws.CRT</RootNamespace>
+
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <PackageOutputPath>$(ProjectDir)../packages</PackageOutputPath>
+    <IncludeSymbols>True</IncludeSymbols>
+
+    <PackageId>AWSCRT</PackageId>
+    <Title>AWS CRT - AWS Common Runtime</Title>
+    <Version>0.2.0</Version>
+    <Authors>aws-sdk-common-runtime</Authors>
+    <Company>Amazon</Company>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <PackageTags>AWS,native,Amazon</PackageTags>
+    <RepositoryUrl>https://github.com/awslabs/aws-crt-dotnet.git</RepositoryUrl>
+    <Copyright>Amazon Web Services, 2019</Copyright>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="CMake" Version="3.5.2" />
@@ -17,32 +31,21 @@
       <CMakeGenerator Condition="$(CMakeGenerator) == '' AND $(OS) == 'Windows_NT' AND $(PlatformTarget) == 'x64'">Visual Studio 15 2017 Win64</CMakeGenerator>
       <CMakeGenerator Condition="$(CMakeGenerator) == '' AND $(OS) == 'Windows_NT' AND $(PlatformTarget) == 'x86'">Visual Studio 15 2017</CMakeGenerator>
       <CMakeGenerator Condition="$(CMakeGenerator) == '' AND $(OS) == 'Unix'">Unix Makefiles</CMakeGenerator>
+      <CMakeBinaries Condition="$(OS) == 'Windows_NT' AND $(CODEBUILD_SRC_DIR) != ''">c:/build-$(MSBuildProjectName)</CMakeBinaries>
+      <CMakeBinaries Condition="$(OS) == 'Windows_NT' AND $(CODEBUILD_SRC_DIR) == ''">$(ProjectDir)../build</CMakeBinaries>
+      <CMakeBinaries Condition="$(OS) != 'Windows_NT'">$(ProjectDir)../build</CMakeBinaries>
     </PropertyGroup>
-    <MakeDir Directories="$(ProjectDir)../build" />
+    <MakeDir Directories="$(CMakeBinaries)" />
     <Message Text="Configuring CMake project" Importance="high"/>
-    <Exec Command="cmake -G&quot;$(CMakeGenerator)&quot; -DCMAKE_BUILD_TYPE=$(Configuration) -DCMAKE_PREFIX_PATH=$(ProjectDir)../build/deps/install -DCMAKE_EXPORT_COMPILE_COMMANDS=ON $(ProjectDir)../native" WorkingDirectory="$(ProjectDir)../build" ConsoleToMSBuild="true">
+    <Exec Command="cmake -G&quot;$(CMakeGenerator)&quot; -DCMAKE_BUILD_TYPE=$(Configuration) -DCMAKE_PREFIX_PATH=$(CMakeBinaries)/deps/install -DCMAKE_EXPORT_COMPILE_COMMANDS=ON $(ProjectDir)../native" WorkingDirectory="$(CMakeBinaries)" ConsoleToMSBuild="true">
       <Output TaskParameter="ConsoleOutput" PropertyName="OutputOfExec" />
     </Exec>
     <Message Text="Building native library" Importance="high"/>
-    <Exec Command="cmake --build . --config $(Configuration)" WorkingDirectory="$(ProjectDir)../build" ConsoleToMSBuild="true">
+    <Exec Command="cmake --build . --config $(Configuration)" WorkingDirectory="$(CMakeBinaries)" ConsoleToMSBuild="true">
       <Output TaskParameter="ConsoleOutput" PropertyName="OutputOfExec" />
     </Exec>
     <ItemGroup>
-      <NativeLibraries Include="$(ProjectDir)../build/lib/*aws-crt-dotnet.*"/>
-      <None Include="@(NativeLibraries)">
-        <Link>%(RecursiveDir)%(FileName)%(Extension)</Link>
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
+      <EmbeddedResource Include="$(CMakeBinaries)/lib/*aws-crt-dotnet.*" />
     </ItemGroup>
   </Target>
-
-  <ProjectExtensions>
-    <MonoDevelop>
-      <Properties>
-        <Policies>
-          <StandardHeader IncludeInNewFiles="True" Text="/*&#xA; * Copyright 2010-2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.&#xA; *&#xA; * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;).&#xA; * You may not use this file except in compliance with the License.&#xA; * A copy of the License is located at&#xA; *&#xA; *  http://aws.amazon.com/apache2.0&#xA; *&#xA; * or in the &quot;license&quot; file accompanying this file. This file is distributed&#xA; * on an &quot;AS IS&quot; BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either&#xA; * express or implied. See the License for the specific language governing&#xA; * permissions and limitations under the License.&#xA; */" />
-        </Policies>
-      </Properties>
-    </MonoDevelop>
-  </ProjectExtensions>
 </Project>

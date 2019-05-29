@@ -13,10 +13,13 @@
  * permissions and limitations under the License.
  */
 using System;
+using System.ComponentModel;
+using System.IO;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Security;
+using System.Threading;
 
 // Make internal classes and members in this assembly available to the unit tests
 [assembly: InternalsVisibleTo("tests")]
@@ -80,14 +83,23 @@ namespace Aws.Crt
 
         internal class LibraryHandle : Handle
         {
-            public LibraryHandle(IntPtr value) 
+            private string libraryPath;
+            public LibraryHandle(IntPtr value, string path)
             {
+                libraryPath = path;
                 SetHandle(value);
             }
 
             protected override bool ReleaseHandle()
             {
                 CRT.Loader.FreeLibrary(handle);
+                // No longer need the library file, delete it
+                try {
+                    File.Delete(libraryPath);
+                }
+                catch (Exception) {
+                    // best effort, just ignore it
+                }
                 return true;
             }
         }
@@ -103,6 +115,7 @@ namespace Aws.Crt
         internal class PlatformBinding
         {
             private LibraryHandle crt;
+            private string libraryPath;
 
             public PlatformBinding()
             {
@@ -120,11 +133,21 @@ namespace Aws.Crt
                     libraryName = "libaws-crt-dotnet.dylib";
                 }
 
-                crt = CRT.Loader.LoadLibrary(libraryName);
+                libraryPath = ExtractLibrary(libraryName);
+                int tries = 0;
+                do 
+                {
+                    crt = CRT.Loader.LoadLibrary(libraryPath);
+                    if (crt.IsInvalid)
+                    {
+                        Thread.Sleep(10);
+                    }
+                } while (crt.IsInvalid && tries++ < 100);
+                
                 if (crt.IsInvalid)
                 {
                     string error = CRT.Loader.GetLastError();
-                    throw new InvalidOperationException($"Unable to load {libraryName}: error={error}");
+                    throw new InvalidOperationException($"Unable to load {libraryPath}: error={error}");
                 }
 
                 Init();
@@ -133,6 +156,22 @@ namespace Aws.Crt
             ~PlatformBinding()
             {
                 Shutdown();
+            }
+
+            private string ExtractLibrary(string libraryName)
+            {
+                var crtAsm = Assembly.GetAssembly(typeof(CRT));
+                using (var resourceStream = crtAsm.GetManifestResourceStream("Aws.CRT." + libraryName))
+                {
+                    string prefix = Path.GetRandomFileName();
+                    var extractedLibraryPath = Path.GetTempPath() + prefix + "." + libraryName;
+                    // Open the shared lib stream, write the embedded stream to it, and it will be deleted later
+                    using (var libStream = new FileStream(extractedLibraryPath, FileMode.Create, FileAccess.Write, FileShare.Delete, 4096, FileOptions.None))
+                    {
+                        resourceStream.CopyTo(libStream);
+                        return extractedLibraryPath;
+                    }
+                }
             }
 
             private delegate void aws_dotnet_static_init();
@@ -178,11 +217,13 @@ namespace Aws.Crt
         {
             public override LibraryHandle LoadLibrary(string name)
             {
-                Assembly crtAsm = Assembly.GetAssembly(typeof(CRT));
-                Console.WriteLine("ASM LOCATION: {0}", crtAsm.Location);
-                string path = crtAsm.Location.Replace(crtAsm.GetName().Name + ".dll", name);
-                Console.WriteLine("DLL LOCATION: {0}", path);
-                return new LibraryHandle(kernel32.LoadLibrary(path));
+                string path = name;
+                if (!Path.IsPathRooted(name))
+                {
+                    Assembly crtAsm = Assembly.GetAssembly(typeof(CRT));
+                    path = crtAsm.Location.Replace(crtAsm.GetName().Name + ".dll", name);
+                }
+                return new LibraryHandle(kernel32.LoadLibrary(path), path);
             }
 
             public override void FreeLibrary(IntPtr handle)
@@ -197,7 +238,8 @@ namespace Aws.Crt
 
             public override string GetLastError()
             {
-                return Marshal.GetLastWin32Error().ToString();
+                // Win32Exception will invoke FormatMessage to extract the error string from GetLastError()
+                return new Win32Exception(Marshal.GetLastWin32Error()).Message;
             }
         }
 
@@ -205,9 +247,13 @@ namespace Aws.Crt
         {
             public override LibraryHandle LoadLibrary(string name)
             {
-                Assembly crtAsm = Assembly.GetAssembly(typeof(CRT));
-                string path = crtAsm.Location.Replace(crtAsm.GetName().Name + ".dll", name);
-                return new LibraryHandle(dl.dlopen(path, dl.RTLD_NOW));
+                string path = name;
+                if (!Path.IsPathRooted(name))
+                {
+                    Assembly crtAsm = Assembly.GetAssembly(typeof(CRT));
+                    path = crtAsm.Location.Replace(crtAsm.GetName().Name + ".dll", name);
+                }
+                return new LibraryHandle(dl.dlopen(path, dl.RTLD_NOW), path);
             }
 
             public override void FreeLibrary(IntPtr handle)

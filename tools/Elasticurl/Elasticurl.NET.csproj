@@ -1,12 +1,13 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <ItemGroup>
-    <ProjectReference Include="..\..\aws-crt-http\aws-crt-http.csproj" />
-  </ItemGroup>
-
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>netcoreapp2.2</TargetFramework>
+    <TargetFramework>netcoreapp2.1</TargetFramework>
   </PropertyGroup>
+
+  <ItemGroup>
+    <!--<PackageReference Include="AWSCRT-HTTP" Version="0.2.0" />-->
+    <ProjectReference Include="..\..\aws-crt-http\aws-crt-http.csproj" />
+  </ItemGroup>
 
 </Project>

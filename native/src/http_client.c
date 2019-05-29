@@ -72,7 +72,7 @@ struct aws_dotnet_http_connection *aws_dotnet_http_connection_new(
     options.allocator = allocator;
     options.bootstrap = client_bootstrap;
     if (initial_window_size != 0) {
-        options.initial_window_size = initial_window_size;
+        options.initial_window_size = (size_t)initial_window_size;
     }
     options.host_name = aws_byte_cursor_from_c_str(host_name);
     options.port = port;
@@ -138,7 +138,7 @@ static enum aws_http_outgoing_body_state s_stream_stream_outgoing_body(
     uint64_t bytes_written = 0;
     enum aws_http_outgoing_body_state state = stream->stream_outgoing_body(buf_ptr, buf_size, &bytes_written);
     AWS_FATAL_ASSERT(bytes_written <= buf_size && "Buffer overflow detected streaming outgoing body");
-    buf->len += bytes_written;
+    buf->len += (size_t)bytes_written;
     return state;
 }
 
@@ -187,7 +187,7 @@ static void s_stream_on_incoming_body(
     if (stream->on_incoming_body) {
         uint64_t window_update_size = *out_window_update_size;
         stream->on_incoming_body(data->ptr, data->len, &window_update_size);
-        *out_window_update_size = window_update_size < SIZE_MAX ? window_update_size : SIZE_MAX;
+        *out_window_update_size = (size_t)(window_update_size < SIZE_MAX ? window_update_size : SIZE_MAX);
     }
 }
 
@@ -226,7 +226,7 @@ AWS_DOTNET_API struct aws_dotnet_http_stream *aws_dotnet_http_stream_new(
     options.method = aws_byte_cursor_from_c_str(method);
     options.header_array = NULL;
     options.num_headers = 0;
-    AWS_VARIABLE_LENGTH_ARRAY(struct aws_http_header, req_headers, header_count ? header_count : 1);
+    AWS_VARIABLE_LENGTH_ARRAY(struct aws_http_header, req_headers, (header_count ? header_count : 1));
     if (header_count > 0) {
         for (size_t header_idx = 0; header_idx < header_count; ++header_idx) {
             req_headers[header_idx].name = aws_byte_cursor_from_c_str(headers[header_idx].name);
