@@ -19,6 +19,7 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Security;
+using System.Threading;
 
 // Make internal classes and members in this assembly available to the unit tests
 [assembly: InternalsVisibleTo("tests")]
@@ -82,14 +83,23 @@ namespace Aws.Crt
 
         internal class LibraryHandle : Handle
         {
-            public LibraryHandle(IntPtr value)
+            private string libraryPath;
+            public LibraryHandle(IntPtr value, string path)
             {
+                libraryPath = path;
                 SetHandle(value);
             }
 
             protected override bool ReleaseHandle()
             {
                 CRT.Loader.FreeLibrary(handle);
+                // No longer need the library file, delete it
+                try {
+                    File.Delete(libraryPath);
+                }
+                catch (Exception) {
+                    // best effort, just ignore it
+                }
                 return true;
             }
         }
@@ -105,6 +115,7 @@ namespace Aws.Crt
         internal class PlatformBinding
         {
             private LibraryHandle crt;
+            private string libraryPath;
 
             public PlatformBinding()
             {
@@ -122,10 +133,17 @@ namespace Aws.Crt
                     libraryName = "libaws-crt-dotnet.dylib";
                 }
 
-                var libraryPath = ExtractLibrary(libraryName);
-                crt = CRT.Loader.LoadLibrary(libraryPath);
-                // No longer need the library file, delete it
-                File.Delete(libraryPath);
+                libraryPath = ExtractLibrary(libraryName);
+                int tries = 0;
+                do 
+                {
+                    crt = CRT.Loader.LoadLibrary(libraryPath);
+                    if (crt.IsInvalid)
+                    {
+                        Thread.Sleep(10);
+                    }
+                } while (crt.IsInvalid && tries++ < 100);
+                
                 if (crt.IsInvalid)
                 {
                     string error = CRT.Loader.GetLastError();
@@ -147,8 +165,8 @@ namespace Aws.Crt
                 {
                     string prefix = Path.GetRandomFileName();
                     var extractedLibraryPath = Path.GetTempPath() + prefix + "." + libraryName;
-                    // Open the shared lib stream, write the embedded stream to it, and it will be deleted after the library is loaded
-                    using (var libStream = new FileStream(extractedLibraryPath, FileMode.Create, FileAccess.Write, FileShare.Read, 4096, FileOptions.None))
+                    // Open the shared lib stream, write the embedded stream to it, and it will be deleted later
+                    using (var libStream = new FileStream(extractedLibraryPath, FileMode.Create, FileAccess.Write, FileShare.Delete, 4096, FileOptions.None))
                     {
                         resourceStream.CopyTo(libStream);
                         return extractedLibraryPath;
@@ -205,7 +223,7 @@ namespace Aws.Crt
                     Assembly crtAsm = Assembly.GetAssembly(typeof(CRT));
                     path = crtAsm.Location.Replace(crtAsm.GetName().Name + ".dll", name);
                 }
-                return new LibraryHandle(kernel32.LoadLibrary(path));
+                return new LibraryHandle(kernel32.LoadLibrary(path), path);
             }
 
             public override void FreeLibrary(IntPtr handle)
@@ -235,7 +253,7 @@ namespace Aws.Crt
                     Assembly crtAsm = Assembly.GetAssembly(typeof(CRT));
                     path = crtAsm.Location.Replace(crtAsm.GetName().Name + ".dll", name);
                 }
-                return new LibraryHandle(dl.dlopen(path, dl.RTLD_NOW));
+                return new LibraryHandle(dl.dlopen(path, dl.RTLD_NOW), path);
             }
 
             public override void FreeLibrary(IntPtr handle)
