@@ -19,6 +19,7 @@
     <PackageTags>AWS,native,Amazon</PackageTags>
     <RepositoryUrl>https://github.com/awslabs/aws-crt-dotnet.git</RepositoryUrl>
     <Copyright>Amazon Web Services, 2019</Copyright>
+    <Description>AWS Common Runtime bindings for .NET</Description>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="CMake" Version="3.5.2" />

@@ -17,6 +17,7 @@
     <PackageTags>AWS,native,Amazon, HTTP</PackageTags>
     <RepositoryUrl>https://github.com/awslabs/aws-crt-dotnet.git</RepositoryUrl>
     <Copyright>Amazon Web Services, 2019</Copyright>
+    <Description>AWS Common Runtime HTTP bindings/API</Description>
   </PropertyGroup>
 
   <ItemGroup>
