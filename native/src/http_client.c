@@ -226,7 +226,7 @@ AWS_DOTNET_API struct aws_dotnet_http_stream *aws_dotnet_http_stream_new(
     options.method = aws_byte_cursor_from_c_str(method);
     options.header_array = NULL;
     options.num_headers = 0;
-    AWS_VARIABLE_LENGTH_ARRAY(struct aws_http_header, req_headers, header_count ? header_count : 1);
+    AWS_VARIABLE_LENGTH_ARRAY(struct aws_http_header, req_headers, (header_count ? header_count : 1));
     if (header_count > 0) {
         for (size_t header_idx = 0; header_idx < header_count; ++header_idx) {
             req_headers[header_idx].name = aws_byte_cursor_from_c_str(headers[header_idx].name);
