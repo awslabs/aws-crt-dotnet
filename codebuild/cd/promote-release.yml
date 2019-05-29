@@ -1,0 +1,27 @@
+version: 0.2
+# this buildspec assumes the aws-common-runtime/ubuntu-16.04 image
+# This job is responsible for downloading the RC nupkgs and publishing them as the lastest release
+phases:
+  install:
+    commands:
+
+  pre_build:
+    commands:
+      - cd $CODEBUILD_SRC_DIR/aws-crt-dotnet
+      - export PKG_VERSION=$(git describe --tags | cut -f1 -d'-' | cut -f2 -dv)
+      - echo PKG_VERSION=$PKG_VERSION
+      # pull nuget key
+      - NUGET_KEY=$(aws secretsmanager get-secret-value --secret-id "NuGet/push" --query SecretString | cut -f2 -d\")
+  build:
+    commands:
+      - cd /tmp
+      - mkdir packages
+      - cd packages
+      - curl -sLO https://www.nuget.org/api/v2/package/AWSCRT/${PKG_VERSION}-rc
+      - curl -sLO https://www.nuget.org/api/v2/package/AWSCRT-HTTP/${PKG_VERSION}-rc
+      - mv AWSCRT.${PKG_VERSION}-rc.nupkg AWSCRT.${PKG_VERSION}.nupkg
+      - mv AWSCRT-HTTP.${PKG_VERSION}-rc.nupkg AWSCRT-HTTP.${PKG_VERSION}.nupkg
+      - dotnet nuget AWSCRT.${PKG_VERSION}.nupkg push -k $NUGET_KEY -s https://api.nuget.org/v3/index.json
+      - dotnet nuget AWSCRT-HTTP.${PKG_VERSION}.nupkg push -k $NUGET_KEY -s https://api.nuget.org/v3/index.json
+  post_build:
+    commands:
