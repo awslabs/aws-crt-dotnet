@@ -3,6 +3,12 @@
 
 dotnet build -c Release -p:CMakeGenerator="Visual Studio 14 2015" || goto error
 
+set GIT_TAG=powershell -NoProfile -InputFormat None -Command ^
+    $tag = (git describe --tags) | Out-String { ^
+    $tag = $tag.split("-")[0].split("v")[1];  ^
+    Write-Host $tag;
+
+
 for /f %%A in ('git describe --tags') do (
     set GIT_TAG=%%A
 )
