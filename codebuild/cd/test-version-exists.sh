@@ -12,7 +12,8 @@ if [ "$CURRENT_TAG" != "$CURRENT_TAG_VERSION" ]; then
     exit 1
 fi
 curl -sL "https://www.nuget.org/packages/AWSCRT/${CURRENT_TAG_VERSION}" -o /tmp/AWSCRT.${CURRENT_TAG_VERSION}.nupkg
-if [ -e /tmp/AWSCRT.${CURRENT_TAG_VERSION}.nupkg ]; then
+curl -sL "https://www.nuget.org/packages/AWSCRT-HTTP/${CURRENT_TAG_VERSION}" -o /tmp/AWSCRT-HTTP.${CURRENT_TAG_VERSION}.nupkg
+if [ -e /tmp/AWSCRT.${CURRENT_TAG_VERSION}.nupkg && -e /tmp/AWSCRT-HTTP.${CURRENT_TAG_VERSION}.nupkg ]; then
     echo "$CURRENT_TAG_VERSION is already in NuGet, cut a new release if you want to publish."
     exit 1
 fi
