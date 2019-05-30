@@ -11,9 +11,9 @@ if [ "$CURRENT_TAG" != "$CURRENT_TAG_VERSION" ]; then
     echo "Current tag version is not a release tag, cut a new release if you want to publish."
     exit 1
 fi
-AWSCRT_STATUS=$(curl -IsL https://api.nuget.org/v3/registration3/awscrt/${CURRENT_TAG_VERSION}.json | grep -e ^HTTP | tail -1 | grep 200)
-AWSCRTHTTP_STATUS=$(curl -IsL https://api.nuget.org/v3/registration3/awscrt-http/${CURRENT_TAG_VERSION}.json | grep -e ^HTTP | tail -1 | grep 200)
-if [ -n $AWSCRT_STATUS ] &&  [ -n $AWSCRTHTTP_STATUS ]; then
+AWSCRT_STATUS=$(curl -IsL https://api.nuget.org/v3/registration3/awscrt/${CURRENT_TAG_VERSION}.json | grep -e ^HTTP | tail -1 | grep -c 200 || true) 
+AWSCRTHTTP_STATUS=$(curl -IsL https://api.nuget.org/v3/registration3/awscrt-http/${CURRENT_TAG_VERSION}.json | grep -e ^HTTP | tail -1 | grep -c 200 || true)
+if [ $AWSCRT_STATUS -gt 0 ] &&  [ $AWSCRTHTTP_STATUS -gt 0 ]; then
     echo "$CURRENT_TAG_VERSION is already in NuGet, cut a new release if you want to publish."
     exit 1
 fi
