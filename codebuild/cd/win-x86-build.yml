@@ -4,6 +4,7 @@ phases:
   install:
     commands:
       - choco install -y awscli
+      - refreshenv
   build:
     commands:
       - cd $env:CODEBUILD_SRC_DIR\aws-crt-dotnet
