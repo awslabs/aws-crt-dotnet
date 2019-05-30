@@ -7,7 +7,15 @@ for /f %%A in ('git describe --tags') do (
     set GIT_TAG=%%A
 )
 
-aws s3 cp --recursive --exclude "*" --include "*.dll" .\build\lib s3://aws-crt-java-pipeline/%GIT_TAG%/x64
+for /f "tokens=1 delims=-" %%A in ("!GIT_TAG!") do (
+    set GIT_TAG=%%A
+)
+
+for /f "tokens=1 delims=v" %%A in ("!GIT_TAG!") do (
+    set GIT_TAG=%%A
+)
+
+aws s3 cp --recursive --exclude "*" --include "*.dll" .\build\lib s3://aws-crt-java-pipeline/%GIT_TAG%/x64 || goto error
 
 @endlocal
 goto :EOF
