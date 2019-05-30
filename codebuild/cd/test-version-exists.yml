@@ -9,10 +9,5 @@ phases:
     commands:
   build:
     commands:
-      - echo Build started on `date`
       - cd aws-crt-dotnet
       - bash ./codebuild/cd/test-version-exists.sh
-  post_build:
-    commands:
-      - echo Build completed on `date`
-
