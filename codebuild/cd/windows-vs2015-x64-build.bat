@@ -3,7 +3,9 @@
 
 dotnet build -c Release -p:CMakeGenerator="Visual Studio 14 2015 Win64" || goto error
 
-robocopy c:\build-aws-crt\lib ..\dist\x86 *.* /xf *.ilk || goto error
+robocopy c:\build-aws-crt\lib ..\dist\x86 *.* /xf *.ilk /np /fp
+:: robocopy exits with a 1 code if everything succeeded
+if %ERRORLEVEL% NEQ 1 goto error
 
 @endlocal
 goto :EOF
