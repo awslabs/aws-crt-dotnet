@@ -1,13 +1,6 @@
 version: 0.2
 # this build spec assumes the aws-common-runtime/ubuntu-16.04:x64 image
 phases:
-  install:
-    commands:
-      - cd $env:CODEBUILD_SRC_DIR\aws-crt-dotnet
-      - .\codebuild\install-dotnet.bat https://download.visualstudio.microsoft.com/download/pr/3c43f486-2799-4454-851c-fa7a9fb73633/673099a9fe6f1cac62dd68da37ddbc1a/dotnet-sdk-2.2.203-win-x64.exe
-      - refreshenv
-      - cd \
-      - dir /s dotnet.exe
   build:
     commands:
       - cd $env:CODEBUILD_SRC_DIR\aws-crt-dotnet
