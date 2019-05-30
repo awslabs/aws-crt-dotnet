@@ -15,7 +15,7 @@ for /f "tokens=1 delims=v" %%A in ("!GIT_TAG!") do (
     set GIT_TAG=%%A
 )
 
-aws s3 cp --recursive --exclude "*" --include "*.dll" .\build\lib s3://aws-crt-java-pipeline/!GIT_TAG!/x86 || goto error
+robocopy .\build\lib ..\dist\x86 *.dll || goto error
 
 @endlocal
 goto :EOF
