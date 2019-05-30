@@ -16,6 +16,7 @@ phases:
   build:
     commands:
       - cd aws-crt-dotnet
+      - mkdir packages
       - dotnet build
   post_build:
     commands:
