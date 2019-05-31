@@ -40,7 +40,7 @@
     </PropertyGroup>
     <MakeDir Directories="$(CMakeBinaries)" />
     <Message Text="Configuring CMake project" Importance="high"/>
-    <Exec Command="cmake -G&quot;$(CMakeGenerator)&quot; -DCMAKE_BUILD_TYPE=$(Configuration) -DCMAKE_PREFIX_PATH=$(CMakeBinaries)/deps/install -DCMAKE_EXPORT_COMPILE_COMMANDS=ON $(ProjectDir)../native" WorkingDirectory="$(CMakeBinaries)" ConsoleToMSBuild="true">
+    <Exec Command="cmake -G&quot;$(CMakeGenerator)&quot; -DCMAKE_BUILD_TYPE=$(CMakeConfig) -DCMAKE_PREFIX_PATH=$(CMakeBinaries)/deps/install -DCMAKE_EXPORT_COMPILE_COMMANDS=ON $(ProjectDir)../native" WorkingDirectory="$(CMakeBinaries)" ConsoleToMSBuild="true">
       <Output TaskParameter="ConsoleOutput" PropertyName="OutputOfExec" />
     </Exec>
     <Message Text="Building native library" Importance="high"/>
