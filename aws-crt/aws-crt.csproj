@@ -35,6 +35,8 @@
       <CMakeBinaries Condition="$(OS) == 'Windows_NT' AND $(CODEBUILD_SRC_DIR) != ''">c:/build-$(MSBuildProjectName)</CMakeBinaries>
       <CMakeBinaries Condition="$(OS) == 'Windows_NT' AND $(CODEBUILD_SRC_DIR) == ''">$(ProjectDir)../build</CMakeBinaries>
       <CMakeBinaries Condition="$(OS) != 'Windows_NT'">$(ProjectDir)../build</CMakeBinaries>
+      <CMakeConfig Condition="$(Configuration) == 'Debug'">Debug</CMakeConfig>
+      <CMakeConfig Condition="$(CMakeConfig) == ''">RelWithDebInfo</CMakeConfig>
     </PropertyGroup>
     <MakeDir Directories="$(CMakeBinaries)" />
     <Message Text="Configuring CMake project" Importance="high"/>
