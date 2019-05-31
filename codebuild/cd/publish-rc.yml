@@ -28,8 +28,8 @@ phases:
     commands:
       - cd $CODEBUILD_SRC_DIR/aws-crt-dotnet
       # build the RC packages
-      - dotnet restore --ignore-failed-sources
-      - dotnet pack -c Release --version-suffix rc -p:BuildNativeLibrary=false
+      - dotnet build --configuration Release -p:BuildNativeLibrary=false
+      - dotnet pack --configuration Release --version-suffix rc --no-build -v normal
       # publish them
       - cd packages
       - dotnet nuget AWSCRT.${PKG_VERSION}-rc.nupkg push -k $NUGET_KEY -s https://api.nuget.org/v3/index.json
