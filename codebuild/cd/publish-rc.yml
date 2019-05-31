@@ -1,0 +1,32 @@
+version: 0.2
+# this buildspec assumes the aws-common-runtime/ubuntu-16.04 image
+# This job is responsible for publishing the nupkgs after assembling them from the artifacted pieces
+phases:
+  pre_build:
+    commands:
+      - cd $CODEBUILD_SRC_DIR/aws-crt-dotnet
+      - export PKG_VERSION=$(git describe --tags | cut -f1 -d'-' | cut -f2 -dv)
+      - mkdir -p packages
+      - cp -rv $CODEBUILD_SRC_DIR_linux_x64/dist/* $CODEBUILD_SRC_DIR/aws-crt-dotnet/build/lib
+      - cp -rv $CODEBUILD_SRC_DIR_win_x86/dist/* $CODEBUILD_SRC_DIR/aws-crt-dotnet/build/lib
+      - cp -rv $CODEBUILD_SRC_DIR_win_x64/dist/* $CODEBUILD_SRC_DIR/aws-crt-dotnet/build/lib
+      - ls -alR $CODEBUILD_SRC_DIR/aws-crt-dotnet/build/lib
+      # pull nuget key
+      - NUGET_KEY=$(aws secretsmanager get-secret-value --secret-id "NuGet/push" --query SecretString | cut -f2 -d\")
+  build:
+    commands:
+      - cd $CODEBUILD_SRC_DIR/aws-crt-dotnet
+      # build the RC packages
+      - dotnet restore --ignore-failed-sources
+      - dotnet pack -c Release --version-suffix rc
+      # publish them
+      - cd packages
+      - dotnet nuget AWSCRT.${PKG_VERSION}-rc.nupkg push -k $NUGET_KEY -s https://api.nuget.org/v3/index.json
+      - dotnet nuget AWSCRT-HTTP.${PKG_VERSION}-rc.nupkg push -k $NUGET_KEY -s https://api.nuget.org/v3/index.json
+  post_build:
+    commands:
+
+artifacts:
+  discard-paths: yes
+  files:
+    - $CODEBUILD_SRC_DIR/aws-crt-dotnet/packages/*.nupkg
