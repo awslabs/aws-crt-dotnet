@@ -6,6 +6,8 @@
     <PlatformTarget Condition="$(PlatformTarget) == ''">x64</PlatformTarget>
     <RootNamespace>Aws.CRT</RootNamespace>
 
+    <BuildNativeLibrary>true</BuildNativeLibrary>
+
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <PackageOutputPath>$(ProjectDir)../packages</PackageOutputPath>
     <IncludeSymbols>True</IncludeSymbols>
@@ -27,7 +29,10 @@
     <PackageReference Include="Microsoft.CSharp" Version="4.5.0" />
   </ItemGroup>
 
-  <Target Name="BuildNativeLibrary" BeforeTargets="PrepareForBuild" Outputs="$(ProjectDir)../build/CMakeCache.txt">
+  <Target Name="BuildNativeLibrary" 
+    Condition="$(BuildNativeLibrary) == 'true'"
+    BeforeTargets="PrepareForBuild" 
+    Outputs="$(ProjectDir)../build/CMakeCache.txt">
     <PropertyGroup>
       <CMakeGenerator Condition="$(CMakeGenerator) == '' AND $(OS) == 'Windows_NT' AND $(PlatformTarget) == 'x64'">Visual Studio 15 2017 Win64</CMakeGenerator>
       <CMakeGenerator Condition="$(CMakeGenerator) == '' AND $(OS) == 'Windows_NT' AND $(PlatformTarget) == 'x86'">Visual Studio 15 2017</CMakeGenerator>
