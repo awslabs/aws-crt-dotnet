@@ -3,9 +3,12 @@
 
 dotnet build -c Release -p:CMakeGenerator="Visual Studio 14 2015" || goto error
 
-robocopy c:\build-aws-crt\lib ..\dist\x86 *.* /xf *.ilk /np /fp
-:: robocopy exits with a 1 code if everything succeeded
-if %ERRORLEVEL% NEQ 1 goto error
+md ..\dist\x86
+for /R c:\build-aws-crt\lib %%F IN (*) do (
+    if %%~xF != ".ilk" (
+        copy %%F ..\dist\x86\
+    )
+)
 
 @endlocal
 goto :EOF
