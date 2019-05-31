@@ -106,12 +106,17 @@ include(AwsSanitizers)
 file(GLOB AWS_CRT_DOTNET_HEADERS src/*.h)
 file(GLOB AWS_CRT_DOTNET_SRC src/*.c)
 
-# TODO: Make this more os/arch dependent and match the loader to it
 set(TARGET_LIB_DIR "lib")
+if (CMAKE_SIZEOF_VOID_P EQUAL 8)
+    set(TARGET_ARCH "x64")
+else()
+    set(TARGET_ARCH "x86")
+endif()
 
 # shared lib that contains the CRT and API bindings, to be loaded by .NET
 add_library(${CMAKE_PROJECT_NAME} SHARED ${AWS_CRT_DOTNET_HEADERS} ${AWS_CRT_DOTNET_SRC})
 set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES LINKER_LANGUAGE C)
+set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES OUTPUT_NAME "${CMAKE_PROJECT_NAME}-${TARGET_ARCH}")
 # for non-msvc, library output will control the shared lib output
 set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${TARGET_LIB_DIR})
 # for msvc, runtime controls where dlls are output

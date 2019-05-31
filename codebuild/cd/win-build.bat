@@ -1,12 +1,12 @@
 
 @setlocal enableextensions enabledelayedexpansion
 
-dotnet build -c Release -p:CMakeGenerator="Visual Studio 14 2015 Win64" || goto error
+dotnet build -c Release -p:CMakeGenerator="%1" || goto error
 
-md ..\dist\x64
+md ..\dist\x86
 for /R c:\build-aws-crt\lib %%F IN (*) do (
     if NOT "%%~xF" == ".ilk" (
-        copy %%F ..\dist\x64\
+        copy %%F ..\dist\
     )
 )
 

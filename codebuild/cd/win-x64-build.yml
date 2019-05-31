@@ -5,9 +5,8 @@ phases:
     commands:
       - cd $env:CODEBUILD_SRC_DIR\aws-crt-dotnet
       - md packages
-      - .\codebuild\cd\windows-vs2015-x64-build.bat
+      - .\codebuild\cd\win-build.bat "Visual Studio 14 2015 Win64"
 
 artifacts:
   files:
     - 'dist/**/*' 
-

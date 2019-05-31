@@ -31,6 +31,8 @@ namespace Aws.Crt
     [SecuritySafeCritical]
     public static class CRT
     {
+        static bool Is64Bit = (IntPtr.Size == 8);
+
         [SecuritySafeCritical]
         internal static class API
         {
@@ -120,20 +122,23 @@ namespace Aws.Crt
             public PlatformBinding()
             {
                 string libraryName = null;
+                string arch = (Is64Bit) ? "x64" : "x86";
                 if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 {
-                    libraryName = "aws-crt-dotnet.dll";
+                    libraryName = $"aws-crt-dotnet-{arch}.dll";
                 }
                 else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
                 {
-                    libraryName = "libaws-crt-dotnet.so";
+                    libraryName = $"libaws-crt-dotnet-{arch}.so";
                 }
                 else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
                 {
-                    libraryName = "libaws-crt-dotnet.dylib";
+                    libraryName = $"libaws-crt-dotnet-{arch}.dylib"; 
                 }
 
                 libraryPath = ExtractLibrary(libraryName);
+
+                // Work around virus scanners munching on a newly found DLL
                 int tries = 0;
                 do 
                 {
@@ -161,6 +166,10 @@ namespace Aws.Crt
             private string ExtractLibrary(string libraryName)
             {
                 var crtAsm = Assembly.GetAssembly(typeof(CRT));
+                var resources = crtAsm.GetManifestResourceNames();
+                foreach (var resource in resources) {
+                    Console.WriteLine(resource);
+                }
                 using (var resourceStream = crtAsm.GetManifestResourceStream("Aws.CRT." + libraryName))
                 {
                     string prefix = Path.GetRandomFileName();
