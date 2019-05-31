@@ -1,7 +1,7 @@
 
 @setlocal enableextensions enabledelayedexpansion
 
-dotnet build -c Release -p:CMakeGenerator=%1 || goto error
+dotnet build --configuration Release -p:CMakeGenerator=%1 || goto error
 
 md ..\dist\x86
 for /R c:\build-aws-crt\lib %%F IN (*) do (

@@ -18,7 +18,7 @@ phases:
     commands:
       - cd aws-crt-dotnet
       - mkdir packages
-      - dotnet build
+      - dotnet build --configuration Release
   post_build:
     commands:
       # get the shared libs from the native build
