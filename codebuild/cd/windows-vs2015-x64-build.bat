@@ -5,7 +5,7 @@ dotnet build -c Release -p:CMakeGenerator="Visual Studio 14 2015 Win64" || goto 
 
 md ..\dist\x64
 for /R c:\build-aws-crt\lib %%F IN (*) do (
-    if NOT %%~xF == ".ilk" (
+    if NOT "%%~xF" == ".ilk" (
         copy %%F ..\dist\x64\
     )
 )
