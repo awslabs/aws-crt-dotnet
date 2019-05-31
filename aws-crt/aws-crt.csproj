@@ -44,7 +44,7 @@
       <Output TaskParameter="ConsoleOutput" PropertyName="OutputOfExec" />
     </Exec>
     <Message Text="Building native library" Importance="high"/>
-    <Exec Command="cmake --build . --config $(Configuration)" WorkingDirectory="$(CMakeBinaries)" ConsoleToMSBuild="true">
+    <Exec Command="cmake --build . --config $(CMakeConfig)" WorkingDirectory="$(CMakeBinaries)" ConsoleToMSBuild="true">
       <Output TaskParameter="ConsoleOutput" PropertyName="OutputOfExec" />
     </Exec>
     <ItemGroup>
