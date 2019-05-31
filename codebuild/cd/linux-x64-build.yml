@@ -22,8 +22,8 @@ phases:
   post_build:
     commands:
       # get the shared libs from the native build
-      - mkdir -p ../dist
-      - cp -rv build/lib/libaws-crt-dotnet.so ../dist/x64
+      - mkdir -p ../dist/x64
+      - cp -rv build/lib/libaws-crt-dotnet.so ../dist/x64/
 
 artifacts:
   files:

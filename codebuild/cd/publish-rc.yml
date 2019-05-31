@@ -8,9 +8,9 @@ phases:
       - export PKG_VERSION=$(git describe --tags | cut -f1 -d'-' | cut -f2 -dv)
       - mkdir -p packages
       - mkdir -p build/lib
-      - cp -rv $CODEBUILD_SRC_DIR_linux_x64/dist/* $CODEBUILD_SRC_DIR/aws-crt-dotnet/build/lib
-      - cp -rv $CODEBUILD_SRC_DIR_win_x86/dist/* $CODEBUILD_SRC_DIR/aws-crt-dotnet/build/lib
-      - cp -rv $CODEBUILD_SRC_DIR_win_x64/dist/* $CODEBUILD_SRC_DIR/aws-crt-dotnet/build/lib
+      - cp -rv $CODEBUILD_SRC_DIR_linux_x64/dist/x64/* $CODEBUILD_SRC_DIR/aws-crt-dotnet/build/lib/x64/
+      - cp -rv $CODEBUILD_SRC_DIR_win_x86/dist/x86/* $CODEBUILD_SRC_DIR/aws-crt-dotnet/build/lib/x86/
+      - cp -rv $CODEBUILD_SRC_DIR_win_x64/dist/x64/* $CODEBUILD_SRC_DIR/aws-crt-dotnet/build/lib/x64/
       - ls -alR $CODEBUILD_SRC_DIR/aws-crt-dotnet/build/lib
       # pull nuget key
       - NUGET_KEY=$(aws secretsmanager get-secret-value --secret-id "NuGet/push" --query SecretString | cut -f2 -d\")
