@@ -31,8 +31,8 @@ phases:
       - dotnet build --configuration Release -p:BuildNativeLibrary=false --version-suffix rc
       # publish them
       - cd packages
-      - dotnet nuget push AWSCRT.${PKG_VERSION}-rc.nupkg -k $NUGET_KEY -s https://api.nuget.org/v3/index.json
-      - dotnet nuget push AWSCRT-HTTP.${PKG_VERSION}-rc.nupkg -k $NUGET_KEY -s https://api.nuget.org/v3/index.json
+      - dotnet nuget push AWSCRT.${PKG_VERSION}.nupkg -k $NUGET_KEY -s https://api.nuget.org/v3/index.json
+      - dotnet nuget push AWSCRT-HTTP.${PKG_VERSION}.nupkg -k $NUGET_KEY -s https://api.nuget.org/v3/index.json
   post_build:
     commands:
 
