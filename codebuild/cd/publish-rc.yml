@@ -28,11 +28,11 @@ phases:
     commands:
       - cd $CODEBUILD_SRC_DIR/aws-crt-dotnet
       # build the RC packages (packages are built as part of build)
-      - dotnet build --configuration Release -p:BuildNativeLibrary=false
+      - dotnet build --configuration Release -p:PackageVersion=${PKG_VERSION}-rc -p:BuildNativeLibrary=false
       # publish them
       - cd packages
-      - dotnet nuget push AWSCRT.${PKG_VERSION}.nupkg -k $NUGET_KEY -s https://api.nuget.org/v3/index.json
-      - dotnet nuget push AWSCRT-HTTP.${PKG_VERSION}.nupkg -k $NUGET_KEY -s https://api.nuget.org/v3/index.json
+      - dotnet nuget push AWSCRT.${PKG_VERSION}-rc.nupkg -k $NUGET_KEY -s https://api.nuget.org/v3/index.json
+      - dotnet nuget push AWSCRT-HTTP.${PKG_VERSION}-rc.nupkg -k $NUGET_KEY -s https://api.nuget.org/v3/index.json
 
 artifacts:
   discard-paths: yes
