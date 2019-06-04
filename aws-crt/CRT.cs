@@ -183,7 +183,7 @@ namespace Aws.Crt
                         // Open the shared lib stream, write the embedded stream to it, and it will be deleted later
                         try
                         {
-                            using (var libStream = new FileStream(extractedLibraryPath, FileMode.Create, FileAccess.Write, FileShare.Delete, 4096, FileOptions.None))
+                            using (var libStream = new FileStream(extractedLibraryPath, FileMode.Create, FileAccess.Write, FileShare.None, 4096, FileOptions.None))
                             {
                                 resourceStream.CopyTo(libStream);
                                 return extractedLibraryPath;
@@ -194,6 +194,10 @@ namespace Aws.Crt
                             throw new InvalidOperationException($"Could not extract {libraryName} to {extractedLibraryPath}", ex);
                         }
                     }
+                }
+                catch (InvalidOperationException iex)
+                {
+                    throw;
                 }
                 catch (Exception ex)
                 {
