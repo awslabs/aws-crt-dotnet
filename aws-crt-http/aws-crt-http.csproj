@@ -10,7 +10,7 @@
 
     <PackageId>AWSCRT-HTTP</PackageId>
     <Title>AWS CRT - HTTP</Title>
-    <Version>0.2.2</Version>
+    <Version>0.2.3</Version>
     <Authors>aws-sdk-common-runtime</Authors>
     <Company>Amazon</Company>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
