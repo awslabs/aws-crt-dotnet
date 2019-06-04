@@ -6,8 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!--<PackageReference Include="AWSCRT-HTTP" Version="0.2.0" />-->
-    <ProjectReference Include="..\..\aws-crt-http\aws-crt-http.csproj" />
+    <PackageReference Include="AWSCRT-HTTP" Version="0.2.0-dev" />
   </ItemGroup>
 
 </Project>
