@@ -14,7 +14,7 @@
 
     <PackageId>AWSCRT</PackageId>
     <Title>AWS CRT - AWS Common Runtime</Title>
-    <Version>0.2.3</Version>
+    <Version>0.2.4</Version>
     <Authors>aws-sdk-common-runtime</Authors>
     <Company>Amazon</Company>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
