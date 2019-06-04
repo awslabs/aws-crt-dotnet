@@ -14,8 +14,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="AWSCRT" Version="0.2.0-dev" />
-    <PackageReference Include="AWSCRT-HTTP" Version="0.2.0-dev" />
+    <PackageReference Include="AWSCRT-HTTP" Version="1.0.0-dev" />
   </ItemGroup>
 
 </Project>

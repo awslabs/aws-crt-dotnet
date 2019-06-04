@@ -5,7 +5,8 @@ set -ex
 # packages dir needs to exist
 mkdir -p packages
 # test will build and package, then run tests
-dotnet test -v normal
+dotnet build -v normal
+dotnet test tests -v normal
 
 if [ "$AWS_DOTNET_RUNTIME" == "" ]; then
     exit 0
