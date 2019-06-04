@@ -13,8 +13,15 @@ if [ "$CURRENT_TAG" != "$CURRENT_TAG_VERSION" ]; then
 fi
 AWSCRT_STATUS=$(curl -IsL https://api.nuget.org/v3/registration3/awscrt/${CURRENT_TAG_VERSION}.json | grep -e ^HTTP | tail -1 | grep -c 200 || true) 
 AWSCRTHTTP_STATUS=$(curl -IsL https://api.nuget.org/v3/registration3/awscrt-http/${CURRENT_TAG_VERSION}.json | grep -e ^HTTP | tail -1 | grep -c 200 || true)
-if [ $AWSCRT_STATUS -gt 0 ] &&  [ $AWSCRTHTTP_STATUS -gt 0 ]; then
+if [ $AWSCRT_STATUS -gt 0 ] && [ $AWSCRTHTTP_STATUS -gt 0 ]; then
     echo "$CURRENT_TAG_VERSION is already in NuGet, cut a new release if you want to publish."
+    exit 1
+fi
+# If a pipeline fails, it's possible to strand a RC, but a new version will allow the pipeline to continue
+AWSCRT_STATUS=$(curl -IsL https://api.nuget.org/v3/registration3/awscrt/${CURRENT_TAG_VERSION}-rc.json | grep -e ^HTTP | tail -1 | grep -c 200 || true) 
+AWSCRTHTTP_STATUS=$(curl -IsL https://api.nuget.org/v3/registration3/awscrt-http/${CURRENT_TAG_VERSION}-rc.json | grep -e ^HTTP | tail -1 | grep -c 200 || true)
+if [ $AWSCRT_STATUS -gt 0 ] && [ $AWSCRTHTTP_STATUS -gt 0 ]; then
+    echo "$CURRENT_TAG_VERSION is already in NuGet as a release candidate, cut a new release if you want to publish."
     exit 1
 fi
 
