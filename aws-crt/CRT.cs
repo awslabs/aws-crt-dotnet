@@ -136,24 +136,32 @@ namespace Aws.Crt
                     libraryName = $"libaws-crt-dotnet-{arch}.dylib"; 
                 }
 
-                libraryPath = ExtractLibrary(libraryName);
-
-                // Work around virus scanners munching on a newly found DLL
-                int tries = 0;
-                do 
+                try
                 {
-                    crt = CRT.Loader.LoadLibrary(libraryPath);
+                    libraryPath = ExtractLibrary(libraryName);
+
+                    // Work around virus scanners munching on a newly found DLL
+                    int tries = 0;
+                    do 
+                    {
+                        crt = CRT.Loader.LoadLibrary(libraryPath);
+                        if (crt.IsInvalid)
+                        {
+                            Thread.Sleep(10);
+                        }
+                    } while (crt.IsInvalid && tries++ < 100);
+                    
                     if (crt.IsInvalid)
                     {
-                        Thread.Sleep(10);
+                        string error = CRT.Loader.GetLastError();
+                        throw new InvalidOperationException($"Unable to load {libraryPath}: error={error}");
                     }
-                } while (crt.IsInvalid && tries++ < 100);
-                
-                if (crt.IsInvalid)
-                {
-                    string error = CRT.Loader.GetLastError();
-                    throw new InvalidOperationException($"Unable to load {libraryPath}: error={error}");
                 }
+                catch (Exception ex)
+                {
+                    throw new InvalidOperationException($"Unable to load {libraryPath}, exception occurred", ex);
+                }
+                
 
                 Init();
             }
@@ -166,10 +174,6 @@ namespace Aws.Crt
             private string ExtractLibrary(string libraryName)
             {
                 var crtAsm = Assembly.GetAssembly(typeof(CRT));
-                var resources = crtAsm.GetManifestResourceNames();
-                foreach (var resource in resources) {
-                    Console.WriteLine(resource);
-                }
                 using (var resourceStream = crtAsm.GetManifestResourceStream("Aws.CRT." + libraryName))
                 {
                     string prefix = Path.GetRandomFileName();

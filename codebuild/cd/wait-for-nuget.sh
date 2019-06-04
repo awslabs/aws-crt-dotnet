@@ -24,7 +24,7 @@ while true; do
         exit 1
     fi
 
-    sleep 5
+    sleep 15
 done
 
 exit 0
