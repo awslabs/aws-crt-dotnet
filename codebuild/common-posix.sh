@@ -2,8 +2,8 @@
 
 set -ex
 
-# grab external dependencies, ignoring that they don't exist in the packages folder
-dotnet restore --ignore-failed-sources
+# packages dir needs to exist
+mkdir -p packages
 # test will build and package, then run tests
 dotnet test -v normal
 
