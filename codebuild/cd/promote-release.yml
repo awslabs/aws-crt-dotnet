@@ -24,8 +24,8 @@ phases:
     commands:
       - mkdir -p /tmp/packages
       - cd /tmp/packages
-      - curl -sL https://api.nuget.org/v3-flatcontainer/awscrt/awscrt.${PKG_VERSION}-rc.nupkg -o AWSCRT.${PKG_VERSION}.nupkg
-      - curl -sL https://api.nuget.org/v3-flatcontainer/awscrt-http/awscrt-http.${PKG_VERSION}-rc.nupkg -o AWSCRT-HTTP.${PKG_VERSION}.nupkg
+      - curl -sL https://www.nuget.org/api/v2/package/AWSCRT/${PKG_VERSION}-rc -o AWSCRT.${PKG_VERSION}.nupkg
+      - curl -sL https://www.nuget.org/api/v2/package/AWSCRT-HTTP/${PKG_VERSION}-rc -o AWSCRT-HTTP.${PKG_VERSION}.nupkg
       - ls -l
       - dotnet nuget push AWSCRT.${PKG_VERSION}.nupkg -k $NUGET_KEY -s https://api.nuget.org/v3/index.json
       - dotnet nuget push AWSCRT-HTTP.${PKG_VERSION}.nupkg -k $NUGET_KEY -s https://api.nuget.org/v3/index.json
