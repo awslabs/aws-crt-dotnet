@@ -25,8 +25,8 @@ phases:
       - cd packages
       - curl -sLO https://api.nuget.org/v3-flatcontainer/awscrt/awscrt.${CRT_VERSION}-rc.nupkg -o AWSCRT.${PKG_VERSION}.nupkg
       - curl -sLO https://api.nuget.org/v3-flatcontainer/awscrt-http/awscrt-http.${CRT_VERSION}-rc.nupkg -o AWSCRT-HTTP.${PKG_VERSION}.nupkg
-      - dotnet nuget AWSCRT.${PKG_VERSION}.nupkg push -k $NUGET_KEY -s https://api.nuget.org/v3/index.json
-      - dotnet nuget AWSCRT-HTTP.${PKG_VERSION}.nupkg push -k $NUGET_KEY -s https://api.nuget.org/v3/index.json
+      - dotnet nuget push AWSCRT.${PKG_VERSION}.nupkg -k $NUGET_KEY -s https://api.nuget.org/v3/index.json
+      - dotnet nuget push AWSCRT-HTTP.${PKG_VERSION}.nupkg -k $NUGET_KEY -s https://api.nuget.org/v3/index.json
   
 artifacts:
   discard-paths: yes
