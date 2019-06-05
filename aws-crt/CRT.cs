@@ -178,6 +178,12 @@ namespace Aws.Crt
                 try
                 {
                     resourceStream = crtAsm.GetManifestResourceStream("Aws.CRT." + libraryName);
+                    if (resourceStream == null)
+                    {
+                        var resources = crtAsm.GetManifestResourceNames();
+                        var resourceList = String.Join(",", resources);
+                        throw new IOException($"Could not find {libraryName} in resource manifest; Resources={resourceList}");
+                    }
                     string prefix = Path.GetRandomFileName();
                     var extractedLibraryPath = Path.GetTempPath() + prefix + "." + libraryName;
                     FileStream libStream = null;
@@ -196,14 +202,6 @@ namespace Aws.Crt
                     {
                         libStream?.Dispose();
                     }
-                }
-                catch (InvalidOperationException)
-                {
-                    throw;
-                }
-                catch (Exception ex)
-                {
-                    throw new InvalidOperationException($"Could not find {libraryName} in resource manifest", ex);
                 }
                 finally
                 {
