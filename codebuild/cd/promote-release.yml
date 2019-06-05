@@ -5,7 +5,7 @@ phases:
   install:
     commands:
       # .NET Core install instructions taken from: https://dotnet.microsoft.com/download/linux-package-manager/ubuntu16-04/sdk-current
-      - curl -L https://packages.microsoft.com/config/ubuntu/16.04/packages-microsoft-prod.deb --output /tmp/packages-microsoft-prod.deb
+      - curl -sL https://packages.microsoft.com/config/ubuntu/16.04/packages-microsoft-prod.deb --output /tmp/packages-microsoft-prod.deb
       - sudo dpkg -i /tmp/packages-microsoft-prod.deb
       - sudo apt-get install apt-transport-https
       - sudo apt-get update -y
