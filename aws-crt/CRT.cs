@@ -174,28 +174,27 @@ namespace Aws.Crt
             private string ExtractLibrary(string libraryName)
             {
                 var crtAsm = Assembly.GetAssembly(typeof(CRT));
+                Stream resourceStream = null;
                 try
                 {
-                    using (var resourceStream = crtAsm.GetManifestResourceStream("Aws.CRT." + libraryName))
+                    resourceStream = crtAsm.GetManifestResourceStream("Aws.CRT." + libraryName);
+                    string prefix = Path.GetRandomFileName();
+                    var extractedLibraryPath = Path.GetTempPath() + prefix + "." + libraryName;
+                    FileStream libStream = null;
+                    // Open the shared lib stream, write the embedded stream to it, and it will be deleted later
+                    try
                     {
-                        string prefix = Path.GetRandomFileName();
-                        var extractedLibraryPath = Path.GetTempPath() + prefix + "." + libraryName;
-                        FileStream libStream = null;
-                        // Open the shared lib stream, write the embedded stream to it, and it will be deleted later
-                        try
-                        {
-                            libStream = new FileStream(extractedLibraryPath, FileMode.Create, FileAccess.Write);
-                            resourceStream.CopyTo(libStream);
-                            return extractedLibraryPath;
-                        }
-                        catch (Exception ex)
-                        {
-                            throw new InvalidOperationException($"Could not extract {libraryName} to {extractedLibraryPath}", ex);
-                        }
-                        finally
-                        {
-                            libStream.Dispose();
-                        }
+                        libStream = new FileStream(extractedLibraryPath, FileMode.Create, FileAccess.Write);
+                        resourceStream.CopyTo(libStream);
+                        return extractedLibraryPath;
+                    }
+                    catch (Exception ex)
+                    {
+                        throw new InvalidOperationException($"Could not extract {libraryName} to {extractedLibraryPath}", ex);
+                    }
+                    finally
+                    {
+                        libStream?.Dispose();
                     }
                 }
                 catch (InvalidOperationException)
@@ -205,6 +204,10 @@ namespace Aws.Crt
                 catch (Exception ex)
                 {
                     throw new InvalidOperationException($"Could not find {libraryName} in resource manifest", ex);
+                }
+                finally
+                {
+                    resourceStream?.Dispose();
                 }
             }
 
