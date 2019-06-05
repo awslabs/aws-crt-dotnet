@@ -180,22 +180,25 @@ namespace Aws.Crt
                     {
                         string prefix = Path.GetRandomFileName();
                         var extractedLibraryPath = Path.GetTempPath() + prefix + "." + libraryName;
+                        FileStream libStream = null;
                         // Open the shared lib stream, write the embedded stream to it, and it will be deleted later
                         try
                         {
-                            using (var libStream = new FileStream(extractedLibraryPath, FileMode.Create, FileAccess.Write, FileShare.None, 4096, FileOptions.None))
-                            {
-                                resourceStream.CopyTo(libStream);
-                                return extractedLibraryPath;
-                            }
+                            libStream = new FileStream(extractedLibraryPath, FileMode.Create, FileAccess.Write);
+                            resourceStream.CopyTo(libStream);
+                            return extractedLibraryPath;
                         }
                         catch (Exception ex)
                         {
                             throw new InvalidOperationException($"Could not extract {libraryName} to {extractedLibraryPath}", ex);
                         }
+                        finally
+                        {
+                            libStream.Dispose();
+                        }
                     }
                 }
-                catch (InvalidOperationException iex)
+                catch (InvalidOperationException)
                 {
                     throw;
                 }
