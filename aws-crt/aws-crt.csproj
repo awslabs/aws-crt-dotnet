@@ -53,7 +53,7 @@
       <Output TaskParameter="ConsoleOutput" PropertyName="OutputOfExec" />
     </Exec>
     <ItemGroup>
-      <EmbeddedResource Include="$(CMakeBinaries)/lib/*aws-crt-dotnet*" Exclude="*.ilk" />
+      <EmbeddedResource Include="$(CMakeBinaries)/lib/*aws-crt-dotnet*" Exclude="**/*.ilk" />
     </ItemGroup>
     <Message Text="Embedded library: %(EmbeddedResource.Identity)" Importance="High"/>
   </Target>
