@@ -22,11 +22,11 @@ phases:
       - NUGET_KEY=$(aws secretsmanager get-secret-value --secret-id "NuGet/push" --query SecretString | cut -f2 -d\")
   build:
     commands:
-      - cd /tmp
-      - mkdir packages
-      - cd packages
+      - mkdir -p /tmp/packages
+      - cd /tmp/packages
       - curl -sLO https://api.nuget.org/v3-flatcontainer/awscrt/awscrt.${CRT_VERSION}-rc.nupkg -o AWSCRT.${PKG_VERSION}.nupkg
       - curl -sLO https://api.nuget.org/v3-flatcontainer/awscrt-http/awscrt-http.${CRT_VERSION}-rc.nupkg -o AWSCRT-HTTP.${PKG_VERSION}.nupkg
+      - ls -l
       - dotnet nuget push AWSCRT.${PKG_VERSION}.nupkg -k $NUGET_KEY -s https://api.nuget.org/v3/index.json
       - dotnet nuget push AWSCRT-HTTP.${PKG_VERSION}.nupkg -k $NUGET_KEY -s https://api.nuget.org/v3/index.json
   
