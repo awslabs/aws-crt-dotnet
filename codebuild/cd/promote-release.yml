@@ -1,6 +1,6 @@
 version: 0.2
 # this buildspec assumes the aws-common-runtime/ubuntu-16.04 image
-# This job is responsible for packaging the nupkgs and publishing them as the lastest release
+# This job is responsible for packaging the nupkgs and publishing them as the latest release
 phases:
   install:
     commands:
