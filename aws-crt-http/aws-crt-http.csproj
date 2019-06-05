@@ -4,9 +4,10 @@
     <TargetFramework>netstandard2.0</TargetFramework>
     <RootNamespace>Aws.Crt.Http</RootNamespace>
 
-    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageOutputPath>$(ProjectDir)../packages</PackageOutputPath>
-    <IncludeSymbols>True</IncludeSymbols>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
 
     <PackageId>AWSCRT-HTTP</PackageId>
     <Title>AWS CRT - HTTP</Title>

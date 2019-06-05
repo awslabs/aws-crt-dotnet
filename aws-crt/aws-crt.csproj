@@ -8,9 +8,10 @@
 
     <BuildNativeLibrary>true</BuildNativeLibrary>
 
-    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageOutputPath>$(ProjectDir)../packages</PackageOutputPath>
-    <IncludeSymbols>True</IncludeSymbols>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
 
     <PackageId>AWSCRT</PackageId>
     <Title>AWS CRT - AWS Common Runtime</Title>
