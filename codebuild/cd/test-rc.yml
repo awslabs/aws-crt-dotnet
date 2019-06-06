@@ -1,0 +1,34 @@
+version: 0.2
+# This buildspec assumes the aws-common-runtime/ubuntu-16.04 image
+# This job is responsible for testing the published RC packages after downloading them
+# from Nuget.org
+phases:
+  install:
+    commands:
+      # .NET Core install instructions taken from: https://dotnet.microsoft.com/download/linux-package-manager/ubuntu16-04/sdk-current
+      - curl -L https://packages.microsoft.com/config/ubuntu/16.04/packages-microsoft-prod.deb --output /tmp/packages-microsoft-prod.deb
+      - sudo dpkg -i /tmp/packages-microsoft-prod.deb
+      - sudo apt-get install apt-transport-https
+      - sudo apt-get update -y
+      - sudo apt-get install dotnet-sdk-2.2 -y
+
+  pre_build:
+    commands:
+      - cd $CODEBUILD_SRC_DIR/aws-crt-dotnet
+      - export CRT_VERSION=$(git describe --tags | cut -f1 -d'-' | cut -f2 -dv)
+
+  build:
+    commands:
+      # Verify that the package can be found on nuget.org, and rebase the tests on it
+      # then run them
+      - cd $CODEBUILD_SRC_DIR/aws-crt-dotnet
+      - mkdir packages
+      # add the package dependencies without restoring...
+      - dotnet add tests package AWSCRT --version ${CRT_VERSION}-rc --no-restore
+      - dotnet add tests package AWSCRT-HTTP --version ${CRT_VERSION}-rc --no-restore
+      # ...and then manually restore without the cache, avoiding NuGet.org's eventual consistency
+      - dotnet restore --no-cache
+      # build the tests without dependencies (since they should be in the package cache)
+      - dotnet build tests --no-dependencies
+      # run the tests
+      - dotnet test tests --no-build -v normal

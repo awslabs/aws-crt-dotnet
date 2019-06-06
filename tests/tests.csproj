@@ -14,8 +14,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\aws-crt\aws-crt.csproj" />
-    <ProjectReference Include="..\aws-crt-http\aws-crt-http.csproj" />
+    <PackageReference Include="AWSCRT-HTTP" Version="1.0.0-dev" />
   </ItemGroup>
 
 </Project>

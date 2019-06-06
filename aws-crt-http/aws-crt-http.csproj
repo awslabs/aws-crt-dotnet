@@ -4,19 +4,21 @@
     <TargetFramework>netstandard2.0</TargetFramework>
     <RootNamespace>Aws.Crt.Http</RootNamespace>
 
-    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageOutputPath>$(ProjectDir)../packages</PackageOutputPath>
-    <IncludeSymbols>True</IncludeSymbols>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
 
     <PackageId>AWSCRT-HTTP</PackageId>
     <Title>AWS CRT - HTTP</Title>
-    <Version>0.2.0</Version>
+    <Version>1.0.0-dev</Version>
     <Authors>aws-sdk-common-runtime</Authors>
     <Company>Amazon</Company>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <PackageTags>AWS,native,Amazon, HTTP</PackageTags>
     <RepositoryUrl>https://github.com/awslabs/aws-crt-dotnet.git</RepositoryUrl>
     <Copyright>Amazon Web Services, 2019</Copyright>
+    <Description>AWS Common Runtime HTTP bindings/API</Description>
   </PropertyGroup>
 
   <ItemGroup>

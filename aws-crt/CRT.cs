@@ -31,6 +31,8 @@ namespace Aws.Crt
     [SecuritySafeCritical]
     public static class CRT
     {
+        static bool Is64Bit = (IntPtr.Size == 8);
+
         [SecuritySafeCritical]
         internal static class API
         {
@@ -120,35 +122,46 @@ namespace Aws.Crt
             public PlatformBinding()
             {
                 string libraryName = null;
+                string arch = (Is64Bit) ? "x64" : "x86";
                 if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 {
-                    libraryName = "aws-crt-dotnet.dll";
+                    libraryName = $"aws-crt-dotnet-{arch}.dll";
                 }
                 else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
                 {
-                    libraryName = "libaws-crt-dotnet.so";
+                    libraryName = $"libaws-crt-dotnet-{arch}.so";
                 }
                 else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
                 {
-                    libraryName = "libaws-crt-dotnet.dylib";
+                    libraryName = $"libaws-crt-dotnet-{arch}.dylib"; 
                 }
 
-                libraryPath = ExtractLibrary(libraryName);
-                int tries = 0;
-                do 
+                try
                 {
-                    crt = CRT.Loader.LoadLibrary(libraryPath);
+                    libraryPath = ExtractLibrary(libraryName);
+
+                    // Work around virus scanners munching on a newly found DLL
+                    int tries = 0;
+                    do 
+                    {
+                        crt = CRT.Loader.LoadLibrary(libraryPath);
+                        if (crt.IsInvalid)
+                        {
+                            Thread.Sleep(10);
+                        }
+                    } while (crt.IsInvalid && tries++ < 100);
+                    
                     if (crt.IsInvalid)
                     {
-                        Thread.Sleep(10);
+                        string error = CRT.Loader.GetLastError();
+                        throw new InvalidOperationException($"Unable to load {libraryPath}: error={error}");
                     }
-                } while (crt.IsInvalid && tries++ < 100);
-                
-                if (crt.IsInvalid)
-                {
-                    string error = CRT.Loader.GetLastError();
-                    throw new InvalidOperationException($"Unable to load {libraryPath}: error={error}");
                 }
+                catch (Exception ex)
+                {
+                    throw new InvalidOperationException($"Unable to load {libraryPath}, exception occurred", ex);
+                }
+                
 
                 Init();
             }
@@ -161,16 +174,38 @@ namespace Aws.Crt
             private string ExtractLibrary(string libraryName)
             {
                 var crtAsm = Assembly.GetAssembly(typeof(CRT));
-                using (var resourceStream = crtAsm.GetManifestResourceStream("Aws.CRT." + libraryName))
+                Stream resourceStream = null;
+                try
                 {
+                    resourceStream = crtAsm.GetManifestResourceStream("Aws.CRT." + libraryName);
+                    if (resourceStream == null)
+                    {
+                        var resources = crtAsm.GetManifestResourceNames();
+                        var resourceList = String.Join(",", resources);
+                        throw new IOException($"Could not find {libraryName} in resource manifest; Resources={resourceList}");
+                    }
                     string prefix = Path.GetRandomFileName();
                     var extractedLibraryPath = Path.GetTempPath() + prefix + "." + libraryName;
+                    FileStream libStream = null;
                     // Open the shared lib stream, write the embedded stream to it, and it will be deleted later
-                    using (var libStream = new FileStream(extractedLibraryPath, FileMode.Create, FileAccess.Write, FileShare.Delete, 4096, FileOptions.None))
+                    try
                     {
+                        libStream = new FileStream(extractedLibraryPath, FileMode.Create, FileAccess.Write);
                         resourceStream.CopyTo(libStream);
                         return extractedLibraryPath;
                     }
+                    catch (Exception ex)
+                    {
+                        throw new InvalidOperationException($"Could not extract {libraryName} to {extractedLibraryPath}", ex);
+                    }
+                    finally
+                    {
+                        libStream?.Dispose();
+                    }
+                }
+                finally
+                {
+                    resourceStream?.Dispose();
                 }
             }
 

@@ -48,7 +48,6 @@ if (BUILD_DEPS)
                 -DANDROID_STANDALONE_TOOLCHAIN=${ANDROID_STANDALONE_TOOLCHAIN}
                 -DANDROID_STL=${ANDROID_STL}
                 -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
-                -DCMAKE_PREFIX_PATH=${AWS_DEPS_INSTALL_DIR}
                 -DCMAKE_INSTALL_PREFIX=${AWS_DEPS_INSTALL_DIR}
                 -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}
                 -DGIT_EXECUTABLE=${GIT_EXECUTABLE}
@@ -64,7 +63,6 @@ if (BUILD_DEPS)
                 -DTARGET_ARCH=${TARGET_ARCH}
                 -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
                 -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
-                -DCMAKE_PREFIX_PATH=${AWS_DEPS_INSTALL_DIR}
                 -DCMAKE_INSTALL_PREFIX=${AWS_DEPS_INSTALL_DIR}
                 -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}
                 -DCMAKE_RUNTIME_OUTPUT_DIRECTORY=${CMAKE_CURRENT_BINARY_DIR}/bin
@@ -78,7 +76,8 @@ if (BUILD_DEPS)
     if (NOT ${BUILD_AWSCRT_EXIT_CODE} EQUAL 0)
         message(FATAL_ERROR "Failed to configure aws crt libraries.")
     endif()
-    execute_process(COMMAND ${CMAKE_COMMAND} --build ${AWS_DEPS_BUILD_DIR} --config ${CMAKE_BUILD_TYPE}
+    execute_process(COMMAND ${CMAKE_COMMAND} --build . --config ${CMAKE_BUILD_TYPE}
+            WORKING_DIRECTORY ${AWS_DEPS_BUILD_DIR}
             RESULT_VARIABLE BUILD_AWSCRT_EXIT_CODE)
 
     if (NOT ${BUILD_AWSCRT_EXIT_CODE} EQUAL 0)
@@ -106,18 +105,25 @@ include(AwsSanitizers)
 file(GLOB AWS_CRT_DOTNET_HEADERS src/*.h)
 file(GLOB AWS_CRT_DOTNET_SRC src/*.c)
 
-# TODO: Make this more os/arch dependent and match the loader to it
 set(TARGET_LIB_DIR "lib")
+if (CMAKE_SIZEOF_VOID_P EQUAL 8)
+    set(TARGET_ARCH "x64")
+else()
+    set(TARGET_ARCH "x86")
+endif()
 
 # shared lib that contains the CRT and API bindings, to be loaded by .NET
 add_library(${CMAKE_PROJECT_NAME} SHARED ${AWS_CRT_DOTNET_HEADERS} ${AWS_CRT_DOTNET_SRC})
 set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES LINKER_LANGUAGE C)
+set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES OUTPUT_NAME "${CMAKE_PROJECT_NAME}-${TARGET_ARCH}")
 # for non-msvc, library output will control the shared lib output
 set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${TARGET_LIB_DIR})
 # for msvc, runtime controls where dlls are output
 set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${TARGET_LIB_DIR})
 set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY_DEBUG ${TARGET_LIB_DIR})
 set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY_RELEASE ${TARGET_LIB_DIR})
+set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO ${TARGET_LIB_DIR})
+set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY_MINSIZEREL ${TARGET_LIB_DIR})
 
 aws_set_common_properties(${CMAKE_PROJECT_NAME})
 include_directories(src)

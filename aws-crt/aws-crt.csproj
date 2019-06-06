@@ -6,19 +6,32 @@
     <PlatformTarget Condition="$(PlatformTarget) == ''">x64</PlatformTarget>
     <RootNamespace>Aws.CRT</RootNamespace>
 
-    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <BuildNativeLibrary>true</BuildNativeLibrary>
+
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageOutputPath>$(ProjectDir)../packages</PackageOutputPath>
-    <IncludeSymbols>True</IncludeSymbols>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
 
     <PackageId>AWSCRT</PackageId>
     <Title>AWS CRT - AWS Common Runtime</Title>
-    <Version>0.2.0</Version>
+    <Version>1.0.0-dev</Version>
     <Authors>aws-sdk-common-runtime</Authors>
     <Company>Amazon</Company>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <PackageTags>AWS,native,Amazon</PackageTags>
     <RepositoryUrl>https://github.com/awslabs/aws-crt-dotnet.git</RepositoryUrl>
     <Copyright>Amazon Web Services, 2019</Copyright>
+    <Description>AWS Common Runtime bindings for .NET</Description>
+
+    <CMakeGenerator Condition="$(CMakeGenerator) == '' AND $(OS) == 'Windows_NT' AND $(PlatformTarget) == 'x64'">Visual Studio 15 2017 Win64</CMakeGenerator>
+    <CMakeGenerator Condition="$(CMakeGenerator) == '' AND $(OS) == 'Windows_NT' AND $(PlatformTarget) == 'x86'">Visual Studio 15 2017</CMakeGenerator>
+    <CMakeGenerator Condition="$(CMakeGenerator) == '' AND $(OS) == 'Unix'">Unix Makefiles</CMakeGenerator>
+    <CMakeBinaries Condition="$(OS) == 'Windows_NT' AND $(CODEBUILD_SRC_DIR) != ''">c:/build-$(MSBuildProjectName)</CMakeBinaries>
+    <CMakeBinaries Condition="$(OS) == 'Windows_NT' AND $(CODEBUILD_SRC_DIR) == ''">$(ProjectDir)../build</CMakeBinaries>
+    <CMakeBinaries Condition="$(OS) != 'Windows_NT'">$(ProjectDir)../build</CMakeBinaries>
+    <CMakeConfig Condition="$(Configuration) == 'Debug'">Debug</CMakeConfig>
+    <CMakeConfig Condition="$(CMakeConfig) == ''">RelWithDebInfo</CMakeConfig>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="CMake" Version="3.5.2" />
@@ -26,26 +39,28 @@
     <PackageReference Include="Microsoft.CSharp" Version="4.5.0" />
   </ItemGroup>
 
-  <Target Name="BuildNativeLibrary" BeforeTargets="PrepareForBuild" Outputs="$(ProjectDir)../build/CMakeCache.txt">
-    <PropertyGroup>
-      <CMakeGenerator Condition="$(CMakeGenerator) == '' AND $(OS) == 'Windows_NT' AND $(PlatformTarget) == 'x64'">Visual Studio 15 2017 Win64</CMakeGenerator>
-      <CMakeGenerator Condition="$(CMakeGenerator) == '' AND $(OS) == 'Windows_NT' AND $(PlatformTarget) == 'x86'">Visual Studio 15 2017</CMakeGenerator>
-      <CMakeGenerator Condition="$(CMakeGenerator) == '' AND $(OS) == 'Unix'">Unix Makefiles</CMakeGenerator>
-      <CMakeBinaries Condition="$(OS) == 'Windows_NT' AND $(CODEBUILD_SRC_DIR) != ''">c:/build-$(MSBuildProjectName)</CMakeBinaries>
-      <CMakeBinaries Condition="$(OS) == 'Windows_NT' AND $(CODEBUILD_SRC_DIR) == ''">$(ProjectDir)../build</CMakeBinaries>
-      <CMakeBinaries Condition="$(OS) != 'Windows_NT'">$(ProjectDir)../build</CMakeBinaries>
-    </PropertyGroup>
+  <Target Name="BuildNativeLibrary" 
+    Condition="$(BuildNativeLibrary) == 'true'"
+    BeforeTargets="PrepareForBuild">
     <MakeDir Directories="$(CMakeBinaries)" />
     <Message Text="Configuring CMake project" Importance="high"/>
-    <Exec Command="cmake -G&quot;$(CMakeGenerator)&quot; -DCMAKE_BUILD_TYPE=$(Configuration) -DCMAKE_PREFIX_PATH=$(CMakeBinaries)/deps/install -DCMAKE_EXPORT_COMPILE_COMMANDS=ON $(ProjectDir)../native" WorkingDirectory="$(CMakeBinaries)" ConsoleToMSBuild="true">
+    <Exec Command="cmake -G&quot;$(CMakeGenerator)&quot; -DCMAKE_BUILD_TYPE=$(CMakeConfig) -DCMAKE_EXPORT_COMPILE_COMMANDS=ON $(ProjectDir)../native" 
+      WorkingDirectory="$(CMakeBinaries)" 
+      ConsoleToMSBuild="true">
       <Output TaskParameter="ConsoleOutput" PropertyName="OutputOfExec" />
     </Exec>
     <Message Text="Building native library" Importance="high"/>
-    <Exec Command="cmake --build . --config $(Configuration)" WorkingDirectory="$(CMakeBinaries)" ConsoleToMSBuild="true">
+    <Exec Command="cmake --build . --config $(CMakeConfig)" WorkingDirectory="$(CMakeBinaries)" ConsoleToMSBuild="true">
       <Output TaskParameter="ConsoleOutput" PropertyName="OutputOfExec" />
     </Exec>
+  </Target>
+
+  <Target Name="EmbedNativeLibraries"
+    BeforeTargets="PrepareForBuild"
+    AfterTargets="BuildNativeLibrary">
     <ItemGroup>
-      <EmbeddedResource Include="$(CMakeBinaries)/lib/*aws-crt-dotnet.*" />
+      <EmbeddedResource Include="$(CMakeBinaries)/lib/*aws-crt-dotnet*" Exclude="**/*.ilk" />
     </ItemGroup>
+    <Message Text="Embedded library: %(EmbeddedResource.Identity)" Importance="High"/>
   </Target>
 </Project>
