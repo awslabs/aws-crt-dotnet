@@ -25,7 +25,7 @@ struct aws_host_resolver *aws_dotnet_host_resolver_new_default(struct aws_event_
         return NULL;
     }
     struct aws_allocator *allocator = aws_dotnet_get_allocator();
-    struct aws_host_resolver *resolver = aws_mem_acquire(allocator, sizeof(struct aws_host_resolver));
+    struct aws_host_resolver *resolver = aws_mem_calloc(allocator, 1, sizeof(struct aws_host_resolver));
     if (!resolver) {
         aws_dotnet_throw_exception(aws_last_error(), "Failed to allocate new aws_host_resolver");
         return NULL;
