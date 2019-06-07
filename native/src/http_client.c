@@ -67,7 +67,7 @@ struct aws_dotnet_http_connection *aws_dotnet_http_connection_new(
         aws_dotnet_throw_exception(aws_last_error(), "Unable to allocate new aws_dotnet_http_connection");
         return NULL;
     }
-    
+
     struct aws_http_client_connection_options options = AWS_HTTP_CLIENT_CONNECTION_OPTIONS_INIT;
     options.allocator = allocator;
     options.bootstrap = client_bootstrap;
