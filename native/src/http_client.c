@@ -62,12 +62,12 @@ struct aws_dotnet_http_connection *aws_dotnet_http_connection_new(
 
     struct aws_allocator *allocator = aws_dotnet_get_allocator();
     struct aws_dotnet_http_connection *connection =
-        aws_mem_acquire(allocator, sizeof(struct aws_dotnet_http_connection));
+        aws_mem_calloc(allocator, 1, sizeof(struct aws_dotnet_http_connection));
     if (!connection) {
         aws_dotnet_throw_exception(aws_last_error(), "Unable to allocate new aws_dotnet_http_connection");
         return NULL;
     }
-    AWS_ZERO_STRUCT(*connection);
+    
     struct aws_http_client_connection_options options = AWS_HTTP_CLIENT_CONNECTION_OPTIONS_INIT;
     options.allocator = allocator;
     options.bootstrap = client_bootstrap;
@@ -241,7 +241,7 @@ AWS_DOTNET_API struct aws_dotnet_http_stream *aws_dotnet_http_stream_new(
     options.on_response_body = s_stream_on_incoming_body;
     options.on_complete = s_stream_on_stream_complete;
 
-    struct aws_dotnet_http_stream *stream = aws_mem_acquire(allocator, sizeof(struct aws_dotnet_http_stream));
+    struct aws_dotnet_http_stream *stream = aws_mem_calloc(allocator, 1, sizeof(struct aws_dotnet_http_stream));
     if (!stream) {
         aws_dotnet_throw_exception(aws_last_error(), "Unable to allocate aws_dotnet_http_stream");
         goto error;

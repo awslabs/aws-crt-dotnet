@@ -142,12 +142,12 @@ void aws_dotnet_tls_ctx_destroy(struct aws_tls_ctx *tls) {
 
 struct aws_tls_ctx_options *s_tls_ctx_options_new(void) {
     struct aws_allocator *allocator = aws_dotnet_get_allocator();
-    struct aws_tls_ctx_options *options = aws_mem_acquire(allocator, sizeof(struct aws_tls_ctx_options));
+    struct aws_tls_ctx_options *options = aws_mem_calloc(allocator, 1, sizeof(struct aws_tls_ctx_options));
     if (!options) {
         aws_dotnet_throw_exception(aws_last_error(), "Failed to allocate new aws_tls_ctx_options");
         return NULL;
     }
-    AWS_ZERO_STRUCT(*options);
+    
     return options;
 }
 
@@ -360,7 +360,7 @@ struct aws_tls_connection_options *aws_dotnet_tls_connection_options_new(
     const char *alpn_list) {
 
     struct aws_allocator *allocator = aws_dotnet_get_allocator();
-    struct aws_tls_connection_options *options = aws_mem_acquire(allocator, sizeof(struct aws_tls_connection_options));
+    struct aws_tls_connection_options *options = aws_mem_calloc(allocator, 1, sizeof(struct aws_tls_connection_options));
     if (!options) {
         aws_dotnet_throw_exception(aws_last_error(), "Unable to allocate aws_tls_connection_options");
         return NULL;
