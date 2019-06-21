@@ -1,8 +1,14 @@
+
+sudo: true
+os: osx
+osx_image:
+  - xcode10.1
+
 language: csharp
 mono: none
 dotnet: 2.2.300
 script:
- - mkdir packages
- - dotnet restore
- - dotnet build
- - dotnet test tests -v normal
+  - mkdir packages
+  - dotnet restore
+  - dotnet build
+  - dotnet test tests -v normal
