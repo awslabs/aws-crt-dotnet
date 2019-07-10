@@ -12,6 +12,7 @@ if ! type -P dotnet &> /dev/null; then
     export PATH=$PATH:~/.dotnet
 fi
 
+mkdir packages
 dotnet build --configuration Release
 mkdir -p ../dist/x64
 cp -rv build/lib/libaws-crt-dotnet-x64.dylib ../dist/
