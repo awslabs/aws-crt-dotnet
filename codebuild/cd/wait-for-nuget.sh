@@ -2,7 +2,8 @@
 
 set -ex
 
-timeout=900 # 15 minute timeout
+timeout=1800 # 30 minute timeout
+interval=15 # 15 second wait between tries
 version=$1
 
 start=$(date +%s)
@@ -24,7 +25,7 @@ while true; do
         exit 1
     fi
 
-    sleep 15
+    sleep $interval
 done
 
 exit 0
