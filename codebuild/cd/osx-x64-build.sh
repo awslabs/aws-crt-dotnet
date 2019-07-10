@@ -14,5 +14,5 @@ fi
 
 mkdir packages
 dotnet build --configuration Release
-mkdir -p ../dist/x64
+mkdir -p ../dist
 cp -rv build/lib/libaws-crt-dotnet-x64.dylib ../dist/
