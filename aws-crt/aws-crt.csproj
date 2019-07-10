@@ -12,6 +12,7 @@
     <PackageOutputPath>$(ProjectDir)../packages</PackageOutputPath>
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <RestoreIgnoreFailedSource>true</RestoreIgnoreFailedSource>
 
     <PackageId>AWSCRT</PackageId>
     <Title>AWS CRT - AWS Common Runtime</Title>
