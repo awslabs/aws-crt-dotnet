@@ -140,3 +140,8 @@ find_package(aws-c-mqtt REQUIRED)
 find_package(aws-c-http REQUIRED)
 target_link_libraries(${CMAKE_PROJECT_NAME} AWS::aws-c-mqtt)
 target_link_libraries(${CMAKE_PROJECT_NAME} AWS::aws-c-http)
+
+if (UNIX AND NOT APPLE)
+    message(STATUS "Linking libcrypto: ${LibCrypto_STATIC_LIBRARY}")
+    target_link_libraries(${CMAKE_PROJECT_NAME} ${LibCrypto_STATIC_LIBRARY})
+endif()
