@@ -1,0 +1,23 @@
+{
+    "name": "aws-crt-dotnet",
+    "build_steps": [
+        "dotnet build -v normal"
+    ],
+    "test_steps": [
+        "dotnet test tests -v normal"
+    ],
+    "imports": [
+        "dotnetcore21"
+    ],
+    "targets": {
+        "linux": {
+            "architectures": {
+                "x64": {
+                    "build_env": {
+                        "AWS_DOTNET_RUNTIME" : "linux-x64"
+                    }
+                }
+            }
+        }
+    }
+}
