@@ -40,6 +40,10 @@
     <PackageReference Include="Microsoft.CSharp" Version="4.5.0" />
   </ItemGroup>
 
+  <Target Name="MakeLocalPackageSource" BeforeTargets="Restore;CollectPackageReferences">
+    <MakeDir Directories="$(SolutionDir)/packages" />
+  </Target>
+
   <Target Name="BuildNativeLibrary" 
     Condition="$(BuildNativeLibrary) == 'true'"
     BeforeTargets="PrepareForBuild">
