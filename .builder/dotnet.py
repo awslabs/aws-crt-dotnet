@@ -26,7 +26,7 @@ URLs = {
 
 class DotNet(Import):
     def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+        super().__init__(config={}, **kwargs)
         self.path = None
         self.installed = False
         self.channel = 'LTS'
