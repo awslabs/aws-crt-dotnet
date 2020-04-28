@@ -47,6 +47,7 @@ class DotNet(Import):
                 'Target OS {} does not have dotnet support'.format(env.spec.target))
 
         install_dir = os.path.join(env.deps_dir, self.name)
+        sh.mkdir(install_dir)
         self.path = str(Path(install_dir).relative_to(env.source_dir))
         script = script_url[script_url.rfind('/')+1:]
         script = os.path.join(install_dir, script)
