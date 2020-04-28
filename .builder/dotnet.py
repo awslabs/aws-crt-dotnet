@@ -50,6 +50,11 @@ class DotNet(Import):
         self.path = str(Path(install_dir).relative_to(env.source_dir))
         script = script_url[script_url.rfind('/')+1:]
         script = os.path.join(install_dir, script)
+
+        print('install_dir={}'.format(install_dir))
+        print('script_url={}'.format(script_url))
+        print('script={}'.format(script))
+
         fetch_script(script_url, script)
 
         arch = env.spec.arch
