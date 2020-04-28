@@ -45,8 +45,9 @@ class DotNet(Import):
             raise EnvironmentError(
                 'Target OS {} does not have dotnet support'.format(env.spec.target))
 
-        script = os.path.basename(urllib.parse.urlparse(script_url).path)
-        script = os.path.join(env.install_dir, script)
+        install_dir = os.path.join(env.deps_dir, self.name)
+        script = script_url[script_url.rfind('/')+1:]
+        script = os.path.join(install_dir, script)
         fetch_script(script_url, script)
 
         arch = env.spec.arch
