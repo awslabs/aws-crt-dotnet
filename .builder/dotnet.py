@@ -15,6 +15,7 @@
 from fetch import fetch_script
 from project import Import
 
+from pathlib import Path
 import os
 import urllib.parse
 
@@ -46,19 +47,23 @@ class DotNet(Import):
                 'Target OS {} does not have dotnet support'.format(env.spec.target))
 
         install_dir = os.path.join(env.deps_dir, self.name)
+        self.path = str(Path(install_dir).relative_to(env.source_dir))
         script = script_url[script_url.rfind('/')+1:]
         script = os.path.join(install_dir, script)
         fetch_script(script_url, script)
 
         arch = env.spec.arch
         if env.spec.target == 'windows':
-            command = '{} -Channel {} -Architecture {}'.format(
-                script, self.channel, arch).split(' ')
+            command = '{} -Channel {} -Architecture {} -InstallDir {}'.format(
+                script, self.channel, arch, install_dir).split(' ')
         else:
-            command = '{} --channel {} --architecture {}'.format(
-                script, self.channel, arch).split(' ')
+            command = '{} --channel {} --architecture {} --install-dir {}'.format(
+                script, self.channel, arch, install_dir).split(' ')
 
+        # Run installer
         sh.exec(command, check=True)
+        # Add to PATH
+        sh.setenv('PATH', '{}:{}'.format(sh.getenv('PATH'), install_dir))
         self.installed = True
 
 
