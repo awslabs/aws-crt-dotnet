@@ -16,6 +16,7 @@ from fetch import fetch_script
 from project import Import
 
 import os
+import urllib.parse
 
 URLs = {
     'linux': 'https://dot.net/v1/dotnet-install.sh',
@@ -44,16 +45,17 @@ class DotNet(Import):
             raise EnvironmentError(
                 'Target OS {} does not have dotnet support'.format(env.spec.target))
 
-        script = os.path.basename(script_url)
+        script = os.path.basename(urllib.parse.urlparse(script_url).path)
+        script = os.path.join(env.install_dir, script)
         fetch_script(script_url, script)
 
         arch = env.spec.arch
         if env.spec.target == 'windows':
             command = '{} -Channel {} -Architecture {}'.format(
-                script, channel, arch)
+                script, self.channel, arch).split(' ')
         else:
             command = '{} --channel {} --architecture {}'.format(
-                script, channel, arch)
+                script, self.channel, arch).split(' ')
 
         sh.exec(command, check=True)
         self.installed = True
