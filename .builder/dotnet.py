@@ -12,7 +12,7 @@
 # express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
 
-from fetch import fetch_script, mirror_package
+from fetch import fetch_script
 from project import Import
 
 import os
