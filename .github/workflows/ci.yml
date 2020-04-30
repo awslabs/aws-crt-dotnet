@@ -67,7 +67,7 @@ jobs:
 #         chmod a+x builder
 #         ./builder build -p ${{ env.PACKAGE_NAME }} --build-dir=ci-build --target=linux-${{ matrix.arch }} --spec=downstream
 
-  windows-vc15:
+  windows-vc16:
     runs-on: windows-latest
     strategy:
       matrix:
@@ -75,7 +75,6 @@ jobs:
     steps:
     - uses: ilammy/msvc-dev-cmd@v1
       with:
-        #toolset: 15.0
         arch: ${{ matrix.arch }}
         uwp: false
         spectre: true
