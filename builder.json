@@ -9,6 +9,15 @@
     "imports": [
         "dotnetcore21"
     ],
+    "hosts": {
+        "al2": {
+            "packages": [
+                "libicu",
+                "zlib",
+                "libcurl"
+            ]
+        }
+    },
     "targets": {
         "linux": {
             "architectures": {
@@ -18,9 +27,6 @@
                     }
                 }
             }
-        },
-        "al2": {
-            "packages": ["libicu", "lttng-ust"]
         }
     }
 }
