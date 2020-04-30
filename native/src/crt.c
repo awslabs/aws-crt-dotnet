@@ -15,11 +15,7 @@
 #include "crt.h"
 #include "exports.h"
 
-#include <aws/common/error.h>
 #include <aws/http/http.h>
-#include <aws/io/io.h>
-#include <aws/io/tls_channel_handler.h>
-#include <aws/mqtt/mqtt.h>
 
 #include <stdarg.h>
 #include <stdio.h>
@@ -52,22 +48,13 @@ void aws_dotnet_throw_exception(int error_code, const char *message, ...) {
 
 AWS_DOTNET_API
 void aws_dotnet_static_init(void) {
-    aws_load_error_strings();
-    aws_io_load_error_strings();
-
     struct aws_allocator *allocator = aws_dotnet_get_allocator();
-    aws_tls_init_static_state(allocator);
-
-    aws_mqtt_library_init(allocator);
     aws_http_library_init(allocator);
 }
 
 AWS_DOTNET_API
 void aws_dotnet_static_shutdown(void) {
     aws_http_library_clean_up();
-    aws_mqtt_library_clean_up();
-
-    aws_tls_clean_up_static_state();
 }
 
 AWS_DOTNET_API
