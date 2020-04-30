@@ -41,6 +41,13 @@ class DotNet(Import):
             return
 
         sh = env.shell
+
+        dotnet_path = sh.where('dotnet')
+        if dotnet_path:
+            self.path = dotnet_path
+            self.installed = True
+            return
+
         script_url = URLs.get(env.spec.target, None)
         if not script_url:
             raise EnvironmentError(
