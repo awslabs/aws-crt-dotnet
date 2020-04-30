@@ -22,12 +22,16 @@
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <PackageTags>AWS,native,Amazon</PackageTags>
     <RepositoryUrl>https://github.com/awslabs/aws-crt-dotnet.git</RepositoryUrl>
-    <Copyright>Amazon Web Services, 2019</Copyright>
+    <Copyright>Amazon Web Services</Copyright>
     <Description>AWS Common Runtime bindings for .NET</Description>
 
-    <CMakeGenerator Condition="$(CMakeGenerator) == '' AND $(OS) == 'Windows_NT' AND $(PlatformTarget) == 'x64'">Visual Studio 15 2017 Win64</CMakeGenerator>
-    <CMakeGenerator Condition="$(CMakeGenerator) == '' AND $(OS) == 'Windows_NT' AND $(PlatformTarget) == 'x86'">Visual Studio 15 2017</CMakeGenerator>
+    <CMakeGenerator Condition="$(CMakeGenerator) == '' AND $(OS) == 'Windows_NT' AND $(PlatformTarget) == 'x64' AND $(ToolsVersion) == '14.0'">Visual Studio 14 2015 Win64</CMakeGenerator>
+    <CMakeGenerator Condition="$(CMakeGenerator) == '' AND $(OS) == 'Windows_NT' AND $(PlatformTarget) == 'x64' AND $(ToolsVersion) == '15.0'">Visual Studio 15 2017 Win64</CMakeGenerator>
+    <CMakeGenerator Condition="$(CMakeGenerator) == '' AND $(OS) == 'Windows_NT' AND $(PlatformTarget) == 'x64' AND $(ToolsVersion) == '16.0'">Visual Studio 16 2019</CMakeGenerator>
+    <CMakeGenerator Condition="$(CMakeGenerator) == '' AND $(OS) == 'Windows_NT' AND $(PlatformTarget) == 'x86' AND $(ToolsVersion) == '14.0'">Visual Studio 14 2015</CMakeGenerator>
+    <CMakeGenerator Condition="$(CMakeGenerator) == '' AND $(OS) == 'Windows_NT' AND $(PlatformTarget) == 'x86' AND $(ToolsVersion) == '15.0'">Visual Studio 15 2017</CMakeGenerator>
     <CMakeGenerator Condition="$(CMakeGenerator) == '' AND $(OS) == 'Unix'">Unix Makefiles</CMakeGenerator>
+    <CMakeArch Condition="$(CMakeGenerator) == 'Visual Studio 16 2019'">-A x64</CMakeArch>
     <CMakeBinaries Condition="$(OS) == 'Windows_NT' AND $(CODEBUILD_SRC_DIR) != ''">c:/build-$(MSBuildProjectName)</CMakeBinaries>
     <CMakeBinaries Condition="$(OS) == 'Windows_NT' AND $(CODEBUILD_SRC_DIR) == ''">$(ProjectDir)../build</CMakeBinaries>
     <CMakeBinaries Condition="$(OS) != 'Windows_NT'">$(ProjectDir)../build</CMakeBinaries>
@@ -49,7 +53,7 @@
     BeforeTargets="PrepareForBuild">
     <MakeDir Directories="$(CMakeBinaries)" />
     <Message Text="Configuring CMake project" Importance="high"/>
-    <Exec Command="cmake -G&quot;$(CMakeGenerator)&quot; -DCMAKE_BUILD_TYPE=$(CMakeConfig) -DCMAKE_EXPORT_COMPILE_COMMANDS=ON $(ProjectDir)../native" 
+    <Exec Command="cmake -G&quot;$(CMakeGenerator)&quot; -DCMAKE_BUILD_TYPE=$(CMakeConfig) -DCMAKE_EXPORT_COMPILE_COMMANDS=ON $(CMakeArch) $(ProjectDir)../native" 
       WorkingDirectory="$(CMakeBinaries)" 
       ConsoleToMSBuild="true">
       <Output TaskParameter="ConsoleOutput" PropertyName="OutputOfExec" />
