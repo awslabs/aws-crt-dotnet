@@ -1,14 +1,17 @@
 {
     "name": "aws-crt-dotnet",
     "build_steps": [
-        "dotnet build -v normal"
+        "dotnet build -v normal -p:PlatformTarget={platform_target}"
     ],
     "test_steps": [
-        "dotnet test tests -v normal"
+        "dotnet test tests -v normal -p:PlatformTarget={platform_target}"
     ],
     "imports": [
         "dotnetcore21"
     ],
+    "variables": {
+        "platform_target": "x64"
+    },
     "hosts": {
         "al2": {
             "packages": [
@@ -24,6 +27,20 @@
                 "x64": {
                     "build_env": {
                         "AWS_DOTNET_RUNTIME" : "linux-x64"
+                    }
+                }
+            }
+        },
+        "windows": {
+            "architectures": {
+                "x86": {
+                    "variables": {
+                        "platform_target": "x86"
+                    }
+                },
+                "x64": {
+                    "variables": {
+                        "platform_target": "x64"
                     }
                 }
             }
