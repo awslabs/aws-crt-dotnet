@@ -25,11 +25,11 @@
     <Copyright>Amazon Web Services</Copyright>
     <Description>AWS Common Runtime bindings for .NET</Description>
 
-    <CMakeGenerator Condition="$(CMakeGenerator) == '' AND $(OS) == 'Windows_NT' AND $(PlatformTarget) == 'x64' AND $(ToolsVersion) == '14.0'">Visual Studio 14 2015 Win64</CMakeGenerator>
-    <CMakeGenerator Condition="$(CMakeGenerator) == '' AND $(OS) == 'Windows_NT' AND $(PlatformTarget) == 'x64' AND $(ToolsVersion) == '15.0'">Visual Studio 15 2017 Win64</CMakeGenerator>
-    <CMakeGenerator Condition="$(CMakeGenerator) == '' AND $(OS) == 'Windows_NT' AND $(PlatformTarget) == 'x64' AND $(ToolsVersion) == '16.0'">Visual Studio 16 2019</CMakeGenerator>
-    <CMakeGenerator Condition="$(CMakeGenerator) == '' AND $(OS) == 'Windows_NT' AND $(PlatformTarget) == 'x86' AND $(ToolsVersion) == '14.0'">Visual Studio 14 2015</CMakeGenerator>
-    <CMakeGenerator Condition="$(CMakeGenerator) == '' AND $(OS) == 'Windows_NT' AND $(PlatformTarget) == 'x86' AND $(ToolsVersion) == '15.0'">Visual Studio 15 2017</CMakeGenerator>
+    <CMakeGenerator Condition="$(CMakeGenerator) == '' AND $(OS) == 'Windows_NT' AND $(PlatformTarget) == 'x64' AND $(VisualStudioVersion) == '14.0'">Visual Studio 14 2015 Win64</CMakeGenerator>
+    <CMakeGenerator Condition="$(CMakeGenerator) == '' AND $(OS) == 'Windows_NT' AND $(PlatformTarget) == 'x64' AND $(VisualStudioVersion) == '15.0'">Visual Studio 15 2017 Win64</CMakeGenerator>
+    <CMakeGenerator Condition="$(CMakeGenerator) == '' AND $(OS) == 'Windows_NT' AND $(PlatformTarget) == 'x64' AND $(VisualStudioVersion) == '16.0'">Visual Studio 16 2019</CMakeGenerator>
+    <CMakeGenerator Condition="$(CMakeGenerator) == '' AND $(OS) == 'Windows_NT' AND $(PlatformTarget) == 'x86' AND $(VisualStudioVersion) == '14.0'">Visual Studio 14 2015</CMakeGenerator>
+    <CMakeGenerator Condition="$(CMakeGenerator) == '' AND $(OS) == 'Windows_NT' AND $(PlatformTarget) == 'x86' AND $(VisualStudioVersion) == '15.0'">Visual Studio 15 2017</CMakeGenerator>
     <CMakeGenerator Condition="$(CMakeGenerator) == '' AND $(OS) == 'Unix'">Unix Makefiles</CMakeGenerator>
     <CMakeArch Condition="$(CMakeGenerator) == 'Visual Studio 16 2019'">-A x64</CMakeArch>
     <CMakeBinaries Condition="$(OS) == 'Windows_NT' AND $(CODEBUILD_SRC_DIR) != ''">c:/build-$(MSBuildProjectName)</CMakeBinaries>
