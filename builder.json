@@ -18,6 +18,9 @@
                     }
                 }
             }
+        },
+        "al2": {
+            "packages": ["libicu", "lttng-ust"]
         }
     }
 }
