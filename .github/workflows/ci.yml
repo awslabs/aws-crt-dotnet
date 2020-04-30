@@ -7,8 +7,8 @@ on:
       - '!master'
 
 env:
-  BUILDER_VERSION: dotnet
-  BUILDER_SOURCE: channels
+  BUILDER_VERSION: v0.6.2
+  BUILDER_SOURCE: releases
   BUILDER_HOST: https://d19elf31gohf1l.cloudfront.net
   PACKAGE_NAME: aws-crt-dotnet
   LINUX_BASE_IMAGE: ubuntu-16-x64
