@@ -49,12 +49,12 @@ void aws_dotnet_throw_exception(int error_code, const char *message, ...) {
 AWS_DOTNET_API
 void aws_dotnet_static_init(void) {
     struct aws_allocator *allocator = aws_dotnet_get_allocator();
-    aws_http_library_init(allocator);
+    (void)allocator;
 }
 
 AWS_DOTNET_API
 void aws_dotnet_static_shutdown(void) {
-    aws_http_library_clean_up();
+    
 }
 
 AWS_DOTNET_API

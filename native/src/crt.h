@@ -16,6 +16,7 @@
 #include <aws/common/common.h>
 
 /* Win32 .NET callbacks are __stdcall, everything else is __cdecl */
+/* DOTNET_CALL should be on every function pointer that points into a .NET callback */
 #if defined(_MSC_VER) && !defined(_WIN64)
 #    define DOTNET_CALL __stdcall
 #else
