@@ -16,6 +16,7 @@
 #include "exports.h"
 
 #include <aws/io/tls_channel_handler.h>
+#include <aws/common/string.h>
 
 bool s_tls_args_to_options(
     struct aws_tls_ctx_options *options,
