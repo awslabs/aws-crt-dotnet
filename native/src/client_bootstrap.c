@@ -18,6 +18,10 @@
 
 #include <aws/io/channel_bootstrap.h>
 
+#if defined(_MSC_VER)
+#    pragma warning(disable : 4204)
+#endif /* _MSC_VER */
+
 AWS_DOTNET_API
 struct aws_client_bootstrap *aws_dotnet_client_bootstrap_new(
     struct aws_event_loop_group *elg,

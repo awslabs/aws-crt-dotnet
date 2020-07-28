@@ -43,6 +43,4 @@ AWS_DOTNET_API void aws_dotnet_logger_enable(int level, const char *filename) {
     }
 
     aws_logger_set(&s_logger);
-
-    aws_io_load_log_subject_strings();
 }
