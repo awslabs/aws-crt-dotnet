@@ -53,9 +53,7 @@ void aws_dotnet_static_init(void) {
 }
 
 AWS_DOTNET_API
-void aws_dotnet_static_shutdown(void) {
-    
-}
+void aws_dotnet_static_shutdown(void) {}
 
 AWS_DOTNET_API
 int aws_test_exception(int a, int b) {

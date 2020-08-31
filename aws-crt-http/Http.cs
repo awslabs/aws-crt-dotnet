@@ -17,7 +17,7 @@ using System.Collections.Specialized;
 using System.Runtime.InteropServices;
 using System.Security;
 
-using Aws.Crt.IO;
+using Aws.Crt;
 
 namespace Aws.Crt.Http
 {

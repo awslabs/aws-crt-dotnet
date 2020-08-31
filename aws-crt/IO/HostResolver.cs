@@ -42,11 +42,8 @@ namespace Aws.Crt.IO
 
         internal Handle NativeHandle { get; private set; }
 
-        private EventLoopGroup eventLoopGroup;
-
-        internal HostResolver(EventLoopGroup eventLoopGroup, Handle handle) 
+        internal HostResolver(Handle handle) 
         {
-            this.eventLoopGroup = eventLoopGroup;
             this.NativeHandle = handle;
         }
     }
@@ -54,7 +51,7 @@ namespace Aws.Crt.IO
     public sealed class DefaultHostResolver : HostResolver
     {
         public DefaultHostResolver(EventLoopGroup eventLoopGroup, int maxHosts=64)
-            : base(eventLoopGroup, API.make_new_default(eventLoopGroup.NativeHandle.DangerousGetHandle(), maxHosts))
+            : base(API.make_new_default(eventLoopGroup.NativeHandle.DangerousGetHandle(), maxHosts))
         {
         }
     }

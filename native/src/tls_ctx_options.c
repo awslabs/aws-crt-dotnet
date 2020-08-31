@@ -15,8 +15,8 @@
 #include "crt.h"
 #include "exports.h"
 
-#include <aws/io/tls_channel_handler.h>
 #include <aws/common/string.h>
+#include <aws/io/tls_channel_handler.h>
 
 bool s_tls_args_to_options(
     struct aws_tls_ctx_options *options,
@@ -134,11 +134,7 @@ struct aws_tls_ctx *aws_dotnet_tls_ctx_new_server(
 
 AWS_DOTNET_API
 void aws_dotnet_tls_ctx_destroy(struct aws_tls_ctx *tls) {
-    if (tls == NULL) {
-        return;
-    }
-
-    aws_tls_ctx_destroy(tls);
+    aws_tls_ctx_release(tls);
 }
 
 struct aws_tls_ctx_options *s_tls_ctx_options_new(void) {

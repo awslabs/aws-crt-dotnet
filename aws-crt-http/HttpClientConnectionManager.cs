@@ -20,6 +20,7 @@ using System.Runtime.InteropServices;
 using System.Security;
 using System.Threading.Tasks;
 
+using Aws.Crt;
 using Aws.Crt.IO;
 
 namespace Aws.Crt.Http
@@ -30,7 +31,7 @@ namespace Aws.Crt.Http
         public String Host;
         public UInt16 Port;
         public Int32 MaxConnections;
-        public UInt32 InitialWindowSize;
+        public UInt64 InitialWindowSize;
         public SocketOptions SocketOptions;
         public TlsConnectionOptions TlsConnectionOptions;
         // TODO: Proxy support
