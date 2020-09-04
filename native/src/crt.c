@@ -118,10 +118,10 @@ static void s_initialize_native_logging(void) {
 
         if (log_level != AWS_LL_NONE) {
             struct aws_logger_standard_options log_options = {
-                .level = log_level, 
+                .level = log_level,
                 .filename = (const char *)log_file_name_value->bytes,
             };
-            
+
             s_aws_init_logging_internal(&log_options);
         }
     }
@@ -142,9 +142,7 @@ void aws_dotnet_static_init(void) {
 }
 
 AWS_DOTNET_API
-void aws_dotnet_static_shutdown(void) {
-
-}
+void aws_dotnet_static_shutdown(void) {}
 
 AWS_DOTNET_API
 int aws_test_exception(int a, int b) {
