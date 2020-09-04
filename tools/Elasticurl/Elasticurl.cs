@@ -88,8 +88,8 @@ namespace Aws.Crt.Elasticurl
                     }
                 }
                 args = expandedArgs.ToArray();
-                // skip last arg, it should be the URI
-                for (int argIdx = 0; argIdx < args.Length - 1; ++argIdx)
+                string uri = "";
+                for (int argIdx = 0; argIdx < args.Length; ++argIdx)
                 {
                     string arg = args[argIdx];
                     switch (arg)
@@ -181,13 +181,18 @@ namespace Aws.Crt.Elasticurl
                             }
                             break;
                         default:
-                            ShowHelp();
-                            Environment.Exit(0);
-                            return;
+                            if (argIdx < args.Length - 1) {
+                                ShowHelp();
+                                Environment.Exit(0);
+                                return;
+                            } else {
+                                uri = arg;
+                            }
+                            break;
                     }
                 }
 
-                ctx.Uri = new Uri(args[args.Length - 1]);
+                ctx.Uri = new Uri(uri);
             }
             catch (IndexOutOfRangeException)
             {
@@ -358,15 +363,18 @@ namespace Aws.Crt.Elasticurl
             var headers = new List<HttpHeader>();
             headers.Add(new HttpHeader("Host", ctx.Uri.Host));
 
-            HttpRequestOptions options = new HttpRequestOptions();
-            options.Method = ctx.Verb;
-            options.Uri = ctx.Uri.PathAndQuery;
-            options.Headers = headers.ToArray();
-            options.IncomingHeaders += OnIncomingHeaders;
-            options.IncomingBody += OnIncomingBody;
-            options.StreamOutgoingBody += StreamOutgoingBody;
-            options.StreamComplete += OnStreamComplete;
-            return connection.MakeRequest(options);
+            HttpRequest request = new HttpRequest();
+            request.Method = ctx.Verb;
+            request.Uri = ctx.Uri.PathAndQuery;
+            request.Headers = headers.ToArray();
+            request.StreamOutgoingBody += StreamOutgoingBody;
+            
+            HttpResponseStreamHandler responseHandler = new HttpResponseStreamHandler();
+            responseHandler.IncomingHeaders += OnIncomingHeaders;
+            responseHandler.IncomingBody += OnIncomingBody;
+            responseHandler.StreamComplete += OnStreamComplete;
+
+            return connection.MakeRequest(request, responseHandler);
         }
 
         private static Context ctx = new Context();

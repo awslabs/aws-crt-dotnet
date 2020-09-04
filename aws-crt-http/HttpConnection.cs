@@ -199,12 +199,13 @@ namespace Aws.Crt.Http
             internal delegate void OnIncomingHeadersNative(
                                     Int32 responseCode,
                                     [MarshalAs(UnmanagedType.I4)] HeaderBlock headerBlock,
-                                    [In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex=2)] HttpHeader[] headers, 
+                                    [In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex=3)] HttpHeader[] headers, 
                                     UInt32 count);
             internal delegate void OnIncomingHeaderBlockDoneNative(
                                     [MarshalAs(UnmanagedType.I4)] HeaderBlock headerBlock);
             internal delegate void OnIncomingBodyNative(
-                                    [In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex=1)] byte[] buffer);
+                                    [In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex=1)] byte[] buffer,
+                                    UInt64 size);
             internal delegate void OnStreamCompleteNative(int errorCode);
 
             private static LibraryHandle library = new LibraryHandle();
@@ -298,7 +299,7 @@ namespace Aws.Crt.Http
                 responseHandler.OnIncomingHeadersDone(this, block);
             };
 
-            onIncomingBody = (byte[] data) =>
+            onIncomingBody = (byte[] data, ulong size) =>
             {
                 responseHandler.OnIncomingBody(this, data);
             };
@@ -485,6 +486,8 @@ namespace Aws.Crt.Http
 
             bootstrap.Stream = new HttpClientStream(this, request, responseHandler);
             streams.Add(bootstrap.Stream);
+            bootstrap.Stream.Activate();
+            
             return bootstrap.TaskSource.Task;
         }
 

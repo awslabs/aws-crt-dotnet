@@ -198,7 +198,7 @@ static int s_stream_on_incoming_body(struct aws_http_stream *s, const struct aws
     (void)s;
     struct aws_dotnet_http_stream *stream = user_data;
     if (stream->on_incoming_body) {
-        stream->on_incoming_body(data->ptr, data->len);
+        stream->on_incoming_body(data->ptr, (uint64_t)data->len);
     }
 
     return AWS_OP_SUCCESS;
@@ -386,6 +386,16 @@ AWS_DOTNET_API struct aws_dotnet_http_stream *aws_dotnet_http_stream_new(
 
     if (on_stream_complete == NULL) {
         aws_dotnet_throw_exception(AWS_ERROR_INVALID_ARGUMENT, "on_stream_complete must be provided");
+        return NULL;
+    }
+
+    if (connection == NULL) {
+        aws_dotnet_throw_exception(AWS_ERROR_INVALID_ARGUMENT, "connection must be valid");
+        return NULL;
+    }
+
+    if (connection->connection == NULL) {
+        aws_dotnet_throw_exception(AWS_ERROR_INVALID_ARGUMENT, "crt connection must be non-null");
         return NULL;
     }
 

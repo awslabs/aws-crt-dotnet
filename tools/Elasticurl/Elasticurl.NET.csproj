@@ -5,6 +5,12 @@
     <TargetFramework>netcoreapp2.0</TargetFramework>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <PlatformTarget Condition="$(PlatformTarget) == ''">x64</PlatformTarget>
+    <OutputType>Exe</OutputType>
+  </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="AWSCRT-HTTP" Version="1.0.0-dev" />
   </ItemGroup>
