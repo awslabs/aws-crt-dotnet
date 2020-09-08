@@ -44,6 +44,7 @@ list(APPEND CMAKE_MODULE_PATH ${AWS_MODULE_PATH})
 
 if (BUILD_DEPS)
     list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/../aws-common-runtime/aws-c-common/cmake")
+    message(STATUS "CMAKE_MODULE_PATH = ${CMAKE_MODULE_PATH}")
     include(AwsFindPackage)
 
     set(IN_SOURCE_BUILD ON)
