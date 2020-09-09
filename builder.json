@@ -23,11 +23,19 @@
     },
     "targets": {
         "linux": {
+            "imports": [
+                "s2n"
+            ],
             "architectures": {
                 "x64": {
                     "build_env": {
                         "AWS_DOTNET_RUNTIME" : "linux-x64"
-                    }
+                    },
+                    "!cmake_args": [
+                        "-DLibCrypto_INCLUDE_DIR=${libcrypto_path}/include",
+                        "-DLibCrypto_SHARED_LIBRARY=${libcrypto_path}/lib/libcrypto.so",
+                        "-DLibCrypto_STATIC_LIBRARY=${libcrypto_path}/lib/libcrypto.a"
+                    ]
                 }
             }
         },
