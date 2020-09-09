@@ -1,7 +1,7 @@
 {
     "name": "aws-crt-dotnet",
     "build_steps": [
-        "dotnet build -v normal -p:PlatformTarget={platform_target}"
+        "dotnet build -v normal -p:PlatformTarget={platform_target} {dotnet_args}"
     ],
     "test_steps": [
         "dotnet test tests -v normal -p:PlatformTarget={platform_target}"
@@ -23,10 +23,16 @@
     },
     "targets": {
         "linux": {
+            "imports": [
+                "s2n"
+            ],
+            "variables": {
+                "dotnet_args": "-p:LibCryptoPath={libcrypto_path}"
+            },
             "architectures": {
                 "x64": {
                     "build_env": {
-                        "AWS_DOTNET_RUNTIME" : "linux-x64"
+                        "AWS_DOTNET_RUNTIME": "linux-x64"
                     }
                 }
             }
