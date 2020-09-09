@@ -28,7 +28,7 @@
                 "s2n"
             ],
             "variables": {
-                "dotnet_args": "-p:LibCryptoPath={libcrypto_path}"
+                "dotnet_args": "-p:LibCryptoPath={source_dir}/{libcrypto_path}"
             },
             "architectures": {
                 "x64": {
