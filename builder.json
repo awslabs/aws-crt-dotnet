@@ -10,7 +10,8 @@
         "dotnetcore21"
     ],
     "variables": {
-        "platform_target": "x64"
+        "platform_target": "x64",
+        "dotnet_args": ""
     },
     "hosts": {
         "al2": {
