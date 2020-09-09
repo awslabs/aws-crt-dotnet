@@ -21,6 +21,7 @@
 
   <ItemGroup>
     <PackageReference Include="AWSCRT-HTTP" Version="1.0.0-dev" />
+    <PackageReference Include="AWSCRT-AUTH" Version="1.0.0-dev" />
   </ItemGroup>
 
 </Project>

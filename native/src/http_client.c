@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0.
  */
 
+#include "http_client.h"
 #include "crt.h"
 #include "exports.h"
 
@@ -93,11 +94,6 @@ void aws_dotnet_http_connection_destroy(struct aws_dotnet_http_connection *conne
     struct aws_allocator *allocator = aws_dotnet_get_allocator();
     aws_mem_release(allocator, connection);
 }
-
-struct aws_dotnet_http_header {
-    const char *name;
-    const char *value;
-};
 
 typedef int(aws_dotnet_http_stream_outgoing_body_fn)(uint8_t *buffer, uint64_t buffer_size, uint64_t *bytes_written);
 typedef void(aws_dotnet_http_on_incoming_headers_fn)(
