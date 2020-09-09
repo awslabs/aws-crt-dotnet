@@ -15,7 +15,7 @@
 	url = https://github.com/awslabs/s2n
 [submodule "aws-common-runtime/aws-c-cal"]
 	path = aws-common-runtime/aws-c-cal
-	url = git@github.com:awslabs/aws-c-cal.git
+	url = https://github.com/awslabs/aws-c-cal
 [submodule "aws-common-runtime/aws-c-auth"]
 	path = aws-common-runtime/aws-c-auth
-	url = git@github.com:awslabs/aws-c-auth.git
+	url = https://github.com/awslabs/aws-c-auth
