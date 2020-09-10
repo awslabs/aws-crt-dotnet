@@ -5,18 +5,31 @@
 #include "crt.h"
 #include "exports.h"
 
-#include <aws/common/error.h>
+#include <aws/common/environment.h>
+#include <aws/common/string.h>
 #include <aws/http/http.h>
-#include <aws/io/io.h>
-#include <aws/io/tls_channel_handler.h>
-#include <aws/mqtt/mqtt.h>
 
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 
-struct aws_allocator *aws_dotnet_get_allocator() {
+static int s_memory_tracing = 0;
+
+static struct aws_allocator *s_init_allocator(void) {
+    if (s_memory_tracing) {
+        struct aws_allocator *allocator = aws_default_allocator();
+        allocator = aws_mem_tracer_new(allocator, NULL, (enum aws_mem_trace_level)s_memory_tracing, 8);
+        return allocator;
+    }
     return aws_default_allocator();
+}
+
+static struct aws_allocator *s_allocator = NULL;
+struct aws_allocator *aws_dotnet_get_allocator() {
+    if (AWS_UNLIKELY(s_allocator == NULL)) {
+        s_allocator = s_init_allocator();
+    }
+    return s_allocator;
 }
 
 typedef void(DOTNET_CALL *dotnet_exception_callback)(int, const char *, const char *);
@@ -40,25 +53,33 @@ void aws_dotnet_throw_exception(int error_code, const char *message, ...) {
     s_throw_exception(error_code, aws_error_name(error_code), exception);
 }
 
+AWS_STATIC_STRING_FROM_LITERAL(s_debug_wait_environment_variable_name, "AWS_CRT_DEBUG_WAIT");
+
+static void s_debug_wait(void) {
+    struct aws_allocator *allocator = aws_dotnet_get_allocator();
+    struct aws_string *wait_value = NULL;
+    aws_get_environment_value(allocator, s_debug_wait_environment_variable_name, &wait_value);
+    if (wait_value != NULL && wait_value->len > 0) {
+        bool done = false;
+        while (!done) {
+            ;
+        }
+    }
+
+    aws_string_destroy(wait_value);
+}
+
 AWS_DOTNET_API
 void aws_dotnet_static_init(void) {
-    aws_load_error_strings();
-    aws_io_load_error_strings();
-
     struct aws_allocator *allocator = aws_dotnet_get_allocator();
-    aws_tls_init_static_state(allocator);
 
-    aws_mqtt_library_init(allocator);
+    s_debug_wait();
+
     aws_http_library_init(allocator);
 }
 
 AWS_DOTNET_API
-void aws_dotnet_static_shutdown(void) {
-    aws_http_library_clean_up();
-    aws_mqtt_library_clean_up();
-
-    aws_tls_clean_up_static_state();
-}
+void aws_dotnet_static_shutdown(void) {}
 
 AWS_DOTNET_API
 int aws_test_exception(int a, int b) {
