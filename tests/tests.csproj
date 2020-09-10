@@ -1,14 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netcoreapp2.0</TargetFramework>
+    <TargetFrameworks>netcoreapp2.0;netcoreapp3.1</TargetFrameworks
     <PlatformTarget Condition="$(PlatformTarget) == '' AND $(OS) == 'Windows_NT' AND ($(CMakeGenerator) == 'Visual Studio 14 2015' OR $(CMakeGenerator) == 'Visual Studio 15 2017')">x86</PlatformTarget>
-    <PlatformTarget Condition="$(PlatformTarget) == ''">x64</PlatformTarget>
-    <IsPackable>false</IsPackable>
-  </PropertyGroup>
-
-  <PropertyGroup>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
     <PlatformTarget Condition="$(PlatformTarget) == ''">x64</PlatformTarget>
     <IsPackable>false</IsPackable>
   </PropertyGroup>
