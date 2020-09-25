@@ -145,6 +145,13 @@ namespace Aws.Crt.Auth
 
         internal static class API
         {
+            internal delegate void OnSigningComplete(
+                UInt64 id, 
+                Int32 error_code, 
+                [MarshalAs(UnmanagedType.LPStr)] string uri, 
+                [In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex=3)] HttpHeader[] headers, 
+                UInt32 count);
+
             internal delegate void aws_dotnet_auth_sign_request(
                                     [MarshalAs(UnmanagedType.LPStr)] string method,
                                     [MarshalAs(UnmanagedType.LPStr)] string uri,
@@ -152,9 +159,11 @@ namespace Aws.Crt.Auth
                                     UInt32 header_count,
                                     [In] AwsSigningConfigNative signing_config,
                                     UInt64 future_id,
-                                    ?? completion_callback_delegate);
+                                    OnSigningComplete completion_callback_delegate);
 
             public static aws_dotnet_auth_sign_request sign_request = NativeAPI.Bind<aws_dotnet_auth_sign_request>();
+
+            public static OnSigningComplete on_signing_complete = AwsSigner.OnSigningComplete;
 
             private static LibraryHandle library = new LibraryHandle();
         }
@@ -167,24 +176,40 @@ namespace Aws.Crt.Auth
 
         private static StrongReferenceVendor<SigningContinuation> continuations = new StrongReferenceVendor<SigningContinuation>();
 
-        private static void OnSigningComplete(ulong id, String uri, HttpHeader[] headers, uint headerCount)
+        private static void OnSigningComplete(ulong id, int errorCode, string uri, HttpHeader[] headers, uint headerCount)
         {
             SigningContinuation continuation = continuations.UnwrapStrongReference(id);
             if (continuation == null) {
                 return;
             }
 
-            HttpRequest sourceRequest = continuation.OriginalRequest;
-            HttpRequest signedRequest = new HttpRequest();
-            signedRequest.Method = sourceRequest.Method;
-            signedRequest.Uri = uri;
-            signedRequest.Headers = headers;
-            signedRequest.StreamOutgoingBody = ??;
+            if (errorCode != 0)
+            {
+                continuation.TaskSource.SetException(new CrtException(errorCode));
+            }
+            else
+            {
+                HttpRequest sourceRequest = continuation.OriginalRequest;
+                HttpRequest signedRequest = new HttpRequest();
+                signedRequest.Method = sourceRequest.Method;
+                signedRequest.Uri = uri;
+                signedRequest.Headers = headers;
+                signedRequest.BodyStream = sourceRequest.BodyStream;
 
-            continuation.TaskSource.Task.??(signedRequest);
+                continuation.TaskSource.SetResult(signedRequest);
+            }
         }
+
         public static Task<HttpRequest> SignRequest(HttpRequest request, AwsSigningConfig signingConfig) 
         {
+            if (request == null || signingConfig == null) {
+                throw new CrtException("Null argument passed to SignRequest");
+            }
+
+            if (request.BodyStream != null && !request.BodyStream.CanSeek) {
+                throw new CrtException("Http request payload stream must be seekable in order to be signed");
+            }
+
             var nativeConfig = new AwsSigningConfigNative(signingConfig);
 
             uint headerCount = 0;
@@ -197,7 +222,7 @@ namespace Aws.Crt.Auth
 
             ulong id = continuations.WrapStrongReference(continuation);
 
-            API.sign_request(request.Method, request.Uri, request.Headers, headerCount, nativeConfig, id, signingCompleteCallback);
+            API.sign_request(request.Method, request.Uri, request.Headers, headerCount, nativeConfig, id, API.on_signing_complete);
 
             return continuation.TaskSource.Task;
         }

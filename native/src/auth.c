@@ -18,4 +18,3 @@ AWS_DOTNET_API
 void aws_dotnet_auth_library_clean_up(void) {
     aws_auth_library_clean_up();
 }
-
