@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0.
  */
 using System;
-using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using System.Net;
 using System.Runtime.InteropServices;
 using System.Security;
@@ -82,19 +82,6 @@ namespace Aws.Crt.Http
         }
     }
 
-    public class StreamOutgoingBodyEventArgs : HttpClientStreamEventArgs
-    {
-        public byte[] Buffer { get; private set; }
-        public OutgoingBodyStreamState State { get; set; } = OutgoingBodyStreamState.InProgress;
-        public UInt64 BytesWritten { get; set; } = UInt64.MaxValue;
-
-        internal StreamOutgoingBodyEventArgs(HttpClientStream stream, byte[] buffer)
-            : base(stream)
-        {
-            Buffer = buffer;
-        }
-    }
-
     public class StreamCompleteEventArgs : HttpClientStreamEventArgs
     {
         public int ErrorCode { get; private set; }
@@ -148,16 +135,25 @@ namespace Aws.Crt.Http
         public string Method { get; set; }
         public string Uri { get; set; }
         public HttpHeader[] Headers { get; set; }
-        public event EventHandler<StreamOutgoingBodyEventArgs> StreamOutgoingBody;
+
+        public Stream BodyStream { get; set; }
 
         internal OutgoingBodyStreamState OnStreamOutgoingBody(HttpClientStream stream, byte[] buffer, out UInt64 bytesWritten)
         {
-            var e = new StreamOutgoingBodyEventArgs(stream, buffer);
-            StreamOutgoingBody?.Invoke(stream, e);
-            if (e.BytesWritten > (UInt64)buffer.Length)
-                throw new ArgumentOutOfRangeException("BytesWritten should be set to the number of bytes written to the buffer");
-            bytesWritten = e.BytesWritten;
-            return e.State;
+            bytesWritten = 0;
+            if (BodyStream != null)
+            {
+                var bufferStream = new MemoryStream(buffer);
+                long prevPosition = BodyStream.Position;
+                BodyStream.CopyTo(bufferStream, buffer.Length);
+                bytesWritten = (UInt64)(BodyStream.Position - prevPosition);
+                if (BodyStream.Position != BodyStream.Length)
+                {
+                    return OutgoingBodyStreamState.InProgress;
+                }
+            }
+
+            return OutgoingBodyStreamState.Done;
         }
     }
 

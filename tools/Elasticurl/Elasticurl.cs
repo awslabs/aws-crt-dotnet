@@ -336,23 +336,6 @@ namespace Aws.Crt.Elasticurl
             ctx.OutputStream.Write(e.Data, 0, e.Data.Length);
         }
 
-        static void StreamOutgoingBody(object sender, StreamOutgoingBodyEventArgs e)
-        {
-            if (ctx.PayloadStream != null)
-            {
-                var bufferStream = new MemoryStream(e.Buffer);
-                long prevPosition = ctx.PayloadStream.Position;
-                ctx.PayloadStream.CopyTo(bufferStream, e.Buffer.Length);
-                e.BytesWritten = (UInt64)(ctx.PayloadStream.Position - prevPosition);
-                if (ctx.PayloadStream.Position != ctx.PayloadStream.Length)
-                {
-                    e.State = OutgoingBodyStreamState.InProgress;
-                    return;
-                }
-            }
-            e.State = OutgoingBodyStreamState.Done;
-        }
-
         static void OnStreamComplete(object sender, StreamCompleteEventArgs e)
         {
             Console.WriteLine("Completed with code {0}", e.ErrorCode);
@@ -367,7 +350,7 @@ namespace Aws.Crt.Elasticurl
             request.Method = ctx.Verb;
             request.Uri = ctx.Uri.PathAndQuery;
             request.Headers = headers.ToArray();
-            request.StreamOutgoingBody += StreamOutgoingBody;
+            request.BodyStream = ctx.PayloadStream;
             
             HttpResponseStreamHandler responseHandler = new HttpResponseStreamHandler();
             responseHandler.IncomingHeaders += OnIncomingHeaders;
