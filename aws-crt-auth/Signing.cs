@@ -6,6 +6,7 @@ using System;
 using System.Collections.Specialized;
 using System.Runtime.InteropServices;
 using System.Security;
+using System.Threading.Tasks;
 
 using Aws.Crt;
 using Aws.Crt.Http;
@@ -144,18 +145,61 @@ namespace Aws.Crt.Auth
 
         internal static class API
         {
-            internal delegate void aws_dotnet_auth_sign_request([In, MarshalAs(UnmanagedType.Struct)] HttpRequestNative request, [In, MarshalAs(UnmanagedType.Struct)] AwsSigningConfigNative signingConfig);
+            internal delegate void aws_dotnet_auth_sign_request(
+                                    [MarshalAs(UnmanagedType.LPStr)] string method,
+                                    [MarshalAs(UnmanagedType.LPStr)] string uri,
+                                    [In] HttpHeader[] headers,
+                                    UInt32 header_count,
+                                    [In] AwsSigningConfigNative signing_config,
+                                    UInt64 future_id,
+                                    ?? completion_callback_delegate);
 
             public static aws_dotnet_auth_sign_request sign_request = NativeAPI.Bind<aws_dotnet_auth_sign_request>();
 
             private static LibraryHandle library = new LibraryHandle();
         }
 
-        public static void SignRequest(HttpRequest request, AwsSigningConfig signingConfig) {
-            var nativeRequest = new HttpRequestNative(request);
+        private class SigningContinuation 
+        {
+            public HttpRequest OriginalRequest;
+            public TaskCompletionSource<HttpRequest> TaskSource = new TaskCompletionSource<HttpRequest>();
+        }
+
+        private static StrongReferenceVendor<SigningContinuation> continuations = new StrongReferenceVendor<SigningContinuation>();
+
+        private static void OnSigningComplete(ulong id, String uri, HttpHeader[] headers, uint headerCount)
+        {
+            SigningContinuation continuation = continuations.UnwrapStrongReference(id);
+            if (continuation == null) {
+                return;
+            }
+
+            HttpRequest sourceRequest = continuation.OriginalRequest;
+            HttpRequest signedRequest = new HttpRequest();
+            signedRequest.Method = sourceRequest.Method;
+            signedRequest.Uri = uri;
+            signedRequest.Headers = headers;
+            signedRequest.StreamOutgoingBody = ??;
+
+            continuation.TaskSource.Task.??(signedRequest);
+        }
+        public static Task<HttpRequest> SignRequest(HttpRequest request, AwsSigningConfig signingConfig) 
+        {
             var nativeConfig = new AwsSigningConfigNative(signingConfig);
-            
-            API.sign_request(nativeRequest, nativeConfig);
+
+            uint headerCount = 0;
+            if (request.Headers != null) {
+                headerCount = (uint) request.Headers.Length;
+            }
+
+            SigningContinuation continuation = new SigningContinuation();
+            continuation.OriginalRequest = request;
+
+            ulong id = continuations.WrapStrongReference(continuation);
+
+            API.sign_request(request.Method, request.Uri, request.Headers, headerCount, nativeConfig, id, signingCompleteCallback);
+
+            return continuation.TaskSource.Task;
         }
     }
 }

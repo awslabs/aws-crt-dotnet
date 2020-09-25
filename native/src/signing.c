@@ -8,16 +8,6 @@
 
 #include <aws/auth/signing_config.h>
 
-struct aws_http_request_native {
-    const char *method;
-
-    const char *uri;
-
-    struct aws_dotnet_http_header *headers;
-
-    uint32_t header_count;
-};
-
 typedef bool(DOTNET_CALL aws_dotnet_auth_should_sign_header_fn)(uint8_t *header_name, int32_t header_name_length);
 
 struct aws_signing_config_native {
@@ -53,8 +43,15 @@ struct aws_signing_config_native {
 };
 
 AWS_DOTNET_API void aws_dotnet_auth_sign_request(
-    struct aws_http_request_native *native_request,
-    struct aws_signing_config_native *native_signing_config) {
-    (void)native_request;
+    const char *method,
+    const char *uri,
+    struct aws_dotnet_http_header headers[],
+    uint32_t header_count,
+    struct aws_signing_config_native native_signing_config) {
+        
+    (void)method;
+    (void)uri;
+    (void)headers;
+    (void)header_count;
     (void)native_signing_config;
 }

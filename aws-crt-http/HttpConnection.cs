@@ -161,28 +161,6 @@ namespace Aws.Crt.Http
         }
     }
 
-    public struct HttpRequestNative
-    {
-        [MarshalAs(UnmanagedType.LPStr)]
-        public string Method;
-
-        [MarshalAs(UnmanagedType.LPStr)]
-        public string Uri;
-
-        [MarshalAs(UnmanagedType.LPArray)]
-        public HttpHeader[] Headers;
-
-        [MarshalAs(UnmanagedType.U4)]
-        public uint HeaderCount;
-
-        public HttpRequestNative(HttpRequest request) {
-            Method = request.Method;
-            Uri = request.Uri;
-            Headers = request.Headers;
-            HeaderCount = (uint) Headers.Length;
-        }
-    }
-
     [StructLayout(LayoutKind.Sequential, CharSet=CharSet.Ansi)]
     public struct HttpHeader
     {

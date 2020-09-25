@@ -6,16 +6,21 @@ using System;
 using Xunit;
 
 using Aws.Crt.Auth;
+using Aws.Crt.Http;
 
 namespace tests
 {
     public class AuthTest
     {
         [Fact]
-        public void AuthCall()
+        public void Signing()
         {
-            var elg = new AuthTest();
-            // When elg goes out of scope, the native handle will be released
+            var config = new AwsSigningConfig();
+            var request = new HttpRequest();
+            request.Method = "GET";
+            request.Uri = "www.google.com";
+
+            AwsSigner.SignRequest(request, config);
         }
     }
 }

@@ -6,6 +6,8 @@
 #ifndef AWS_DOTNET_HTTP_CLIENT_H
 #define AWS_DOTNET_HTTP_CLIENT_H
 
+#include <aws/common/common.h>
+
 struct aws_dotnet_http_header {
     const char *name;
     const char *value;
