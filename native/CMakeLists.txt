@@ -76,6 +76,7 @@ add_library(${PROJECT_NAME} SHARED ${AWS_CRT_DOTNET_HEADERS} ${AWS_CRT_DOTNET_SR
 
 # AWS Common Runtime dependencies
 aws_use_package(aws-c-auth)
+
 target_link_libraries(${PROJECT_NAME} ${DEP_AWS_LIBS})
 
 set(TARGET_LIB_DIR "lib")
