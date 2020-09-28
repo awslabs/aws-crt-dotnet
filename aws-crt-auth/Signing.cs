@@ -4,6 +4,7 @@
  */
 using System;
 using System.Collections.Specialized;
+using System.IO;
 using System.Runtime.InteropServices;
 using System.Security;
 using System.Threading.Tasks;
@@ -149,7 +150,7 @@ namespace Aws.Crt.Auth
                 UInt64 id, 
                 Int32 error_code, 
                 [MarshalAs(UnmanagedType.LPStr)] string uri, 
-                [In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex=3)] HttpHeader[] headers, 
+                [In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex=4)] HttpHeader[] headers, 
                 UInt32 count);
 
             internal delegate void aws_dotnet_auth_sign_request(
@@ -168,17 +169,17 @@ namespace Aws.Crt.Auth
             private static LibraryHandle library = new LibraryHandle();
         }
 
-        private class SigningContinuation 
+        private class SigningCallback
         {
             public HttpRequest OriginalRequest;
             public TaskCompletionSource<HttpRequest> TaskSource = new TaskCompletionSource<HttpRequest>();
         }
 
-        private static StrongReferenceVendor<SigningContinuation> continuations = new StrongReferenceVendor<SigningContinuation>();
+        private static StrongReferenceVendor<SigningCallback> pendingCallbacks = new StrongReferenceVendor<SigningCallback>();
 
         private static void OnSigningComplete(ulong id, int errorCode, string uri, HttpHeader[] headers, uint headerCount)
         {
-            SigningContinuation continuation = continuations.UnwrapStrongReference(id);
+            SigningCallback continuation = pendingCallbacks.UnwrapStrongReference(id);
             if (continuation == null) {
                 return;
             }
@@ -206,8 +207,12 @@ namespace Aws.Crt.Auth
                 throw new CrtException("Null argument passed to SignRequest");
             }
 
-            if (request.BodyStream != null && !request.BodyStream.CanSeek) {
-                throw new CrtException("Http request payload stream must be seekable in order to be signed");
+            if (request.BodyStream != null) {
+                if (!request.BodyStream.CanSeek) {
+                    throw new CrtException("Http request payload stream must be seekable in order to be signed");
+                }
+
+                request.BodyStream.Seek(0, SeekOrigin.Begin);
             }
 
             var nativeConfig = new AwsSigningConfigNative(signingConfig);
@@ -217,14 +222,14 @@ namespace Aws.Crt.Auth
                 headerCount = (uint) request.Headers.Length;
             }
 
-            SigningContinuation continuation = new SigningContinuation();
-            continuation.OriginalRequest = request;
+            SigningCallback callback = new SigningCallback();
+            callback.OriginalRequest = request;
 
-            ulong id = continuations.WrapStrongReference(continuation);
+            ulong id = pendingCallbacks.WrapStrongReference(callback);
 
             API.sign_request(request.Method, request.Uri, request.Headers, headerCount, nativeConfig, id, API.on_signing_complete);
 
-            return continuation.TaskSource.Task;
+            return callback.TaskSource.Task;
         }
     }
 }

@@ -6,6 +6,7 @@ using System;
 using System.Collections.Specialized;
 using System.Runtime.InteropServices;
 using System.Security;
+using System.Text;
 
 using Aws.Crt;
 
@@ -22,6 +23,15 @@ namespace Aws.Crt.Auth
             AccessKeyId = accessKeyId;
             SecretAccessKey = secretAccessKey;
             SessionToken = sessionToken;
+        }
+
+        public Credentials(string accessKeyId, string secretAccessKey, string sessionToken)
+        {
+            AccessKeyId = ASCIIEncoding.ASCII.GetBytes(accessKeyId);
+            SecretAccessKey = ASCIIEncoding.ASCII.GetBytes(secretAccessKey);
+            if (sessionToken != null) {
+                SessionToken = ASCIIEncoding.ASCII.GetBytes(sessionToken);
+            }
         }
     }
 }
