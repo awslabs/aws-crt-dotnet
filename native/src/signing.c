@@ -5,6 +5,7 @@
 #include "crt.h"
 #include "exports.h"
 #include "http_client.h"
+#include "stream.h"
 
 #include <aws/auth/credentials.h>
 #include <aws/auth/signable.h>
@@ -13,6 +14,7 @@
 #include <aws/auth/signing_result.h>
 #include <aws/common/string.h>
 #include <aws/http/request_response.h>
+#include <aws/io/stream.h>
 
 typedef bool(DOTNET_CALL aws_dotnet_auth_should_sign_header_fn)(uint8_t *header_name, int32_t header_name_length);
 
@@ -62,6 +64,7 @@ struct aws_dotnet_signing_callback_state {
     struct aws_string *region;
     struct aws_string *service;
     struct aws_string *signed_body_value;
+    aws_dotnet_auth_should_sign_header_fn *should_sign_header;
     uint64_t callback_id;
     aws_dotnet_auth_on_signing_complete_fn *on_signing_complete;
 };
@@ -73,10 +76,18 @@ static void s_destroy_signing_callback_state(struct aws_dotnet_signing_callback_
 
     aws_credentials_release(callback_state->credentials);
     aws_signable_destroy(callback_state->original_request_signable);
-    aws_http_message_release(callback_state->request);
     aws_string_destroy(callback_state->region);
     aws_string_destroy(callback_state->service);
     aws_string_destroy(callback_state->signed_body_value);
+
+    if (callback_state->request != NULL) {
+        struct aws_input_stream *body_stream = aws_http_message_get_body_stream(callback_state->request);
+        if (body_stream != NULL) {
+            aws_input_stream_destroy(body_stream);
+        }
+
+        aws_http_message_release(callback_state->request);
+    }
 
     aws_mem_release(aws_dotnet_get_allocator(), callback_state);
 }
@@ -91,6 +102,12 @@ static struct aws_byte_cursor s_byte_cursor_from_nullable_c_string(const char *s
     }
 
     return cursor;
+}
+
+static bool s_should_sign_header_adapter(const struct aws_byte_cursor *name, void *user_data) {
+    struct aws_dotnet_signing_callback_state *callback_state = user_data;
+
+    return callback_state->should_sign_header(name->ptr, (int32_t)name->len);
 }
 
 static int s_initialize_signing_config(
@@ -140,19 +157,10 @@ static int s_initialize_signing_config(
 
     config->expiration_in_seconds = dotnet_config->expiration_in_seconds;
 
-    /*
-
-        jobject sign_header_predicate =
-            (*env)->GetObjectField(env, java_config, aws_signing_config_properties.should_sign_header_field_id);
-        if (sign_header_predicate != NULL) {
-            callback_data->java_sign_header_predicate = (*env)->NewGlobalRef(env, sign_header_predicate);
-            AWS_FATAL_ASSERT(callback_data->java_sign_header_predicate != NULL);
-
-            config->should_sign_header = s_should_sign_header;
-            config->should_sign_header_ud = callback_data;
-        }
-
-    */
+    if (dotnet_config->should_sign_header != NULL) {
+        config->should_sign_header = s_should_sign_header_adapter;
+        config->should_sign_header_ud = callback_state;
+    }
 
     return AWS_OP_SUCCESS;
 }
@@ -232,51 +240,12 @@ done:
     s_destroy_signing_callback_state(callback_state);
 }
 
-static struct aws_http_message *s_build_request_to_sign(
-    const char *method,
-    const char *uri,
-    struct aws_dotnet_http_header headers[],
-    uint32_t header_count) {
-
-    struct aws_allocator *allocator = aws_dotnet_get_allocator();
-    struct aws_http_message *request = aws_http_message_new_request(allocator);
-    if (request == NULL) {
-        return NULL;
-    }
-
-    if (aws_http_message_set_request_method(request, aws_byte_cursor_from_c_str(method))) {
-        goto on_error;
-    }
-
-    if (aws_http_message_set_request_path(request, aws_byte_cursor_from_c_str(uri))) {
-        goto on_error;
-    }
-
-    for (size_t i = 0; i < header_count; ++i) {
-        struct aws_http_header header;
-        AWS_ZERO_STRUCT(header);
-
-        header.name = aws_byte_cursor_from_c_str(headers[i].name);
-        header.value = aws_byte_cursor_from_c_str(headers[i].value);
-        if (aws_http_message_add_header(request, header)) {
-            goto on_error;
-        }
-    }
-
-    return request;
-
-on_error:
-
-    aws_http_message_release(request);
-
-    return NULL;
-}
-
 AWS_DOTNET_API void aws_dotnet_auth_sign_request(
     const char *method,
     const char *uri,
     struct aws_dotnet_http_header headers[],
     uint32_t header_count,
+    struct aws_dotnet_stream_function_table body_stream_delegates,
     struct aws_signing_config_native native_signing_config,
     uint64_t callback_id,
     aws_dotnet_auth_on_signing_complete_fn *on_signing_complete) {
@@ -300,7 +269,8 @@ AWS_DOTNET_API void aws_dotnet_auth_sign_request(
 
     continuation->callback_id = callback_id;
     continuation->on_signing_complete = on_signing_complete;
-    continuation->request = s_build_request_to_sign(method, uri, headers, header_count);
+    continuation->should_sign_header = native_signing_config.should_sign_header;
+    continuation->request = aws_build_http_request(method, uri, headers, header_count, &body_stream_delegates);
     if (continuation->request == NULL) {
         goto on_error;
     }

@@ -21,12 +21,6 @@ namespace Aws.Crt.Http
         Trailing = 2
     }
 
-    public enum OutgoingBodyStreamState 
-    {
-        InProgress = 0,
-        Done = 1,
-    }
-
     public class StreamResult
     {
         public int ErrorCode { get; private set; }
@@ -136,25 +130,9 @@ namespace Aws.Crt.Http
         public string Uri { get; set; }
         public HttpHeader[] Headers { get; set; }
         public Stream BodyStream { get; set; }
-
-        internal OutgoingBodyStreamState OnStreamOutgoingBody(HttpClientStream stream, byte[] buffer, out UInt64 bytesWritten)
-        {
-            bytesWritten = 0;
-            if (BodyStream != null)
-            {
-                var bufferStream = new MemoryStream(buffer);
-                long prevPosition = BodyStream.Position;
-                BodyStream.CopyTo(bufferStream, buffer.Length);
-                bytesWritten = (UInt64)(BodyStream.Position - prevPosition);
-                if (BodyStream.Position != BodyStream.Length)
-                {
-                    return OutgoingBodyStreamState.InProgress;
-                }
-            }
-
-            return OutgoingBodyStreamState.Done;
-        }
     }
+
+
 
     [StructLayout(LayoutKind.Sequential, CharSet=CharSet.Ansi)]
     public struct HttpHeader
@@ -177,10 +155,6 @@ namespace Aws.Crt.Http
         [SecuritySafeCritical]
         internal static class API
         {
-            internal delegate int OnStreamOutgoingBodyNative(
-                                    [In, Out, MarshalAs(UnmanagedType.LPArray, SizeParamIndex=1)] byte[] buffer, 
-                                    UInt64 size,
-                                    out UInt64 bytesWritten);
             internal delegate void OnIncomingHeadersNative(
                                     Int32 responseCode,
                                     [MarshalAs(UnmanagedType.I4)] HeaderBlock headerBlock,
@@ -200,7 +174,7 @@ namespace Aws.Crt.Http
                                     [MarshalAs(UnmanagedType.LPStr)] string uri,
                                     [In] HttpHeader[] headers,
                                     UInt32 header_count,
-                                    OnStreamOutgoingBodyNative onStreamOutgoingBody,
+                                    [In] CrtStreamWrapper.DelegateTable streamDelegateTable,
                                     OnIncomingHeadersNative onIncomingHeaders,
                                     OnIncomingHeaderBlockDoneNative onIncomingHeaderBlockDone,
                                     OnIncomingBodyNative onIncomingBody,
@@ -248,10 +222,11 @@ namespace Aws.Crt.Http
         // for the duration of the stream
         private HttpRequest request;
 
+        private CrtStreamWrapper requestBodyStream;
+
         private HttpResponseStreamHandler responseHandler;
 
         // References to native callbacks to keep them alive for the duration of the stream
-        private API.OnStreamOutgoingBodyNative onStreamOutgoingBody;
         private API.OnIncomingHeadersNative onIncomingHeaders;
         private API.OnIncomingHeaderBlockDoneNative onIncomingHeaderBlockDone;
         private API.OnIncomingBodyNative onIncomingBody;
@@ -263,14 +238,11 @@ namespace Aws.Crt.Http
             responseHandler.Validate();
 
             this.request = request;
+            this.requestBodyStream = new CrtStreamWrapper(request.BodyStream);
+
             this.responseHandler = responseHandler;
 
             // Wrap the native callbacks to bind this stream to them as the first argument
-            onStreamOutgoingBody = (byte[] buffer, UInt64 size, out UInt64 bytesWritten) =>
-            {
-                return (int)request.OnStreamOutgoingBody(this, buffer, out bytesWritten);
-            };
-
             onIncomingHeaders = (responseCode, block, headers, headerCount) =>
             {
                 if (ResponseStatusCode == 0) {
@@ -300,7 +272,7 @@ namespace Aws.Crt.Http
                 request.Uri,
                 request.Headers,
                 (UInt32)(request.Headers?.Length ?? 0),
-                onStreamOutgoingBody,
+                requestBodyStream.Delegates,
                 onIncomingHeaders,
                 onIncomingHeaderBlockDone,
                 onIncomingBody,

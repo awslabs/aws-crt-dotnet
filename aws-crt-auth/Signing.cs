@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 
 using Aws.Crt;
 using Aws.Crt.Http;
+using Aws.Crt.IO;
 
 namespace Aws.Crt.Auth
 {
@@ -37,7 +38,7 @@ namespace Aws.Crt.Auth
         X_AMZ_CONTENT_SHA256 = 1
     }
 
-    public delegate bool aws_dotnet_auth_should_sign_header([In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex=1)]byte[] headerName);
+    public delegate bool aws_dotnet_auth_should_sign_header([In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex=1)]byte[] headerName, UInt32 length);
 
     public class AwsSigningConfig {
 
@@ -146,7 +147,7 @@ namespace Aws.Crt.Auth
 
         internal static class API
         {
-            internal delegate void OnSigningComplete(
+            internal delegate void DSigningComplete(
                 UInt64 id, 
                 Int32 error_code, 
                 [MarshalAs(UnmanagedType.LPStr)] string uri, 
@@ -158,13 +159,14 @@ namespace Aws.Crt.Auth
                                     [MarshalAs(UnmanagedType.LPStr)] string uri,
                                     [In] HttpHeader[] headers,
                                     UInt32 header_count,
+                                    [In] CrtStreamWrapper.DelegateTable stream_delegate_table,
                                     [In] AwsSigningConfigNative signing_config,
                                     UInt64 future_id,
-                                    OnSigningComplete completion_callback_delegate);
+                                    DSigningComplete completion_callback_delegate);
 
-            public static aws_dotnet_auth_sign_request sign_request = NativeAPI.Bind<aws_dotnet_auth_sign_request>();
+            public static aws_dotnet_auth_sign_request SignRequestNative = NativeAPI.Bind<aws_dotnet_auth_sign_request>();
 
-            public static OnSigningComplete on_signing_complete = AwsSigner.OnSigningComplete;
+            public static DSigningComplete OnSigningComplete = AwsSigner.OnSigningComplete;
 
             private static LibraryHandle library = new LibraryHandle();
         }
@@ -173,6 +175,8 @@ namespace Aws.Crt.Auth
         {
             public HttpRequest OriginalRequest;
             public TaskCompletionSource<HttpRequest> TaskSource = new TaskCompletionSource<HttpRequest>();
+            public CrtStreamWrapper BodyStream;
+            public aws_dotnet_auth_should_sign_header ShouldSignHeader;
         }
 
         private static StrongReferenceVendor<SigningCallback> pendingCallbacks = new StrongReferenceVendor<SigningCallback>();
@@ -211,8 +215,6 @@ namespace Aws.Crt.Auth
                 if (!request.BodyStream.CanSeek) {
                     throw new CrtException("Http request payload stream must be seekable in order to be signed");
                 }
-
-                request.BodyStream.Seek(0, SeekOrigin.Begin);
             }
 
             var nativeConfig = new AwsSigningConfigNative(signingConfig);
@@ -223,11 +225,13 @@ namespace Aws.Crt.Auth
             }
 
             SigningCallback callback = new SigningCallback();
-            callback.OriginalRequest = request;
+            callback.OriginalRequest = request; /* needed to build final signed request */
+            callback.ShouldSignHeader = signingConfig.ShouldSignHeader; /* prevent GC while signing */
+            callback.BodyStream = new CrtStreamWrapper(request.BodyStream);
 
             ulong id = pendingCallbacks.WrapStrongReference(callback);
 
-            API.sign_request(request.Method, request.Uri, request.Headers, headerCount, nativeConfig, id, API.on_signing_complete);
+            API.SignRequestNative(request.Method, request.Uri, request.Headers, headerCount, callback.BodyStream.Delegates, nativeConfig, id, API.OnSigningComplete);
 
             return callback.TaskSource.Task;
         }

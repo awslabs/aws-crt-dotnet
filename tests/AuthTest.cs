@@ -4,6 +4,9 @@
  */
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -26,6 +29,11 @@ namespace tests
             return false;
         }
 
+        private static bool ShouldSignHeader(byte[] headerName, uint length) {
+            byte[] skipHeader = ASCIIEncoding.ASCII.GetBytes("Skip");
+            return !skipHeader.SequenceEqual(headerName);
+        }
+
         [Fact]
         public void SimpleRequestSign()
         {
@@ -38,13 +46,16 @@ namespace tests
             config.Service = "FakeService";
             config.Credentials = credentials;
             config.Timestamp = new DateTimeOffset(date);
+            config.ShouldSignHeader = AuthTest.ShouldSignHeader;
 
             var request = new HttpRequest();
             request.Method = "GET";
             request.Uri = "www.google.com";
+            request.BodyStream = new MemoryStream(ASCIIEncoding.ASCII.GetBytes("DerpDerp"));
 
             var headers = new List<HttpHeader>();
             headers.Add(new HttpHeader("Host", "testing.example.com"));
+            headers.Add(new HttpHeader("Skip", "Me"));
 
             request.Headers = headers.ToArray();
 
@@ -52,7 +63,7 @@ namespace tests
             HttpRequest signedRequest = result.Result;
 
             Assert.Equal("GET", signedRequest.Method);
-            Assert.Equal(3, signedRequest.Headers.Length);
+            Assert.Equal(4, signedRequest.Headers.Length);
             Assert.True(HasHeader(signedRequest, "Host", "testing.example.com"));
             Assert.True(HasHeader(signedRequest, "X-Amz-Date", "20150830T123600Z"));
             Assert.True(HasHeader(signedRequest, "Authorization", null));

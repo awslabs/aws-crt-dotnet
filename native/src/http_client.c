@@ -6,6 +6,7 @@
 #include "http_client.h"
 #include "crt.h"
 #include "exports.h"
+#include "stream.h"
 
 #include <aws/common/string.h>
 #include <aws/http/connection.h>
@@ -95,7 +96,6 @@ void aws_dotnet_http_connection_destroy(struct aws_dotnet_http_connection *conne
     aws_mem_release(allocator, connection);
 }
 
-typedef int(aws_dotnet_http_stream_outgoing_body_fn)(uint8_t *buffer, uint64_t buffer_size, uint64_t *bytes_written);
 typedef void(aws_dotnet_http_on_incoming_headers_fn)(
     int32_t status_code,
     int32_t header_block,
@@ -109,32 +109,12 @@ struct aws_dotnet_http_stream {
     struct aws_dotnet_http_connection *connection;
     struct aws_http_stream *stream;
     struct aws_http_message *request;
-    aws_dotnet_http_stream_outgoing_body_fn *stream_outgoing_body;
+
     aws_dotnet_http_on_incoming_headers_fn *on_incoming_headers;
     aws_dotnet_http_on_incoming_header_block_done_fn *on_incoming_headers_block_done;
     aws_dotnet_http_on_incoming_body_fn *on_incoming_body;
     aws_dotnet_http_on_stream_complete_fn *on_stream_complete;
 };
-
-enum aws_http_outgoing_body_state {
-    HOBS_IN_PROGRESS,
-    HOBS_DONE,
-};
-
-static enum aws_http_outgoing_body_state s_stream_stream_outgoing_body(
-    struct aws_http_stream *s,
-    struct aws_byte_buf *buf,
-    void *user_data) {
-    (void)s;
-    struct aws_dotnet_http_stream *stream = user_data;
-    uint64_t buf_size = buf->capacity - buf->len;
-    uint8_t *buf_ptr = buf->buffer + buf->len;
-    uint64_t bytes_written = 0;
-    enum aws_http_outgoing_body_state state = stream->stream_outgoing_body(buf_ptr, buf_size, &bytes_written);
-    AWS_FATAL_ASSERT(bytes_written <= buf_size && "Buffer overflow detected streaming outgoing body");
-    buf->len += (size_t)bytes_written;
-    return state;
-}
 
 static int s_stream_on_incoming_headers(
     struct aws_http_stream *s,
@@ -196,102 +176,14 @@ static void s_stream_on_stream_complete(struct aws_http_stream *s, int error_cod
     stream->on_stream_complete(error_code);
 }
 
-/*
- * Temporary input stream implementation until we bind a http body stream wrapper.
- * No support for seek or true status.
- */
-struct aws_input_stream_dotnet_impl {
-    struct aws_dotnet_http_stream *stream_wrapper;
-    enum aws_http_outgoing_body_state state;
-};
-
-static int s_aws_input_stream_dotnet_seek(
-    struct aws_input_stream *stream,
-    aws_off_t offset,
-    enum aws_stream_seek_basis basis) {
-    (void)stream;
-    (void)offset;
-    (void)basis;
-
-    return AWS_OP_ERR;
-}
-
-static int s_aws_input_stream_dotnet_read(struct aws_input_stream *stream, struct aws_byte_buf *dest) {
-    struct aws_input_stream_dotnet_impl *impl = stream->impl;
-
-    impl->state = s_stream_stream_outgoing_body(impl->stream_wrapper->stream, dest, impl->stream_wrapper);
-
-    return AWS_OP_SUCCESS;
-}
-
-static int s_aws_input_stream_dotnet_get_status(struct aws_input_stream *stream, struct aws_stream_status *status) {
-    struct aws_input_stream_dotnet_impl *impl = stream->impl;
-
-    status->is_end_of_stream = impl->state == HOBS_DONE;
-    status->is_valid = true;
-
-    return AWS_OP_SUCCESS;
-}
-
-static int s_aws_input_stream_dotnet_get_length(struct aws_input_stream *stream, int64_t *out_length) {
-    (void)stream;
-    (void)out_length;
-
-    return AWS_OP_ERR;
-}
-
-static void s_aws_input_stream_dotnet_destroy(struct aws_input_stream *stream) {
-    aws_mem_release(stream->allocator, stream);
-}
-
-static struct aws_input_stream_vtable s_aws_input_stream_dotnet_vtable = {
-    .seek = s_aws_input_stream_dotnet_seek,
-    .read = s_aws_input_stream_dotnet_read,
-    .get_status = s_aws_input_stream_dotnet_get_status,
-    .get_length = s_aws_input_stream_dotnet_get_length,
-    .destroy = s_aws_input_stream_dotnet_destroy};
-
-static struct aws_input_stream *s_aws_input_stream_new_dotnet(
-    struct aws_allocator *allocator,
-    struct aws_dotnet_http_stream *stream_wrapper) {
-
-    struct aws_input_stream *input_stream = NULL;
-    struct aws_input_stream_dotnet_impl *impl = NULL;
-
-    aws_mem_acquire_many(
-        allocator,
-        2,
-        &input_stream,
-        sizeof(struct aws_input_stream),
-        &impl,
-        sizeof(struct aws_input_stream_dotnet_impl));
-
-    if (!input_stream) {
-        return NULL;
-    }
-
-    AWS_ZERO_STRUCT(*input_stream);
-    AWS_ZERO_STRUCT(*impl);
-
-    input_stream->allocator = allocator;
-    input_stream->vtable = &s_aws_input_stream_dotnet_vtable;
-    input_stream->impl = impl;
-
-    impl->stream_wrapper = stream_wrapper;
-    impl->state = HOBS_IN_PROGRESS;
-
-    return input_stream;
-}
-
-static struct aws_http_message *s_create_http_request(
+struct aws_http_message *aws_build_http_request(
     const char *method,
     const char *uri,
     struct aws_dotnet_http_header headers[],
     uint32_t header_count,
-    struct aws_dotnet_http_stream *stream_wrapper) {
+    struct aws_dotnet_stream_function_table *body_stream_delegates) {
 
     struct aws_allocator *allocator = aws_dotnet_get_allocator();
-    AWS_VARIABLE_LENGTH_ARRAY(struct aws_http_header, req_headers, (header_count ? header_count : 1));
     struct aws_http_message *request = aws_http_message_new_request(allocator);
     if (request == NULL) {
         return NULL;
@@ -305,19 +197,19 @@ static struct aws_http_message *s_create_http_request(
         goto on_error;
     }
 
-    if (header_count > 0) {
-        for (size_t header_idx = 0; header_idx < header_count; ++header_idx) {
-            req_headers[header_idx].name = aws_byte_cursor_from_c_str(headers[header_idx].name);
-            req_headers[header_idx].value = aws_byte_cursor_from_c_str(headers[header_idx].value);
-        }
+    for (size_t i = 0; i < header_count; ++i) {
+        struct aws_http_header header;
+        AWS_ZERO_STRUCT(header);
 
-        if (aws_http_message_add_header_array(request, req_headers, header_count)) {
+        header.name = aws_byte_cursor_from_c_str(headers[i].name);
+        header.value = aws_byte_cursor_from_c_str(headers[i].value);
+        if (aws_http_message_add_header(request, header)) {
             goto on_error;
         }
     }
 
-    if (stream_wrapper->stream_outgoing_body != NULL) {
-        struct aws_input_stream *body_stream = s_aws_input_stream_new_dotnet(allocator, stream_wrapper);
+    if (aws_stream_function_table_is_valid(body_stream_delegates)) {
+        struct aws_input_stream *body_stream = aws_input_stream_new_dotnet(allocator, body_stream_delegates);
         if (body_stream == NULL) {
             goto on_error;
         }
@@ -359,7 +251,7 @@ AWS_DOTNET_API struct aws_dotnet_http_stream *aws_dotnet_http_stream_new(
     const char *uri,
     struct aws_dotnet_http_header headers[],
     uint32_t header_count,
-    aws_dotnet_http_stream_outgoing_body_fn *stream_outgoing_body,
+    struct aws_dotnet_stream_function_table body_stream_delegates,
     aws_dotnet_http_on_incoming_headers_fn *on_incoming_headers,
     aws_dotnet_http_on_incoming_header_block_done_fn *on_incoming_headers_block_done,
     aws_dotnet_http_on_incoming_body_fn *on_incoming_body,
@@ -394,13 +286,12 @@ AWS_DOTNET_API struct aws_dotnet_http_stream *aws_dotnet_http_stream_new(
     }
 
     stream->connection = connection;
-    stream->stream_outgoing_body = stream_outgoing_body;
     stream->on_incoming_headers = on_incoming_headers;
     stream->on_incoming_headers_block_done = on_incoming_headers_block_done;
     stream->on_incoming_body = on_incoming_body;
     stream->on_stream_complete = on_stream_complete;
 
-    stream->request = s_create_http_request(method, uri, headers, header_count, stream);
+    stream->request = aws_build_http_request(method, uri, headers, header_count, &body_stream_delegates);
     if (stream->request == NULL) {
         goto on_error;
     }
