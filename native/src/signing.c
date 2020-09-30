@@ -121,10 +121,15 @@ static int s_initialize_signing_config(
     config->algorithm = dotnet_config->algorithm;
     config->signature_type = dotnet_config->signature_type;
 
-    callback_state->region = aws_string_new_from_c_str(allocator, dotnet_config->region);
-    config->region = aws_byte_cursor_from_string(callback_state->region);
-    callback_state->service = aws_string_new_from_c_str(allocator, dotnet_config->service);
-    config->service = aws_byte_cursor_from_string(callback_state->service);
+    if (dotnet_config->region != NULL) {
+        callback_state->region = aws_string_new_from_c_str(allocator, dotnet_config->region);
+        config->region = aws_byte_cursor_from_string(callback_state->region);
+    }
+
+    if (dotnet_config->service != NULL) {
+        callback_state->service = aws_string_new_from_c_str(allocator, dotnet_config->service);
+        config->service = aws_byte_cursor_from_string(callback_state->service);
+    }
 
     aws_date_time_init_epoch_millis(&config->date, (uint64_t)dotnet_config->milliseconds_since_epoch);
 
@@ -139,6 +144,7 @@ static int s_initialize_signing_config(
         s_byte_cursor_from_nullable_c_string(dotnet_config->session_token),
         UINT64_MAX);
     if (callback_state->credentials == NULL) {
+        aws_raise_error(AWS_AUTH_SIGNING_INVALID_CONFIGURATION);
         return AWS_OP_ERR;
     }
 
