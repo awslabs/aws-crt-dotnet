@@ -249,7 +249,7 @@ namespace tests
                 crtErrorCode = AggregateExceptionToCrtErrorCode(e);
             }
 
-            /* ?? */
+            /* AWS_AUTH_SIGNING_INVALID_CONFIGURATION */
             Assert.Equal(1024 * 6 + 7, crtErrorCode);
         }   
 
@@ -272,7 +272,7 @@ namespace tests
                 crtErrorCode = AggregateExceptionToCrtErrorCode(e);
             }
 
-            /* ?? */
+            /* AWS_AUTH_SIGNING_INVALID_CONFIGURATION */
             Assert.Equal(1024 * 6 + 7, crtErrorCode);
         }
 
@@ -295,7 +295,7 @@ namespace tests
                 crtErrorCode = AggregateExceptionToCrtErrorCode(e);
             }
 
-            /* ?? */
+            /* AWS_AUTH_SIGNING_INVALID_CONFIGURATION */
             Assert.Equal(1024 * 6 + 7, crtErrorCode);
         }           
     }
