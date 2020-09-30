@@ -18,17 +18,17 @@ namespace Aws.Crt.IO
             End = 2
         }
 
-        public delegate int DRead(
+        public delegate int CrtStreamReadCallback(
                         [In, Out, MarshalAs(UnmanagedType.LPArray, SizeParamIndex=1)] byte[] buffer, 
                         UInt64 size,
                         out UInt64 bytesWritten);
-        public delegate bool DSeek(Int64 offset, int basis);
+        public delegate bool CrtStreamSeekCallback(Int64 offset, int basis);
 
         [StructLayout(LayoutKind.Sequential, CharSet=CharSet.Ansi)]
         public struct DelegateTable
         {
-            public DRead Read;
-            public DSeek Seek;
+            public CrtStreamReadCallback ReadCallback;
+            public CrtStreamSeekCallback SeekCallback;
         }
 
         private Stream BodyStream;
@@ -44,16 +44,20 @@ namespace Aws.Crt.IO
                     return SeekOrigin.End;
             }
 
-            return SeekOrigin.Begin;
+            throw new ArgumentException("Seek basis must be Begin or End");
         }
 
         private bool SeekInternal(long offset, int basis) {
             SeekBasis realBasis = (SeekBasis) basis;
 
-            if (BodyStream.CanSeek) {
-                BodyStream.Seek(offset, SeekBasisToSeekOrigin(realBasis));
-                return true;
-            } 
+            try {
+                if (BodyStream.CanSeek) {
+                    BodyStream.Seek(offset, SeekBasisToSeekOrigin(realBasis));
+                    return true;
+                }
+            } catch (ArgumentException) {
+                ;
+            }
 
             return false;
         }
@@ -80,12 +84,15 @@ namespace Aws.Crt.IO
             BodyStream = stream;
             var delegates = new DelegateTable();
 
+            /*
+             * We pass the delegate table by value to C, so we indicate a null stream with a nulled table.
+             */
             if (stream != null) {
-                delegates.Read = ReadInternal;
-                delegates.Seek = SeekInternal;
+                delegates.ReadCallback = ReadInternal;
+                delegates.SeekCallback = SeekInternal;
             } else {
-                delegates.Read = null;
-                delegates.Seek = null;
+                delegates.ReadCallback = null;
+                delegates.SeekCallback = null;
             }
 
             Delegates = delegates;

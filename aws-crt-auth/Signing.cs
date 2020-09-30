@@ -3,13 +3,9 @@
  * SPDX-License-Identifier: Apache-2.0.
  */
 using System;
-using System.Collections.Specialized;
-using System.IO;
 using System.Runtime.InteropServices;
-using System.Security;
 using System.Threading.Tasks;
 
-using Aws.Crt;
 using Aws.Crt.Http;
 using Aws.Crt.IO;
 
@@ -38,7 +34,7 @@ namespace Aws.Crt.Auth
         X_AMZ_CONTENT_SHA256 = 1
     }
 
-    public delegate bool aws_dotnet_auth_should_sign_header([In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex=1)]byte[] headerName, UInt32 length);
+    public delegate bool ShouldSignHeaderCallback([In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex=1)]byte[] headerName, UInt32 length);
 
     public class AwsSigningConfig {
 
@@ -48,7 +44,7 @@ namespace Aws.Crt.Auth
         public string Service { get; set; }
         public DateTimeOffset Timestamp { get; set; }
         public Credentials Credentials { get; set; }
-        public aws_dotnet_auth_should_sign_header ShouldSignHeader;
+        public ShouldSignHeaderCallback ShouldSignHeader { get; set; }
         public bool UseDoubleUriEncode { get; set; }
         public bool ShouldNormalizeUriPath { get; set; }
         public bool OmitSessionToken { get; set; }
@@ -69,6 +65,10 @@ namespace Aws.Crt.Auth
     }
 
     public class AwsSigner {
+
+        /*
+         * Decouples the public signing configuration from what we toss over the wall
+         */
         [StructLayout(LayoutKind.Sequential, CharSet=CharSet.Ansi)]
         internal struct AwsSigningConfigNative
         {
@@ -96,7 +96,7 @@ namespace Aws.Crt.Auth
             [MarshalAs(UnmanagedType.LPStr)]
             public string SessionToken;
 
-            public aws_dotnet_auth_should_sign_header ShouldSignHeader;
+            public ShouldSignHeaderCallback ShouldSignHeader;
 
             [MarshalAs(UnmanagedType.U1)]
             public bool UseDoubleUriEncode;
@@ -147,14 +147,14 @@ namespace Aws.Crt.Auth
 
         internal static class API
         {
-            internal delegate void DSigningComplete(
+            internal delegate void SigningCompleteCallback(
                 UInt64 id, 
-                Int32 error_code, 
+                Int32 errorCode, 
                 [MarshalAs(UnmanagedType.LPStr)] string uri, 
                 [In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex=4)] HttpHeader[] headers, 
                 UInt32 count);
 
-            internal delegate void aws_dotnet_auth_sign_request(
+            internal delegate void AwsDotnetAuthSignRequest(
                                     [MarshalAs(UnmanagedType.LPStr)] string method,
                                     [MarshalAs(UnmanagedType.LPStr)] string uri,
                                     [In] HttpHeader[] headers,
@@ -162,11 +162,11 @@ namespace Aws.Crt.Auth
                                     [In] CrtStreamWrapper.DelegateTable stream_delegate_table,
                                     [In] AwsSigningConfigNative signing_config,
                                     UInt64 future_id,
-                                    DSigningComplete completion_callback_delegate);
+                                    SigningCompleteCallback completion_callback_delegate);
 
-            public static aws_dotnet_auth_sign_request SignRequestNative = NativeAPI.Bind<aws_dotnet_auth_sign_request>();
+            public static AwsDotnetAuthSignRequest SignRequestNative = NativeAPI.Bind<AwsDotnetAuthSignRequest>("aws_dotnet_auth_sign_request");
 
-            public static DSigningComplete OnSigningComplete = AwsSigner.OnSigningComplete;
+            public static SigningCompleteCallback OnSigningComplete = AwsSigner.OnSigningComplete;
 
             private static LibraryHandle library = new LibraryHandle();
         }
@@ -176,32 +176,32 @@ namespace Aws.Crt.Auth
             public HttpRequest OriginalRequest;
             public TaskCompletionSource<HttpRequest> TaskSource = new TaskCompletionSource<HttpRequest>();
             public CrtStreamWrapper BodyStream;
-            public aws_dotnet_auth_should_sign_header ShouldSignHeader;
+            public ShouldSignHeaderCallback ShouldSignHeader;
         }
 
-        private static StrongReferenceVendor<SigningCallback> pendingCallbacks = new StrongReferenceVendor<SigningCallback>();
+        private static StrongReferenceVendor<SigningCallback> PendingCallbacks = new StrongReferenceVendor<SigningCallback>();
 
         private static void OnSigningComplete(ulong id, int errorCode, string uri, HttpHeader[] headers, uint headerCount)
         {
-            SigningCallback continuation = pendingCallbacks.UnwrapStrongReference(id);
-            if (continuation == null) {
+            SigningCallback callback = PendingCallbacks.ReleaseStrongReference(id);
+            if (callback == null) {
                 return;
             }
 
             if (errorCode != 0)
             {
-                continuation.TaskSource.SetException(new CrtException(errorCode));
+                callback.TaskSource.SetException(new CrtException(errorCode));
             }
             else
             {
-                HttpRequest sourceRequest = continuation.OriginalRequest;
+                HttpRequest sourceRequest = callback.OriginalRequest;
                 HttpRequest signedRequest = new HttpRequest();
                 signedRequest.Method = sourceRequest.Method;
                 signedRequest.Uri = uri;
                 signedRequest.Headers = headers;
                 signedRequest.BodyStream = sourceRequest.BodyStream;
 
-                continuation.TaskSource.SetResult(signedRequest);
+                callback.TaskSource.SetResult(signedRequest);
             }
         }
 
@@ -229,7 +229,7 @@ namespace Aws.Crt.Auth
             callback.ShouldSignHeader = signingConfig.ShouldSignHeader; /* prevent GC while signing */
             callback.BodyStream = new CrtStreamWrapper(request.BodyStream);
 
-            ulong id = pendingCallbacks.WrapStrongReference(callback);
+            ulong id = PendingCallbacks.AcquireStrongReference(callback);
 
             API.SignRequestNative(request.Method, request.Uri, request.Headers, headerCount, callback.BodyStream.Delegates, nativeConfig, id, API.OnSigningComplete);
 

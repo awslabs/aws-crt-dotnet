@@ -2,13 +2,7 @@
  * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
  * SPDX-License-Identifier: Apache-2.0.
  */
-using System;
-using System.Collections.Specialized;
-using System.Runtime.InteropServices;
-using System.Security;
 using System.Text;
-
-using Aws.Crt;
 
 namespace Aws.Crt.Auth
 {

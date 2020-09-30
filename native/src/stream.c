@@ -9,7 +9,6 @@
 
 #include <aws/io/stream.h>
 
-
 struct aws_input_stream_dotnet_impl {
     struct aws_dotnet_stream_function_table delegates;
     enum aws_stream_state state;

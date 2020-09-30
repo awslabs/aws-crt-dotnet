@@ -1,10 +1,9 @@
 using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 
 namespace Aws.Crt
 {
-    public class WeakReferenceVendor<T>
+    public class WeakReferenceVendor<T> where T : class
     {
         private ulong NextId = 0;
 
@@ -14,7 +13,7 @@ namespace Aws.Crt
         {
         }
 
-        public ulong WrapWeakReference(T thing)
+        public ulong AcquireWeakReference(T thing)
         {
             ulong id = 0;
 
@@ -26,7 +25,7 @@ namespace Aws.Crt
             return id;
         }
 
-        public T UnwrapWeakReference(ulong id)
+        public T ReleaseWeakReference(ulong id)
         {
             WeakReference reference = null;
             lock(this) {
@@ -43,7 +42,7 @@ namespace Aws.Crt
         }
     }
 
-    public class StrongReferenceVendor<T>
+    public class StrongReferenceVendor<T> where T : class
     {
         private ulong NextId = 0;
 
@@ -53,7 +52,7 @@ namespace Aws.Crt
         {
         }
 
-        public ulong WrapStrongReference(T thing)
+        public ulong AcquireStrongReference(T thing)
         {
             ulong id = 0;
 
@@ -65,7 +64,7 @@ namespace Aws.Crt
             return id;
         }
 
-        public T UnwrapStrongReference(ulong id)
+        public T ReleaseStrongReference(ulong id)
         {
             T thing = default(T);
             lock(this) {
