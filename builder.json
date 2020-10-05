@@ -1,0 +1,56 @@
+{
+    "name": "aws-crt-dotnet",
+    "build_steps": [
+        "dotnet build -v normal -p:PlatformTarget={platform_target} {dotnet_args}"
+    ],
+    "test_steps": [
+        "dotnet test tests -v normal -p:PlatformTarget={platform_target} -f netcoreapp2.0"
+    ],
+    "imports": [
+        "dotnetcore21"
+    ],
+    "variables": {
+        "platform_target": "x64",
+        "dotnet_args": ""
+    },
+    "hosts": {
+        "al2": {
+            "packages": [
+                "libicu",
+                "zlib",
+                "libcurl"
+            ]
+        }
+    },
+    "targets": {
+        "linux": {
+            "imports": [
+                "s2n"
+            ],
+            "variables": {
+                "dotnet_args": "-p:LibCryptoPath={source_dir}/{libcrypto_path}"
+            },
+            "architectures": {
+                "x64": {
+                    "build_env": {
+                        "AWS_DOTNET_RUNTIME": "linux-x64"
+                    }
+                }
+            }
+        },
+        "windows": {
+            "architectures": {
+                "x86": {
+                    "variables": {
+                        "platform_target": "x86"
+                    }
+                },
+                "x64": {
+                    "variables": {
+                        "platform_target": "x64"
+                    }
+                }
+            }
+        }
+    }
+}

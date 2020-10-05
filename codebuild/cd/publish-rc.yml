@@ -1,0 +1,45 @@
+version: 0.2
+# this buildspec assumes the aws-common-runtime/ubuntu-16.04 image
+# This job is responsible for publishing the nupkgs after assembling them from the artifacted pieces
+phases:
+  install:
+    commands:
+      # .NET Core install instructions taken from: https://dotnet.microsoft.com/download/linux-package-manager/ubuntu16-04/sdk-current
+      - curl -L https://packages.microsoft.com/config/ubuntu/16.04/packages-microsoft-prod.deb --output /tmp/packages-microsoft-prod.deb
+      - sudo dpkg -i /tmp/packages-microsoft-prod.deb
+      - sudo apt-get install apt-transport-https
+      - sudo apt-get update -y
+      - sudo apt-get install dotnet-sdk-2.2 -y
+      # need latest awscli for secretsmanager
+      - sudo pip3 install awscli --upgrade
+  pre_build:
+    commands:
+      - cd $CODEBUILD_SRC_DIR/aws-crt-dotnet
+      - export PKG_VERSION=$(git describe --tags | cut -f1 -d'-' | cut -f2 -dv)
+      - mkdir -p packages
+      - mkdir -p build/lib
+      - cp -rv $CODEBUILD_SRC_DIR_linux_x64/dist/* $CODEBUILD_SRC_DIR/aws-crt-dotnet/build/lib/
+      - cp -rv $CODEBUILD_SRC_DIR_win_x86/dist/* $CODEBUILD_SRC_DIR/aws-crt-dotnet/build/lib/
+      - cp -rv $CODEBUILD_SRC_DIR_win_x64/dist/* $CODEBUILD_SRC_DIR/aws-crt-dotnet/build/lib/
+      - cp -rv $CODEBUILD_SRC_DIR_osx_x64/* $CODEBUILD_SRC_DIR/aws-crt-dotnet/build/lib/
+      - ls -alR $CODEBUILD_SRC_DIR/aws-crt-dotnet/build/lib
+      # pull nuget key
+      - NUGET_KEY=$(aws secretsmanager get-secret-value --secret-id "NuGet/push" --query SecretString | cut -f2 -d\")
+  build:
+    commands:
+      - cd $CODEBUILD_SRC_DIR/aws-crt-dotnet
+      # build the RC packages (packages are built as part of build)
+      - dotnet build --configuration Release -p:Version=${PKG_VERSION} -p:PackageVersion=${PKG_VERSION}-rc -p:BuildNativeLibrary=false
+      # publish them
+      - cd packages
+      - dotnet nuget push AWSCRT.${PKG_VERSION}-rc.nupkg -k $NUGET_KEY -s https://api.nuget.org/v3/index.json
+      - dotnet nuget push AWSCRT-HTTP.${PKG_VERSION}-rc.nupkg -k $NUGET_KEY -s https://api.nuget.org/v3/index.json
+  post_build:
+    commands:
+      # wait for the package to become available on nuget
+      - bash $CODEBUILD_SRC_DIR/aws-crt-dotnet/codebuild/cd/wait-for-nuget.sh ${PKG_VERSION}-rc
+
+artifacts:
+  discard-paths: yes
+  files:
+    - $CODEBUILD_SRC_DIR/aws-crt-dotnet/packages/*.nupkg

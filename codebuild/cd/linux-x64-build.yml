@@ -1,0 +1,31 @@
+version: 0.2
+# this build spec assumes the aws-common-runtime/ubuntu-16.04:x64 image
+phases:
+  install:
+    commands:
+      - sudo apt-get install -y clang-3.9
+      # .NET Core install instructions taken from: https://dotnet.microsoft.com/download/linux-package-manager/ubuntu16-04/sdk-current
+      - curl -L https://packages.microsoft.com/config/ubuntu/16.04/packages-microsoft-prod.deb --output /tmp/packages-microsoft-prod.deb
+      - sudo dpkg -i /tmp/packages-microsoft-prod.deb
+      - sudo apt-get install apt-transport-https
+      - sudo apt-get update -y
+      - sudo apt-get install dotnet-sdk-2.2 -y
+  pre_build:
+    commands:
+      - export CC=clang-3.9
+      - export CXX=clang++-3.9
+  build:
+    commands:
+      - cd aws-crt-dotnet
+      - mkdir packages
+      - dotnet build --configuration Release
+  post_build:
+    commands:
+      # get the shared libs from the native build
+      - mkdir -p ../dist/x64
+      - cp -rv build/lib/libaws-crt-dotnet-x64.so ../dist/
+
+artifacts:
+  files:
+    - 'dist/**/*' 
+

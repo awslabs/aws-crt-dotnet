@@ -1,0 +1,29 @@
+version: 0.2
+#this buildspec assumes the ubuntu 14.04 trusty image
+phases:
+  install:
+    commands:
+      - wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
+      - sudo add-apt-repository ppa:ubuntu-toolchain-r/test
+      - sudo apt-add-repository "deb http://apt.llvm.org/trusty/ llvm-toolchain-trusty-6.0 main"
+      - sudo apt-get update -y
+      - sudo apt-get install clang-6.0 cmake3 dpkg python3 -y -f
+      # .NET Core install instructions taken from: https://dotnet.microsoft.com/download/linux-package-manager/ubuntu14-04/sdk-current
+      - curl -L https://packages.microsoft.com/config/ubuntu/14.04/packages-microsoft-prod.deb --output /tmp/packages-microsoft-prod.deb
+      - sudo dpkg -i /tmp/packages-microsoft-prod.deb
+      - sudo apt-get install apt-transport-https
+      - sudo apt-get update -y
+      - sudo apt-get install dotnet-sdk-2.2 -y
+
+  pre_build:
+    commands:
+      - export CC=clang-6.0
+      - export AWS_DOTNET_RUNTIME=linux-x64
+  build:
+    commands:
+      - echo Build started on `date`
+      - ./codebuild/common-posix.sh
+  post_build:
+    commands:
+      - echo Build completed on `date`
+
