@@ -3,6 +3,9 @@
  * SPDX-License-Identifier: Apache-2.0.
  */
 
+#ifndef AWS_DOTNET_CRT_H
+#define AWS_DOTNET_CRT_H
+
 #include <aws/common/common.h>
 
 /* Win32 .NET callbacks are __stdcall, everything else is __cdecl */
@@ -19,3 +22,5 @@ struct aws_allocator *aws_dotnet_get_allocator(void);
  * native function returns, the exception will be thrown, which preserves the
  * .NET callstack */
 void aws_dotnet_throw_exception(int error_code, const char *message, ...);
+
+#endif /* AWS_DOTNET_CRT_H */

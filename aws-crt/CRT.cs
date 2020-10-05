@@ -336,4 +336,20 @@ namespace Aws.Crt
             }
         }
     }
+
+    public class CrtException : Exception {
+
+        public int ErrorCode {get; private set; }
+
+        public CrtException(int errorCode) :
+            base(String.Format("Crt Runtime Exception: {0}", CRT.ErrorString(errorCode)))
+        {
+            ErrorCode = errorCode;
+        }
+
+        public CrtException(string message) :
+            base(message)
+        {
+        }
+    }
 }
