@@ -12,7 +12,8 @@ using Aws.Crt.IO;
 namespace Aws.Crt.Auth
 {
     public enum AwsSigningAlgorithm {
-        SIGV4 = 0
+        SIGV4 = 0,
+        SIGV4A = 1,
     }
 
     public enum AwsSignatureType {

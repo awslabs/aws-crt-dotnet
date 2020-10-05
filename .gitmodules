@@ -18,4 +18,4 @@
 	url = https://github.com/awslabs/aws-c-cal
 [submodule "aws-common-runtime/aws-c-auth"]
 	path = crt/aws-c-auth
-	url = https://github.com/awslabs/aws-c-auth
+	url = git@github.com:awslabs/aws-c-auth-staging.git
