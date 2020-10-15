@@ -147,9 +147,8 @@ namespace tests
 
             Assert.Equal("GET", signedRequest.Method);
             Assert.Equal("/?Param-3=Value3&Param=Value2&%E1%88%B4=Value1&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIDEXAMPLE%2F20150830%2Fus-east-1%2Fservice%2Faws4_request&X-Amz-Date=20150830T123600Z&X-Amz-SignedHeaders=host&X-Amz-Expires=3600&X-Amz-Signature=c5f1848ceec943ac2ca68ee720460c23aaae30a2300586597ada94c4a65e4787", signedRequest.Uri);
-            Assert.Equal(2, signedRequest.Headers.Length);
+            Assert.Equal(1, signedRequest.Headers.Length);
             Assert.True(HasHeader(signedRequest, "Host", "example.amazonaws.com"));
-            Assert.True(HasHeader(signedRequest, "X-Amz-Date", "20150830T123600Z"));
         }
 
         /* Sourced from the post-x-www-form-urlencoded test case in aws-c-auth */
