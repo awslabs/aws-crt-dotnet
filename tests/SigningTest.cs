@@ -14,6 +14,7 @@ using Xunit;
 using Aws.Crt;
 using Aws.Crt.Auth;
 using Aws.Crt.Http;
+using Aws.Crt.IO;
 
 namespace tests
 {
@@ -121,7 +122,7 @@ namespace tests
             var config = BuildBaseSigningConfig();
             var request = BuildTestSuiteRequestWithoutBody();
 
-            Task<HttpRequest> result = AwsSigner.SignRequest(request, config);
+            Task<HttpRequest> result = AwsSigner.SignHttpRequest(request, config);
             HttpRequest signedRequest = result.Result;
 
             Assert.Equal("GET", signedRequest.Method);
@@ -142,7 +143,7 @@ namespace tests
 
             var request = BuildTestSuiteRequestWithoutBody();
 
-            Task<HttpRequest> result = AwsSigner.SignRequest(request, config);
+            Task<HttpRequest> result = AwsSigner.SignHttpRequest(request, config);
             HttpRequest signedRequest = result.Result;
 
             Assert.Equal("GET", signedRequest.Method);
@@ -160,7 +161,7 @@ namespace tests
 
             var request = BuildTestSuiteRequestWithBody();
 
-            Task<HttpRequest> result = AwsSigner.SignRequest(request, config);
+            Task<HttpRequest> result = AwsSigner.SignHttpRequest(request, config);
             HttpRequest signedRequest = result.Result;
 
             Assert.Equal("POST", signedRequest.Method);
@@ -174,6 +175,36 @@ namespace tests
             Assert.True(HasHeader(signedRequest, "Content-Length", "13"));
         }      
 
+        /* Sourced from the post-x-www-form-urlencoded test case in aws-c-auth */
+        [Fact]
+        public void SignCanonicalRequestByHeaders()
+        {
+            Logger.EnableLogging(LogLevel.TRACE, "/tmp/log.txt");
+
+            var config = BuildBaseSigningConfig();
+            config.SignedBodyHeader = AwsSignedBodyHeaderType.X_AMZ_CONTENT_SHA256;
+            config.SignatureType = AwsSignatureType.CANONICAL_REQUEST_VIA_HEADERS;
+
+
+            var canonicalRequest = String.Join('\n',
+                "POST",
+                "/",
+                "",
+                "content-length:13",
+                "content-type:application/x-www-form-urlencoded",
+                "host:example.amazonaws.com",
+                "x-amz-content-sha256:9095672bbd1f56dfc5b65f3e153adc8731a4a654192329106275f4c7b24d0b6e",
+                "x-amz-date:20150830T123600Z",
+                "",
+                "content-length;content-type;host;x-amz-content-sha256;x-amz-date",
+                "9095672bbd1f56dfc5b65f3e153adc8731a4a654192329106275f4c7b24d0b6e");
+
+            Task<String> result = AwsSigner.SignCanonicalRequest(canonicalRequest, config);
+            String signatureValue = result.Result;
+
+            Assert.Equal("AWS4-HMAC-SHA256 Credential=AKIDEXAMPLE/20150830/us-east-1/service/aws4_request, SignedHeaders=content-length;content-type;host;x-amz-content-sha256;x-amz-date, Signature=d3875051da38690788ef43de4db0d8f280229d82040bfac253562e56c3f20e0b", signatureValue);
+        } 
+
         [Fact]
         public void SignRequestByHeadersWithHeaderSkip()
         {
@@ -182,7 +213,7 @@ namespace tests
 
             var request = BuildRequestWithSkippedHeader();
 
-            Task<HttpRequest> result = AwsSigner.SignRequest(request, config);
+            Task<HttpRequest> result = AwsSigner.SignHttpRequest(request, config);
             HttpRequest signedRequest = result.Result;
 
             Assert.Equal("GET", signedRequest.Method);
@@ -214,7 +245,7 @@ namespace tests
 
             var request = BuildRequestWithIllegalHeader();
 
-            Task<HttpRequest> result = AwsSigner.SignRequest(request, config);
+            Task<HttpRequest> result = AwsSigner.SignHttpRequest(request, config);
 
             Assert.Throws<AggregateException>(() => result.Result);
 
@@ -237,7 +268,7 @@ namespace tests
 
             var request = BuildTestSuiteRequestWithoutBody();
 
-            Task<HttpRequest> result = AwsSigner.SignRequest(request, config);
+            Task<HttpRequest> result = AwsSigner.SignHttpRequest(request, config);
 
             Assert.Throws<AggregateException>(() => result.Result);
 
@@ -260,7 +291,7 @@ namespace tests
 
             var request = BuildTestSuiteRequestWithoutBody();
 
-            Task<HttpRequest> result = AwsSigner.SignRequest(request, config);
+            Task<HttpRequest> result = AwsSigner.SignHttpRequest(request, config);
 
             Assert.Throws<AggregateException>(() => result.Result);
 
@@ -283,7 +314,7 @@ namespace tests
 
             var request = BuildTestSuiteRequestWithoutBody();
 
-            Task<HttpRequest> result = AwsSigner.SignRequest(request, config);
+            Task<HttpRequest> result = AwsSigner.SignHttpRequest(request, config);
 
             Assert.Throws<AggregateException>(() => result.Result);
 

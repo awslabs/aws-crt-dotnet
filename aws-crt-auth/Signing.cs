@@ -229,7 +229,7 @@ namespace Aws.Crt.Auth
             }
         }
 
-        public static Task<HttpRequest> SignRequest(HttpRequest request, AwsSigningConfig signingConfig) 
+        public static Task<HttpRequest> SignHttpRequest(HttpRequest request, AwsSigningConfig signingConfig) 
         {
             if (request == null || signingConfig == null) {
                 throw new CrtException("Null argument passed to SignRequest");
