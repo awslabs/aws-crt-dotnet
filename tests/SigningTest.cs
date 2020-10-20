@@ -202,7 +202,7 @@ namespace tests
             Task<String> result = AwsSigner.SignCanonicalRequest(canonicalRequest, config);
             String signatureValue = result.Result;
 
-            Assert.Equal("AWS4-HMAC-SHA256 Credential=AKIDEXAMPLE/20150830/us-east-1/service/aws4_request, SignedHeaders=content-length;content-type;host;x-amz-content-sha256;x-amz-date, Signature=d3875051da38690788ef43de4db0d8f280229d82040bfac253562e56c3f20e0b", signatureValue);
+            Assert.Equal("d3875051da38690788ef43de4db0d8f280229d82040bfac253562e56c3f20e0b", signatureValue);
         } 
 
         [Fact]

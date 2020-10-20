@@ -252,19 +252,7 @@ static void s_complete_canonical_request_signing(
     struct aws_signing_result *result) {
     struct aws_string *authorization_result = NULL;
 
-    if (callback_state->signature_type == AWS_ST_CANONICAL_REQUEST_HEADERS) {
-        aws_signing_result_get_property_value_in_property_list(
-            result,
-            g_aws_http_headers_property_list_name,
-            g_aws_signing_authorization_header_name,
-            &authorization_result);
-    } else {
-        aws_signing_result_get_property_value_in_property_list(
-            result,
-            g_aws_http_query_params_property_list_name,
-            g_aws_signing_authorization_query_param_name,
-            &authorization_result);
-    }
+    aws_signing_result_get_property(result, g_aws_signature_property_name, &authorization_result);
 
     if (authorization_result == NULL) {
         s_complete_signing_exceptionally(callback_state, AWS_ERROR_INVALID_STATE);
