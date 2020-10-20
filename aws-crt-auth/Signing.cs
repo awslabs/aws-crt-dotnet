@@ -20,7 +20,9 @@ namespace Aws.Crt.Auth
         HTTP_REQUEST_VIA_HEADERS = 0,
         HTTP_REQUEST_VIA_QUERY_PARAMS = 1,
         HTTP_REQUEST_CHUNK = 2,
-        HTTP_REQUEST_EVENT = 3
+        HTTP_REQUEST_EVENT = 3,
+        CANONICAL_REQUEST_VIA_HEADERS = 4,
+        CANONICAL_REQUEST_VIA_QUERY_PARAMS = 5,
     }
 
     public class AwsSignedBodyValue {
@@ -148,14 +150,14 @@ namespace Aws.Crt.Auth
 
         internal static class API
         {
-            internal delegate void SigningCompleteCallback(
+            internal delegate void HttpRequestSigningCompleteCallback(
                 UInt64 id, 
                 Int32 errorCode, 
                 [MarshalAs(UnmanagedType.LPStr)] string uri, 
                 [In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex=4)] HttpHeader[] headers, 
                 UInt32 count);
 
-            internal delegate void AwsDotnetAuthSignRequest(
+            internal delegate void AwsDotnetAuthSignHttpRequest(
                                     [MarshalAs(UnmanagedType.LPStr)] string method,
                                     [MarshalAs(UnmanagedType.LPStr)] string uri,
                                     [In] HttpHeader[] headers,
@@ -163,16 +165,31 @@ namespace Aws.Crt.Auth
                                     [In] CrtStreamWrapper.DelegateTable stream_delegate_table,
                                     [In] AwsSigningConfigNative signing_config,
                                     UInt64 future_id,
-                                    SigningCompleteCallback completion_callback_delegate);
+                                    HttpRequestSigningCompleteCallback completion_callback_delegate);
 
-            public static AwsDotnetAuthSignRequest SignRequestNative = NativeAPI.Bind<AwsDotnetAuthSignRequest>("aws_dotnet_auth_sign_request");
+            internal delegate void CanonicalRequestSigningCompleteCallback(
+                UInt64 id, 
+                Int32 errorCode, 
+                [MarshalAs(UnmanagedType.LPStr)] string authorizationValue);
 
-            public static SigningCompleteCallback OnSigningComplete = AwsSigner.OnSigningComplete;
+            internal delegate void AwsDotnetAuthSignCanonicalRequest(
+                                    [MarshalAs(UnmanagedType.LPStr)] string canonical_request,
+                                    [In] AwsSigningConfigNative signing_config,
+                                    UInt64 future_id,
+                                    CanonicalRequestSigningCompleteCallback completion_callback_delegate);                                    
+
+            public static AwsDotnetAuthSignHttpRequest SignRequestNative = NativeAPI.Bind<AwsDotnetAuthSignHttpRequest>("aws_dotnet_auth_sign_http_request");
+
+            public static AwsDotnetAuthSignCanonicalRequest SignCanonicalRequestNative = NativeAPI.Bind<AwsDotnetAuthSignCanonicalRequest>("aws_dotnet_auth_sign_canonical_request");
+
+            public static HttpRequestSigningCompleteCallback OnHttpRequestSigningComplete = AwsSigner.OnHttpRequestSigningComplete;
+
+            public static CanonicalRequestSigningCompleteCallback OnCanonicalRequestSigningComplete = AwsSigner.OnCanonicalRequestSigningComplete;
 
             private static LibraryHandle library = new LibraryHandle();
         }
 
-        private class SigningCallback
+        private class HttpRequestSigningCallback
         {
             public HttpRequest OriginalRequest;
             public TaskCompletionSource<HttpRequest> TaskSource = new TaskCompletionSource<HttpRequest>();
@@ -180,11 +197,18 @@ namespace Aws.Crt.Auth
             public ShouldSignHeaderCallback ShouldSignHeader;
         }
 
-        private static StrongReferenceVendor<SigningCallback> PendingCallbacks = new StrongReferenceVendor<SigningCallback>();
-
-        private static void OnSigningComplete(ulong id, int errorCode, string uri, HttpHeader[] headers, uint headerCount)
+        private class CanonicalRequestSigningCallback
         {
-            SigningCallback callback = PendingCallbacks.ReleaseStrongReference(id);
+            public String OriginalCanonicalRequest;
+            public TaskCompletionSource<String> TaskSource = new TaskCompletionSource<String>();
+        }
+
+        private static StrongReferenceVendor<HttpRequestSigningCallback> PendingHttpRequestSignings = new StrongReferenceVendor<HttpRequestSigningCallback>();
+        private static StrongReferenceVendor<CanonicalRequestSigningCallback> PendingCanonicalRequestSignings = new StrongReferenceVendor<CanonicalRequestSigningCallback>();
+
+        private static void OnHttpRequestSigningComplete(ulong id, int errorCode, string uri, HttpHeader[] headers, uint headerCount)
+        {
+            HttpRequestSigningCallback callback = PendingHttpRequestSignings.ReleaseStrongReference(id);
             if (callback == null) {
                 return;
             }
@@ -206,7 +230,7 @@ namespace Aws.Crt.Auth
             }
         }
 
-        public static Task<HttpRequest> SignRequest(HttpRequest request, AwsSigningConfig signingConfig) 
+        public static Task<HttpRequest> SignHttpRequest(HttpRequest request, AwsSigningConfig signingConfig) 
         {
             if (request == null || signingConfig == null) {
                 throw new CrtException("Null argument passed to SignRequest");
@@ -225,16 +249,56 @@ namespace Aws.Crt.Auth
                 headerCount = (uint) request.Headers.Length;
             }
 
-            SigningCallback callback = new SigningCallback();
+            HttpRequestSigningCallback callback = new HttpRequestSigningCallback();
             callback.OriginalRequest = request; /* needed to build final signed request */
             callback.ShouldSignHeader = signingConfig.ShouldSignHeader; /* prevent GC while signing */
             callback.BodyStream = new CrtStreamWrapper(request.BodyStream);
 
-            ulong id = PendingCallbacks.AcquireStrongReference(callback);
+            ulong id = PendingHttpRequestSignings.AcquireStrongReference(callback);
 
-            API.SignRequestNative(request.Method, request.Uri, request.Headers, headerCount, callback.BodyStream.Delegates, nativeConfig, id, API.OnSigningComplete);
+            API.SignRequestNative(request.Method, request.Uri, request.Headers, headerCount, callback.BodyStream.Delegates, nativeConfig, id, API.OnHttpRequestSigningComplete);
 
             return callback.TaskSource.Task;
         }
+
+        private static void OnCanonicalRequestSigningComplete(ulong id, int errorCode, string authorizationValue)
+        {
+            CanonicalRequestSigningCallback callback = PendingCanonicalRequestSignings.ReleaseStrongReference(id);
+            if (callback == null) {
+                return;
+            }
+
+            if (errorCode != 0)
+            {
+                callback.TaskSource.SetException(new CrtException(errorCode));
+            }
+            else
+            {
+                callback.TaskSource.SetResult(authorizationValue);
+            }
+        }
+
+        public static Task<String> SignCanonicalRequest(String canonicalRequest, AwsSigningConfig signingConfig) 
+        {
+            if (canonicalRequest == null || signingConfig == null) {
+                throw new CrtException("Null argument passed to SignRequest");
+            }
+
+            if (signingConfig.SignatureType != AwsSignatureType.CANONICAL_REQUEST_VIA_HEADERS && 
+                signingConfig.SignatureType != AwsSignatureType.CANONICAL_REQUEST_VIA_QUERY_PARAMS) {
+                throw new CrtException("Illegal signing type for canonical request signing");
+            }
+
+            var nativeConfig = new AwsSigningConfigNative(signingConfig);
+
+            CanonicalRequestSigningCallback callback = new CanonicalRequestSigningCallback();
+            callback.OriginalCanonicalRequest = canonicalRequest;
+
+            ulong id = PendingCanonicalRequestSignings.AcquireStrongReference(callback);
+
+            API.SignCanonicalRequestNative(canonicalRequest, nativeConfig, id, API.OnCanonicalRequestSigningComplete);
+
+            return callback.TaskSource.Task;
+        }        
     }
 }
