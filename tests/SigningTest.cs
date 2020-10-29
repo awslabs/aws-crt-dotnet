@@ -210,7 +210,6 @@ namespace tests
             Logger.EnableLogging(LogLevel.TRACE, "/tmp/log.txt");
 
             var config = BuildBaseSigningConfig();
-            config.SignedBodyHeader = AwsSignedBodyHeaderType.X_AMZ_CONTENT_SHA256;
             config.SignatureType = AwsSignatureType.CANONICAL_REQUEST_VIA_HEADERS;
             config.Algorithm = AwsSigningAlgorithm.SIGV4A;
 
@@ -224,8 +223,9 @@ namespace tests
                 "host:example.amazonaws.com",
                 "x-amz-content-sha256:9095672bbd1f56dfc5b65f3e153adc8731a4a654192329106275f4c7b24d0b6e",
                 "x-amz-date:20150830T123600Z",
+                "x-amz-region-set:us-east-1",
                 "",
-                "content-length;content-type;host;x-amz-content-sha256;x-amz-date",
+                "content-length;content-type;host;x-amz-content-sha256;x-amz-date;x-amz-region-set",
                 "9095672bbd1f56dfc5b65f3e153adc8731a4a654192329106275f4c7b24d0b6e");
 
             Task<String> result = AwsSigner.SignCanonicalRequest(canonicalRequest, config);

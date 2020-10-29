@@ -417,5 +417,41 @@ AWS_DOTNET_API bool aws_dotnet_auth_verify_v4a_canonical_signing(
     (void)ecc_pub_x;
     (void)ecc_pub_y;
 
-    return true;
+    struct aws_byte_cursor canonical_request_cursor = aws_byte_cursor_from_c_str(canonical_request);
+
+    struct aws_allocator *allocator = aws_dotnet_get_allocator();
+
+    int result = AWS_OP_ERR;
+    struct aws_dotnet_signing_callback_state *continuation =
+        aws_mem_calloc(allocator, 1, sizeof(struct aws_dotnet_signing_callback_state));
+    if (continuation == NULL) {
+        return false;
+    }
+
+    struct aws_signing_config_aws config;
+    AWS_ZERO_STRUCT(config);
+
+    if (s_initialize_signing_config(&config, &native_signing_config, continuation)) {
+        goto done;
+    }
+
+    struct aws_signable *signable = aws_signable_new_canonical_request(allocator, canonical_request_cursor);
+    if (signable == NULL) {
+        goto done;
+    }
+
+    result = aws_verify_sigv4a_signing(
+        allocator,
+        signable,
+        (struct aws_signing_config_base *)&config,
+        aws_byte_cursor_from_c_str(canonical_request),
+        aws_byte_cursor_from_c_str(hex_signature),
+        aws_byte_cursor_from_c_str(ecc_pub_x),
+        aws_byte_cursor_from_c_str(ecc_pub_y));
+
+done:
+
+    s_destroy_signing_callback_state(continuation);
+
+    return result == AWS_OP_SUCCESS;
 }
