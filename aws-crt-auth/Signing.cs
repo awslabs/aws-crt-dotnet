@@ -176,11 +176,21 @@ namespace Aws.Crt.Auth
                                     [MarshalAs(UnmanagedType.LPStr)] string canonical_request,
                                     [In] AwsSigningConfigNative signing_config,
                                     UInt64 future_id,
-                                    CanonicalRequestSigningCompleteCallback completion_callback_delegate);                                    
+                                    CanonicalRequestSigningCompleteCallback completion_callback_delegate);     
+
+            
+            internal delegate bool AwsDotnetAuthVerifyV4aCanonicalSigning(
+                                    [MarshalAs(UnmanagedType.LPStr)] string canonical_request,
+                                    [In] AwsSigningConfigNative signing_config,
+                                    [MarshalAs(UnmanagedType.LPStr)] string signature,
+                                    [MarshalAs(UnmanagedType.LPStr)] string ecc_pub_x,
+                                    [MarshalAs(UnmanagedType.LPStr)] string ecc_pub_y);                                                           
 
             public static AwsDotnetAuthSignHttpRequest SignRequestNative = NativeAPI.Bind<AwsDotnetAuthSignHttpRequest>("aws_dotnet_auth_sign_http_request");
 
             public static AwsDotnetAuthSignCanonicalRequest SignCanonicalRequestNative = NativeAPI.Bind<AwsDotnetAuthSignCanonicalRequest>("aws_dotnet_auth_sign_canonical_request");
+
+            public static AwsDotnetAuthVerifyV4aCanonicalSigning VerifyV4aCanonicalSigningNative = NativeAPI.Bind<AwsDotnetAuthVerifyV4aCanonicalSigning>("aws_dotnet_auth_verify_v4a_canonical_signing");
 
             public static HttpRequestSigningCompleteCallback OnHttpRequestSigningComplete = AwsSigner.OnHttpRequestSigningComplete;
 
@@ -299,6 +309,21 @@ namespace Aws.Crt.Auth
             API.SignCanonicalRequestNative(canonicalRequest, nativeConfig, id, API.OnCanonicalRequestSigningComplete);
 
             return callback.TaskSource.Task;
+        }
+
+        public static bool VerifyV4aCanonicalSigning(String canonicalRequest, AwsSigningConfig signingConfig, String hexSignature, String eccPubX, String eccPubY) {
+            if (canonicalRequest == null || signingConfig == null) {
+                throw new CrtException("Null argument passed to SignRequest");
+            }
+
+            if (signingConfig.SignatureType != AwsSignatureType.CANONICAL_REQUEST_VIA_HEADERS && 
+                signingConfig.SignatureType != AwsSignatureType.CANONICAL_REQUEST_VIA_QUERY_PARAMS) {
+                throw new CrtException("Illegal signing type for canonical request signing");
+            }
+
+            var nativeConfig = new AwsSigningConfigNative(signingConfig);
+
+            return API.VerifyV4aCanonicalSigningNative(canonicalRequest, nativeConfig, hexSignature, eccPubX, eccPubY);            
         }        
     }
 }

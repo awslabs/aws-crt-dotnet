@@ -403,3 +403,19 @@ on_error:
 
     on_signing_complete(callback_id, error_code, NULL);
 }
+
+AWS_DOTNET_API bool aws_dotnet_auth_verify_v4a_canonical_signing(
+    const char *canonical_request,
+    struct aws_signing_config_native native_signing_config,
+    const char *hex_signature,
+    const char *ecc_pub_x,
+    const char *ecc_pub_y) {
+
+    (void)canonical_request;
+    (void)native_signing_config;
+    (void)hex_signature;
+    (void)ecc_pub_x;
+    (void)ecc_pub_y;
+
+    return true;
+}

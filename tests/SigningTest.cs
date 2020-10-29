@@ -179,8 +179,6 @@ namespace tests
         [Fact]
         public void SignCanonicalRequestByHeaders()
         {
-            Logger.EnableLogging(LogLevel.TRACE, "/tmp/log.txt");
-
             var config = BuildBaseSigningConfig();
             config.SignedBodyHeader = AwsSignedBodyHeaderType.X_AMZ_CONTENT_SHA256;
             config.SignatureType = AwsSignatureType.CANONICAL_REQUEST_VIA_HEADERS;
@@ -204,6 +202,38 @@ namespace tests
 
             Assert.Equal("d3875051da38690788ef43de4db0d8f280229d82040bfac253562e56c3f20e0b", signatureValue);
         } 
+
+        /* Sourced from the post-x-www-form-urlencoded test case in aws-c-auth */
+        [Fact]
+        public void SignCanonicalRequestByHeadersV4a()
+        {
+            Logger.EnableLogging(LogLevel.TRACE, "/tmp/log.txt");
+
+            var config = BuildBaseSigningConfig();
+            config.SignedBodyHeader = AwsSignedBodyHeaderType.X_AMZ_CONTENT_SHA256;
+            config.SignatureType = AwsSignatureType.CANONICAL_REQUEST_VIA_HEADERS;
+            config.Algorithm = AwsSigningAlgorithm.SIGV4A;
+
+
+            var canonicalRequest = String.Join('\n',
+                "POST",
+                "/",
+                "",
+                "content-length:13",
+                "content-type:application/x-www-form-urlencoded",
+                "host:example.amazonaws.com",
+                "x-amz-content-sha256:9095672bbd1f56dfc5b65f3e153adc8731a4a654192329106275f4c7b24d0b6e",
+                "x-amz-date:20150830T123600Z",
+                "",
+                "content-length;content-type;host;x-amz-content-sha256;x-amz-date",
+                "9095672bbd1f56dfc5b65f3e153adc8731a4a654192329106275f4c7b24d0b6e");
+
+            Task<String> result = AwsSigner.SignCanonicalRequest(canonicalRequest, config);
+            String signatureValue = result.Result;
+
+            Assert.True(AwsSigner.VerifyV4aCanonicalSigning(canonicalRequest, config, signatureValue, "b6618f6a65740a99e650b33b6b4b5bd0d43b176d721a3edfea7e7d2d56d936b1", "865ed22a7eadc9c5cb9d2cbaca1b3699139fedc5043dc6661864218330c8e518"));
+        } 
+
 
         [Fact]
         public void SignRequestByHeadersWithHeaderSkip()
