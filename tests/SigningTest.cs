@@ -207,8 +207,6 @@ namespace tests
         [Fact]
         public void SignCanonicalRequestByHeadersV4a()
         {
-            Logger.EnableLogging(LogLevel.TRACE, "/tmp/log.txt");
-
             var config = BuildBaseSigningConfig();
             config.SignatureType = AwsSignatureType.CANONICAL_REQUEST_VIA_HEADERS;
             config.Algorithm = AwsSigningAlgorithm.SIGV4A;
