@@ -230,6 +230,16 @@ namespace Aws.Crt
                 nativeShutdown();
             }
 
+            public Object GetFunction<DT>(string name)
+            {
+                IntPtr function = GetFunctionAddress(name);
+                if (function == IntPtr.Zero)
+                {
+                    throw new InvalidOperationException($"Unable to resolve function {name}");
+                }
+                return Marshal.GetDelegateForFunctionPointer(function, typeof(DT));
+            }
+
             private aws_dotnet_static_init GetStaticInitFunction(string name)
             {
                 IntPtr function = GetFunctionAddress(name);

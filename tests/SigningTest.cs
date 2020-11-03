@@ -177,8 +177,6 @@ namespace tests
         [Fact]
         public void SignCanonicalRequestByHeaders()
         {
-            Logger.EnableLogging(LogLevel.TRACE, "/tmp/log.txt");
-
             var config = BuildBaseSigningConfig();
             config.SignedBodyHeader = AwsSignedBodyHeaderType.X_AMZ_CONTENT_SHA256;
             config.SignatureType = AwsSignatureType.CANONICAL_REQUEST_VIA_HEADERS;
@@ -226,16 +224,6 @@ namespace tests
             Assert.Equal(false, authValue.Contains("Skip"));
         }    
 
-        int AggregateExceptionToCrtErrorCode(AggregateException e) {
-            IEnumerable<int> codes = e.InnerExceptions
-                    .Where( ie => { return ie.GetType() == typeof(CrtException); } )
-                    .Select( ie => { return ((CrtException)ie).ErrorCode; } );
-
-            Assert.Equal(1, codes.Count());
-
-            return codes.First();        
-        }
-
         [Fact]
         public void SignRequestFailureIllegalHeader()
         {
@@ -245,13 +233,13 @@ namespace tests
 
             CrtResult<HttpRequest> result = AwsSigner.SignHttpRequest(request, config);
 
-            Assert.Throws<AggregateException>(() => result.Get());
+            Assert.Throws<CrtException>(() => result.Get());
 
             int crtErrorCode = 0;
             try {
                 HttpRequest req = result.Get();
-            } catch (AggregateException e) {
-                crtErrorCode = AggregateExceptionToCrtErrorCode(e);
+            } catch (CrtException e) {
+                crtErrorCode = e.ErrorCode;
             }
 
             /* AWS_AUTH_SIGNING_ILLEGAL_REQUEST_HEADER */
@@ -268,13 +256,13 @@ namespace tests
 
             CrtResult<HttpRequest> result = AwsSigner.SignHttpRequest(request, config);
 
-            Assert.Throws<AggregateException>(() => result.Get());
+            Assert.Throws<CrtException>(() => result.Get());
 
             int crtErrorCode = 0;
             try {
                 HttpRequest req = result.Get();
-            } catch (AggregateException e) {
-                crtErrorCode = AggregateExceptionToCrtErrorCode(e);
+            } catch (CrtException e) {
+                crtErrorCode = e.ErrorCode;
             }
 
             /* AWS_AUTH_SIGNING_INVALID_CONFIGURATION */
@@ -291,13 +279,13 @@ namespace tests
 
             CrtResult<HttpRequest> result = AwsSigner.SignHttpRequest(request, config);
 
-            Assert.Throws<AggregateException>(() => result.Get());
+            Assert.Throws<CrtException>(() => result.Get());
 
             int crtErrorCode = 0;
             try {
                 HttpRequest req = result.Get();
-            } catch (AggregateException e) {
-                crtErrorCode = AggregateExceptionToCrtErrorCode(e);
+            } catch (CrtException e) {
+                crtErrorCode = e.ErrorCode;
             }
 
             /* AWS_AUTH_SIGNING_INVALID_CONFIGURATION */
@@ -314,13 +302,13 @@ namespace tests
 
             CrtResult<HttpRequest> result = AwsSigner.SignHttpRequest(request, config);
 
-            Assert.Throws<AggregateException>(() => result.Get());
+            Assert.Throws<CrtException>(() => result.Get());
 
             int crtErrorCode = 0;
             try {
                 HttpRequest req = result.Get();
-            } catch (AggregateException e) {
-                crtErrorCode = AggregateExceptionToCrtErrorCode(e);
+            } catch (CrtException e) {
+                crtErrorCode = e.ErrorCode;
             }
 
             /* AWS_AUTH_SIGNING_INVALID_CONFIGURATION */

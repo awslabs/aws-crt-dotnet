@@ -34,14 +34,17 @@ namespace Aws.Crt
 
         public void Complete(T result)
         {
-            bool invokeCallback = false;
-            lock(this)
+            bool signalCompletion = false;
+            OnCompletion completionCallback = null;
+
+            lock (this)
             {
                 if (State == ResultState.INCOMPLETE)
                 {
                     State = ResultState.COMPLETE;
                     Result = result;
-                    invokeCallback = true;
+                    signalCompletion = true;
+                    completionCallback = OnCompletionCallback;
                 }
                 else
                 {
@@ -49,23 +52,29 @@ namespace Aws.Crt
                 }
             }
 
-            if (invokeCallback)
+            if (signalCompletion)
             {
-                OnCompletionCallback(result);
+                if (completionCallback != null)
+                {
+                    OnCompletionCallback(result);
+                }
                 CompletionSignal.Set();
             }
         }
 
         public void CompleteExceptionally(Exception exception)
         {
-            bool invokeCallback = false;
+            bool signalCompletion = false;
+            OnException exceptionCallback = null;
+
             lock (this)
             {
                 if (State == ResultState.INCOMPLETE)
                 {
                     State = ResultState.COMPLETE;
                     Exception = exception;
-                    invokeCallback = true;
+                    signalCompletion = true;
+                    exceptionCallback = OnExceptionCallback;
                 }
                 else
                 {
@@ -73,9 +82,12 @@ namespace Aws.Crt
                 }
             }
 
-            if (invokeCallback)
+            if (signalCompletion)
             {
-                OnExceptionCallback(exception);
+                if (exceptionCallback != null)
+                {
+                    OnExceptionCallback(exception);
+                }
                 CompletionSignal.Set();
             }
         }
