@@ -4,6 +4,9 @@
     <TargetFramework>net35</TargetFramework>
     <RootNamespace>Aws.Crt.Http</RootNamespace>
 
+    <!-- workaround per https://github.com/Microsoft/msbuild/issues/1333 -->
+    <FrameworkPathOverride Condition="'$(TargetFramework)' == 'net35'">C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v3.5\Profile\Client</FrameworkPathOverride>
+
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageOutputPath>$(ProjectDir)../packages</PackageOutputPath>
     <IncludeSymbols>true</IncludeSymbols>
