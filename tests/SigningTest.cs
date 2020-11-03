@@ -179,8 +179,6 @@ namespace tests
         [Fact]
         public void SignCanonicalRequestByHeaders()
         {
-            Logger.EnableLogging(LogLevel.TRACE, "/tmp/log.txt");
-
             var config = BuildBaseSigningConfig();
             config.SignedBodyHeader = AwsSignedBodyHeaderType.X_AMZ_CONTENT_SHA256;
             config.SignatureType = AwsSignatureType.CANONICAL_REQUEST_VIA_HEADERS;
