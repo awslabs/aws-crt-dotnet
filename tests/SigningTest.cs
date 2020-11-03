@@ -182,7 +182,7 @@ namespace tests
             config.SignatureType = AwsSignatureType.CANONICAL_REQUEST_VIA_HEADERS;
 
 
-            var canonicalRequest = String.Join('\n',
+            var canonicalRequest = String.Join("\n",
                 "POST",
                 "/",
                 "",
