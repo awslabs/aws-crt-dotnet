@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net35</TargetFramework>
+    <RootNamespace>Aws.Crt.Auth</RootNamespace>
+
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageOutputPath>$(ProjectDir)../packages</PackageOutputPath>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+
+    <PackageId>AWSCRT-AUTH</PackageId>
+    <Title>AWS CRT - AUTH</Title>
+    <Version>1.0.0-dev</Version>
+    <Authors>aws-sdk-common-runtime</Authors>
+    <Company>Amazon</Company>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <PackageTags>AWS,native,Amazon</PackageTags>
+    <RepositoryUrl>https://github.com/awslabs/aws-crt-dotnet.git</RepositoryUrl>
+    <Copyright>Amazon Web Services, 2019</Copyright>
+    <Description>AWS Common Runtime Auth bindings/API</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\aws-crt\aws-crt.Net35.csproj" />
+    <ProjectReference Include="..\aws-crt-http\aws-crt-http.Net35.csproj" />
+  </ItemGroup>
+
+</Project>

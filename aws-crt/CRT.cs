@@ -32,6 +32,16 @@ namespace Aws.Crt
             public static aws_dotnet_error_name error_name = NativeAPI.Bind<aws_dotnet_error_name>();
         }
 
+        public static void CopyStream(Stream source, Stream dest)
+        {
+            byte[] buffer = new byte[4096];
+            int read;
+            while ((read = source.Read(buffer, 0, buffer.Length)) > 0)
+            {
+                dest.Write(buffer, 0, read);
+            }
+        }
+
         public static string ErrorString(int errorCode)
         {
             return Marshal.PtrToStringAnsi(API.error_string(errorCode));
@@ -113,15 +123,15 @@ namespace Aws.Crt
             {
                 string libraryName = null;
                 string arch = (Is64Bit) ? "x64" : "x86";
-                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                if (Environment.OSVersion.Platform == PlatformID.Win32NT)
                 {
                     libraryName = $"aws-crt-dotnet-{arch}.dll";
                 }
-                else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+                else if (Environment.OSVersion.Platform == PlatformID.Unix)
                 {
                     libraryName = $"libaws-crt-dotnet-{arch}.so";
                 }
-                else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+                else if (Environment.OSVersion.Platform == PlatformID.MacOSX)
                 {
                     libraryName = $"libaws-crt-dotnet-{arch}.dylib"; 
                 }
@@ -181,7 +191,7 @@ namespace Aws.Crt
                     try
                     {
                         libStream = new FileStream(extractedLibraryPath, FileMode.Create, FileAccess.Write);
-                        resourceStream.CopyTo(libStream);
+                        CopyStream(resourceStream, libStream);
                         return extractedLibraryPath;
                     }
                     catch (Exception ex)
@@ -207,20 +217,20 @@ namespace Aws.Crt
             private NativeException.NativeExceptionRecorder recordNativeException = NativeException.RecordNativeException;
             private void Init()
             {
-                var nativeInit = GetFunction<aws_dotnet_static_init>("aws_dotnet_static_init");
+                var nativeInit = GetStaticInitFunction("aws_dotnet_static_init");
                 nativeInit();
 
-                var setExceptionCallback = GetFunction<NativeException.SetExceptionCallback>("aws_dotnet_set_exception_callback");
+                var setExceptionCallback = GetSetExceptionCallbackFunction("aws_dotnet_set_exception_callback");
                 setExceptionCallback(recordNativeException);
             }
 
             private void Shutdown()
             {
-                var nativeShutdown = GetFunction<aws_dotnet_static_shutdown>("aws_dotnet_static_shutdown");
+                var nativeShutdown = GetStaticShutdownFunction("aws_dotnet_static_shutdown");
                 nativeShutdown();
             }
 
-            public DT GetFunction<DT>(string name)
+            private aws_dotnet_static_init GetStaticInitFunction(string name)
             {
                 IntPtr function = GetFunctionAddress(name);
                 if (function == IntPtr.Zero)
@@ -228,7 +238,29 @@ namespace Aws.Crt
                     throw new InvalidOperationException($"Unable to resolve function {name}");
                 }
 
-                return Marshal.GetDelegateForFunctionPointer<DT>(function);
+                return (aws_dotnet_static_init)Marshal.GetDelegateForFunctionPointer(function, typeof(aws_dotnet_static_init));
+            }
+
+            private NativeException.SetExceptionCallback GetSetExceptionCallbackFunction(string name)
+            {
+                IntPtr function = GetFunctionAddress(name);
+                if (function == IntPtr.Zero)
+                {
+                    throw new InvalidOperationException($"Unable to resolve function {name}");
+                }
+
+                return (NativeException.SetExceptionCallback)Marshal.GetDelegateForFunctionPointer(function, typeof(NativeException.SetExceptionCallback));
+            }
+
+            private aws_dotnet_static_shutdown GetStaticShutdownFunction(string name)
+            {
+                IntPtr function = GetFunctionAddress(name);
+                if (function == IntPtr.Zero)
+                {
+                    throw new InvalidOperationException($"Unable to resolve function {name}");
+                }
+
+                return (aws_dotnet_static_shutdown)Marshal.GetDelegateForFunctionPointer(function, typeof(aws_dotnet_static_shutdown));
             }
 
             public IntPtr GetFunctionAddress(string name) {
@@ -306,7 +338,7 @@ namespace Aws.Crt
                     return s_loader;
                 }
 
-                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                if (Environment.OSVersion.Platform == PlatformID.Win32NT)
                 {
                     return s_loader = new WindowsLoader();
                 }
@@ -320,7 +352,7 @@ namespace Aws.Crt
         // Base class for native resources. SafeHandle guarantees that when the handle
         // goes out of scope, the ReleaseHandle() function will be called, which each
         // Handle subclass will implement to free the resource
-        internal abstract class Handle : SafeHandle
+        public abstract class Handle : SafeHandle
         {
             protected Handle()
             : base((IntPtr)0, true)

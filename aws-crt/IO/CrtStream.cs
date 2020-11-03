@@ -2,6 +2,8 @@ using System;
 using System.IO;
 using System.Runtime.InteropServices;
 
+using Aws.Crt;
+
 namespace Aws.Crt.IO
 {
     public sealed class CrtStreamWrapper
@@ -68,7 +70,7 @@ namespace Aws.Crt.IO
             {
                 var bufferStream = new MemoryStream(buffer);
                 long prevPosition = BodyStream.Position;
-                BodyStream.CopyTo(bufferStream, buffer.Length);
+                CRT.CopyStream(BodyStream, bufferStream);
                 bytesWritten = (ulong)(BodyStream.Position - prevPosition);
                 if (BodyStream.Position != BodyStream.Length)
                 {
