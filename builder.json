@@ -4,7 +4,7 @@
         "dotnet build -f netstandard2.0 -v normal -p:PlatformTarget={platform_target} {dotnet_args}"
     ],
     "test_steps": [
-        "dotnet test tests -v normal -p:PlatformTarget={platform_target} -f netcoreapp2.0"
+        "dotnet test tests/tests.csproj -v normal -p:PlatformTarget={platform_target} -f netcoreapp2.0"
     ],
     "imports": [
         "dotnetcore21"
