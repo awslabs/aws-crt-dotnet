@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.0;net35</TargetFrameworks>
+    <TargetFrameworks>netstandard2.0;net35;net45</TargetFrameworks>
     <DefineConstants Condition="$(TargetFramework) == 'netstandard2.0'">$(DefineConstants);NETSTANDARD</DefineConstants>
     <DefineConstants Condition="$(TargetFramework) == 'net35'">$(DefineConstants);BCL;BCL35</DefineConstants>
     <DefineConstants Condition="$(TargetFramework) == 'net45'">$(DefineConstants);BCL;BCL45</DefineConstants>    
