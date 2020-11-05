@@ -4,6 +4,9 @@
     <TargetFrameworks>netstandard2.0;net35</TargetFrameworks>
     <PlatformTarget Condition="$(PlatformTarget) == '' AND $(OS) == 'Windows_NT' AND ($(CMakeGenerator) == 'Visual Studio 14 2015' OR $(CMakeGenerator) == 'Visual Studio 15 2017')">x86</PlatformTarget>
     <PlatformTarget Condition="$(PlatformTarget) == ''">x64</PlatformTarget>
+    <DefineConstants Condition="$(TargetFramework) == 'netstandard2.0'">$(DefineConstants);NETSTANDARD</DefineConstants>
+    <DefineConstants Condition="$(TargetFramework) == 'net35'">$(DefineConstants);BCL;BCL35</DefineConstants>
+    <DefineConstants Condition="$(TargetFramework) == 'net45'">$(DefineConstants);BCL;BCL45</DefineConstants>
     <RootNamespace>Aws.CRT</RootNamespace>
 
     <!-- workaround per https://github.com/Microsoft/msbuild/issues/1333 -->

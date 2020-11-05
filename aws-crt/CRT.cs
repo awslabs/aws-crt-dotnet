@@ -123,17 +123,20 @@ namespace Aws.Crt
             {
                 string libraryName = null;
                 string arch = (Is64Bit) ? "x64" : "x86";
-                if (Environment.OSVersion.Platform == PlatformID.Win32NT)
-                {
-                    libraryName = $"aws-crt-dotnet-{arch}.dll";
-                }
-                else if (Environment.OSVersion.Platform == PlatformID.Unix)
-                {
-                    libraryName = $"libaws-crt-dotnet-{arch}.so";
-                }
-                else if (Environment.OSVersion.Platform == PlatformID.MacOSX)
-                {
-                    libraryName = $"libaws-crt-dotnet-{arch}.dylib"; 
+                PlatformOS os = Aws.Crt.Platform.GetRuntimePlatformOS();
+
+                switch(os) {
+                    case PlatformOS.WINDOWS:
+                        libraryName = $"aws-crt-dotnet-{arch}.dll";
+                        break;
+
+                    case PlatformOS.UNIX:
+                        libraryName = $"libaws-crt-dotnet-{arch}.so";
+                        break;
+
+                    case PlatformOS.MAC:
+                        libraryName = $"libaws-crt-dotnet-{arch}.dylib";
+                        break;
                 }
 
                 try
@@ -217,16 +220,16 @@ namespace Aws.Crt
             private NativeException.NativeExceptionRecorder recordNativeException = NativeException.RecordNativeException;
             private void Init()
             {
-                var nativeInit = GetStaticInitFunction("aws_dotnet_static_init");
+                aws_dotnet_static_init nativeInit = (aws_dotnet_static_init) GetFunction<aws_dotnet_static_init>("aws_dotnet_static_init");
                 nativeInit();
 
-                var setExceptionCallback = GetSetExceptionCallbackFunction("aws_dotnet_set_exception_callback");
+                NativeException.SetExceptionCallback setExceptionCallback = (NativeException.SetExceptionCallback) GetFunction<NativeException.SetExceptionCallback>("aws_dotnet_set_exception_callback");
                 setExceptionCallback(recordNativeException);
             }
 
             private void Shutdown()
             {
-                var nativeShutdown = GetStaticShutdownFunction("aws_dotnet_static_shutdown");
+                aws_dotnet_static_shutdown nativeShutdown = (aws_dotnet_static_shutdown) GetFunction<aws_dotnet_static_shutdown>("aws_dotnet_static_shutdown");
                 nativeShutdown();
             }
 
@@ -240,42 +243,11 @@ namespace Aws.Crt
                 return Marshal.GetDelegateForFunctionPointer(function, typeof(DT));
             }
 
-            private aws_dotnet_static_init GetStaticInitFunction(string name)
-            {
-                IntPtr function = GetFunctionAddress(name);
-                if (function == IntPtr.Zero)
-                {
-                    throw new InvalidOperationException($"Unable to resolve function {name}");
-                }
-
-                return (aws_dotnet_static_init)Marshal.GetDelegateForFunctionPointer(function, typeof(aws_dotnet_static_init));
-            }
-
-            private NativeException.SetExceptionCallback GetSetExceptionCallbackFunction(string name)
-            {
-                IntPtr function = GetFunctionAddress(name);
-                if (function == IntPtr.Zero)
-                {
-                    throw new InvalidOperationException($"Unable to resolve function {name}");
-                }
-
-                return (NativeException.SetExceptionCallback)Marshal.GetDelegateForFunctionPointer(function, typeof(NativeException.SetExceptionCallback));
-            }
-
-            private aws_dotnet_static_shutdown GetStaticShutdownFunction(string name)
-            {
-                IntPtr function = GetFunctionAddress(name);
-                if (function == IntPtr.Zero)
-                {
-                    throw new InvalidOperationException($"Unable to resolve function {name}");
-                }
-
-                return (aws_dotnet_static_shutdown)Marshal.GetDelegateForFunctionPointer(function, typeof(aws_dotnet_static_shutdown));
-            }
-
             public IntPtr GetFunctionAddress(string name) {
                 return CRT.Loader.GetFunction(crt.DangerousGetHandle(), name);
             }
+
+
         }
 
         internal static PlatformBinding Binding { get; private set; } = new PlatformBinding();

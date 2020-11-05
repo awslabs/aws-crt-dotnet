@@ -1,4 +1,9 @@
-﻿using System;
+﻿/**
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0.
+ */
+ 
+using System;
 using System.Threading;
 
 namespace Aws.Crt
@@ -56,7 +61,7 @@ namespace Aws.Crt
             {
                 if (completionCallback != null)
                 {
-                    OnCompletionCallback(result);
+                    completionCallback(result);
                 }
                 CompletionSignal.Set();
             }
@@ -86,7 +91,7 @@ namespace Aws.Crt
             {
                 if (exceptionCallback != null)
                 {
-                    OnExceptionCallback(exception);
+                    exceptionCallback(exception);
                 }
                 CompletionSignal.Set();
             }
@@ -133,7 +138,7 @@ namespace Aws.Crt
 
                 if (invokeCallback)
                 {
-                    OnCompletionCallback.Invoke(result);
+                    value.Invoke(result);
                 }
             } 
         }
@@ -161,7 +166,7 @@ namespace Aws.Crt
 
                 if (invokeCallback)
                 {
-                    OnExceptionCallback.Invoke(exception);
+                    value.Invoke(exception);
                 }
             }
         }
