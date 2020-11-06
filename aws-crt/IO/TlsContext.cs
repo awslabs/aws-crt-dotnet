@@ -116,7 +116,7 @@ namespace Aws.Crt.IO
             public static aws_dotnet_tls_ctx_destroy destroy = NativeAPI.Bind<aws_dotnet_tls_ctx_destroy>();
         }
 
-        internal class Handle : CRT.Handle
+        public class Handle : CRT.Handle
         {
             protected override bool ReleaseHandle()
             {
@@ -125,7 +125,7 @@ namespace Aws.Crt.IO
             }
         }
 
-        internal Handle NativeHandle { get; set; }
+        public Handle NativeHandle { get; set; }
     }
 
     public class ClientTlsContext : TlsContext {
@@ -175,7 +175,7 @@ namespace Aws.Crt.IO
             public static aws_dotnet_tls_connection_options_destroy destroy = NativeAPI.Bind<aws_dotnet_tls_connection_options_destroy>();
         }
 
-        internal class Handle : CRT.Handle
+        public class Handle : CRT.Handle
         {
             protected override bool ReleaseHandle()
             {
@@ -184,7 +184,7 @@ namespace Aws.Crt.IO
             }
         }
 
-        internal Handle NativeHandle
+        public Handle NativeHandle
         {
             get
             {

@@ -21,7 +21,7 @@ namespace Aws.Crt.IO
             public static aws_dotnet_host_resolver_destroy destroy = NativeAPI.Bind<aws_dotnet_host_resolver_destroy>();
         }
 
-        internal class Handle : CRT.Handle
+        public class Handle : CRT.Handle
         {
             protected override bool ReleaseHandle()
             {
@@ -30,7 +30,7 @@ namespace Aws.Crt.IO
             }
         }
 
-        internal Handle NativeHandle { get; private set; }
+        public Handle NativeHandle { get; private set; }
 
         internal HostResolver(Handle handle) 
         {

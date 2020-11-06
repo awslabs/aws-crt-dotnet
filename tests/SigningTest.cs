@@ -7,13 +7,12 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using Xunit;
 
 using Aws.Crt;
 using Aws.Crt.Auth;
 using Aws.Crt.Http;
+using Aws.Crt.IO;
 
 namespace tests
 {
@@ -121,8 +120,8 @@ namespace tests
             var config = BuildBaseSigningConfig();
             var request = BuildTestSuiteRequestWithoutBody();
 
-            Task<HttpRequest> result = AwsSigner.SignRequest(request, config);
-            HttpRequest signedRequest = result.Result;
+            CrtResult<HttpRequest> result = AwsSigner.SignHttpRequest(request, config);
+            HttpRequest signedRequest = result.Get();
 
             Assert.Equal("GET", signedRequest.Method);
             Assert.Equal("/?Param-3=Value3&Param=Value2&%E1%88%B4=Value1", signedRequest.Uri);
@@ -142,14 +141,13 @@ namespace tests
 
             var request = BuildTestSuiteRequestWithoutBody();
 
-            Task<HttpRequest> result = AwsSigner.SignRequest(request, config);
-            HttpRequest signedRequest = result.Result;
+            CrtResult<HttpRequest> result = AwsSigner.SignHttpRequest(request, config);
+            HttpRequest signedRequest = result.Get();
 
             Assert.Equal("GET", signedRequest.Method);
             Assert.Equal("/?Param-3=Value3&Param=Value2&%E1%88%B4=Value1&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIDEXAMPLE%2F20150830%2Fus-east-1%2Fservice%2Faws4_request&X-Amz-Date=20150830T123600Z&X-Amz-SignedHeaders=host&X-Amz-Expires=3600&X-Amz-Signature=c5f1848ceec943ac2ca68ee720460c23aaae30a2300586597ada94c4a65e4787", signedRequest.Uri);
-            Assert.Equal(2, signedRequest.Headers.Length);
+            Assert.Equal(1, signedRequest.Headers.Length);
             Assert.True(HasHeader(signedRequest, "Host", "example.amazonaws.com"));
-            Assert.True(HasHeader(signedRequest, "X-Amz-Date", "20150830T123600Z"));
         }
 
         /* Sourced from the post-x-www-form-urlencoded test case in aws-c-auth */
@@ -161,8 +159,8 @@ namespace tests
 
             var request = BuildTestSuiteRequestWithBody();
 
-            Task<HttpRequest> result = AwsSigner.SignRequest(request, config);
-            HttpRequest signedRequest = result.Result;
+            CrtResult<HttpRequest> result = AwsSigner.SignHttpRequest(request, config);
+            HttpRequest signedRequest = result.Get();
 
             Assert.Equal("POST", signedRequest.Method);
             Assert.Equal("/", signedRequest.Uri);
@@ -175,6 +173,34 @@ namespace tests
             Assert.True(HasHeader(signedRequest, "Content-Length", "13"));
         }      
 
+        /* Sourced from the post-x-www-form-urlencoded test case in aws-c-auth */
+        [Fact]
+        public void SignCanonicalRequestByHeaders()
+        {
+            var config = BuildBaseSigningConfig();
+            config.SignedBodyHeader = AwsSignedBodyHeaderType.X_AMZ_CONTENT_SHA256;
+            config.SignatureType = AwsSignatureType.CANONICAL_REQUEST_VIA_HEADERS;
+
+
+            var canonicalRequest = String.Join("\n",
+                "POST",
+                "/",
+                "",
+                "content-length:13",
+                "content-type:application/x-www-form-urlencoded",
+                "host:example.amazonaws.com",
+                "x-amz-content-sha256:9095672bbd1f56dfc5b65f3e153adc8731a4a654192329106275f4c7b24d0b6e",
+                "x-amz-date:20150830T123600Z",
+                "",
+                "content-length;content-type;host;x-amz-content-sha256;x-amz-date",
+                "9095672bbd1f56dfc5b65f3e153adc8731a4a654192329106275f4c7b24d0b6e");
+
+            CrtResult<String> result = AwsSigner.SignCanonicalRequest(canonicalRequest, config);
+            String signatureValue = result.Get();
+
+            Assert.Equal("d3875051da38690788ef43de4db0d8f280229d82040bfac253562e56c3f20e0b", signatureValue);
+        } 
+
         [Fact]
         public void SignRequestByHeadersWithHeaderSkip()
         {
@@ -183,8 +209,8 @@ namespace tests
 
             var request = BuildRequestWithSkippedHeader();
 
-            Task<HttpRequest> result = AwsSigner.SignRequest(request, config);
-            HttpRequest signedRequest = result.Result;
+            CrtResult<HttpRequest> result = AwsSigner.SignHttpRequest(request, config);
+            HttpRequest signedRequest = result.Get();
 
             Assert.Equal("GET", signedRequest.Method);
             Assert.Equal("/", signedRequest.Uri);
@@ -198,16 +224,6 @@ namespace tests
             Assert.Equal(false, authValue.Contains("Skip"));
         }    
 
-        int AggregateExceptionToCrtErrorCode(AggregateException e) {
-            IEnumerable<int> codes = e.InnerExceptions
-                    .Where( ie => { return ie.GetType() == typeof(CrtException); } )
-                    .Select( ie => { return ((CrtException)ie).ErrorCode; } );
-
-            Assert.Equal(1, codes.Count());
-
-            return codes.First();        
-        }
-
         [Fact]
         public void SignRequestFailureIllegalHeader()
         {
@@ -215,15 +231,15 @@ namespace tests
 
             var request = BuildRequestWithIllegalHeader();
 
-            Task<HttpRequest> result = AwsSigner.SignRequest(request, config);
+            CrtResult<HttpRequest> result = AwsSigner.SignHttpRequest(request, config);
 
-            Assert.Throws<AggregateException>(() => result.Result);
+            Assert.Throws<CrtException>(() => result.Get());
 
             int crtErrorCode = 0;
             try {
-                HttpRequest req = result.Result;
-            } catch (AggregateException e) {
-                crtErrorCode = AggregateExceptionToCrtErrorCode(e);
+                HttpRequest req = result.Get();
+            } catch (CrtException e) {
+                crtErrorCode = e.ErrorCode;
             }
 
             /* AWS_AUTH_SIGNING_ILLEGAL_REQUEST_HEADER */
@@ -238,15 +254,15 @@ namespace tests
 
             var request = BuildTestSuiteRequestWithoutBody();
 
-            Task<HttpRequest> result = AwsSigner.SignRequest(request, config);
+            CrtResult<HttpRequest> result = AwsSigner.SignHttpRequest(request, config);
 
-            Assert.Throws<AggregateException>(() => result.Result);
+            Assert.Throws<CrtException>(() => result.Get());
 
             int crtErrorCode = 0;
             try {
-                HttpRequest req = result.Result;
-            } catch (AggregateException e) {
-                crtErrorCode = AggregateExceptionToCrtErrorCode(e);
+                HttpRequest req = result.Get();
+            } catch (CrtException e) {
+                crtErrorCode = e.ErrorCode;
             }
 
             /* AWS_AUTH_SIGNING_INVALID_CONFIGURATION */
@@ -261,15 +277,15 @@ namespace tests
 
             var request = BuildTestSuiteRequestWithoutBody();
 
-            Task<HttpRequest> result = AwsSigner.SignRequest(request, config);
+            CrtResult<HttpRequest> result = AwsSigner.SignHttpRequest(request, config);
 
-            Assert.Throws<AggregateException>(() => result.Result);
+            Assert.Throws<CrtException>(() => result.Get());
 
             int crtErrorCode = 0;
             try {
-                HttpRequest req = result.Result;
-            } catch (AggregateException e) {
-                crtErrorCode = AggregateExceptionToCrtErrorCode(e);
+                HttpRequest req = result.Get();
+            } catch (CrtException e) {
+                crtErrorCode = e.ErrorCode;
             }
 
             /* AWS_AUTH_SIGNING_INVALID_CONFIGURATION */
@@ -284,15 +300,15 @@ namespace tests
 
             var request = BuildTestSuiteRequestWithoutBody();
 
-            Task<HttpRequest> result = AwsSigner.SignRequest(request, config);
+            CrtResult<HttpRequest> result = AwsSigner.SignHttpRequest(request, config);
 
-            Assert.Throws<AggregateException>(() => result.Result);
+            Assert.Throws<CrtException>(() => result.Get());
 
             int crtErrorCode = 0;
             try {
-                HttpRequest req = result.Result;
-            } catch (AggregateException e) {
-                crtErrorCode = AggregateExceptionToCrtErrorCode(e);
+                HttpRequest req = result.Get();
+            } catch (CrtException e) {
+                crtErrorCode = e.ErrorCode;
             }
 
             /* AWS_AUTH_SIGNING_INVALID_CONFIGURATION */

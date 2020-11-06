@@ -1,10 +1,16 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFrameworks>netstandard2.0;net35;net45</TargetFrameworks>
     <PlatformTarget Condition="$(PlatformTarget) == '' AND $(OS) == 'Windows_NT' AND ($(CMakeGenerator) == 'Visual Studio 14 2015' OR $(CMakeGenerator) == 'Visual Studio 15 2017')">x86</PlatformTarget>
     <PlatformTarget Condition="$(PlatformTarget) == ''">x64</PlatformTarget>
+    <DefineConstants Condition="$(TargetFramework) == 'netstandard2.0'">$(DefineConstants);NETSTANDARD</DefineConstants>
+    <DefineConstants Condition="$(TargetFramework) == 'net35'">$(DefineConstants);BCL;BCL35</DefineConstants>
+    <DefineConstants Condition="$(TargetFramework) == 'net45'">$(DefineConstants);BCL;BCL45</DefineConstants>
     <RootNamespace>Aws.CRT</RootNamespace>
+
+    <!-- workaround per https://github.com/Microsoft/msbuild/issues/1333 -->
+    <FrameworkPathOverride Condition="'$(TargetFramework)' == 'net35'">C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v3.5\Profile\Client</FrameworkPathOverride>
 
     <LibCryptoPath></LibCryptoPath>
     <BuildNativeLibrary>true</BuildNativeLibrary>
@@ -42,8 +48,8 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="CMake" Version="3.5.2" />
-    <PackageReference Include="System.Runtime.Loader" Version="4.3.0" />
-    <PackageReference Include="Microsoft.CSharp" Version="4.5.0" />
+    <PackageReference Condition="'$(TargetFramework)' == 'netstandard2.0'" Include="System.Runtime.Loader" Version="4.3.0" />
+    <PackageReference Condition="'$(TargetFramework)' != 'net35'" Include="Microsoft.CSharp" Version="4.5.0" />
   </ItemGroup>
 
   <Target Name="MakeLocalPackageSource" BeforeTargets="Restore;CollectPackageReferences">

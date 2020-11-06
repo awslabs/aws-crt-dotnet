@@ -1,8 +1,14 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFrameworks>netstandard2.0;net35;net45</TargetFrameworks>
+    <DefineConstants Condition="$(TargetFramework) == 'netstandard2.0'">$(DefineConstants);NETSTANDARD</DefineConstants>
+    <DefineConstants Condition="$(TargetFramework) == 'net35'">$(DefineConstants);BCL;BCL35</DefineConstants>
+    <DefineConstants Condition="$(TargetFramework) == 'net45'">$(DefineConstants);BCL;BCL45</DefineConstants>    
     <RootNamespace>Aws.Crt.Http</RootNamespace>
+
+    <!-- workaround per https://github.com/Microsoft/msbuild/issues/1333 -->
+    <FrameworkPathOverride Condition="'$(TargetFramework)' == 'net35'">C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v3.5\Profile\Client</FrameworkPathOverride>
 
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageOutputPath>$(ProjectDir)../packages</PackageOutputPath>
