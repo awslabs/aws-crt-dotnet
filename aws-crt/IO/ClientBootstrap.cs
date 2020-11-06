@@ -20,7 +20,7 @@ namespace Aws.Crt.IO
             public static aws_dotnet_client_bootstrap_destroy destroy = NativeAPI.Bind<aws_dotnet_client_bootstrap_destroy>();
         }
 
-        internal class Handle : CRT.Handle
+        public class Handle : CRT.Handle
         {
             protected override bool ReleaseHandle()
             {
@@ -29,7 +29,7 @@ namespace Aws.Crt.IO
             }
         }
 
-        internal Handle NativeHandle { get; private set; }
+        public Handle NativeHandle { get; private set; }
 
         public ClientBootstrap(EventLoopGroup eventLoopGroup, HostResolver hostResolver = null)
         {
