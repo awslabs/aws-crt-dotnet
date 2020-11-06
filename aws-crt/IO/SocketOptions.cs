@@ -38,7 +38,7 @@ namespace Aws.Crt.IO
             public static aws_dotnet_socket_options_destroy destroy = NativeAPI.Bind<aws_dotnet_socket_options_destroy>();
         }
 
-        internal class Handle : CRT.Handle
+        public class Handle : CRT.Handle
         {
             protected override bool ReleaseHandle()
             {
@@ -47,7 +47,7 @@ namespace Aws.Crt.IO
             }
         }
 
-        internal Handle NativeHandle { 
+        public Handle NativeHandle { 
             get {
                 return API.make_new(
                             (Int32)Type,

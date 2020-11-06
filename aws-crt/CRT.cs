@@ -32,6 +32,16 @@ namespace Aws.Crt
             public static aws_dotnet_error_name error_name = NativeAPI.Bind<aws_dotnet_error_name>();
         }
 
+        public static void CopyStream(Stream source, Stream dest)
+        {
+            byte[] buffer = new byte[4096];
+            int read;
+            while ((read = source.Read(buffer, 0, buffer.Length)) > 0)
+            {
+                dest.Write(buffer, 0, read);
+            }
+        }
+
         public static string ErrorString(int errorCode)
         {
             return Marshal.PtrToStringAnsi(API.error_string(errorCode));
@@ -113,17 +123,20 @@ namespace Aws.Crt
             {
                 string libraryName = null;
                 string arch = (Is64Bit) ? "x64" : "x86";
-                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                {
-                    libraryName = $"aws-crt-dotnet-{arch}.dll";
-                }
-                else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-                {
-                    libraryName = $"libaws-crt-dotnet-{arch}.so";
-                }
-                else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
-                {
-                    libraryName = $"libaws-crt-dotnet-{arch}.dylib"; 
+                PlatformOS os = Aws.Crt.Platform.GetRuntimePlatformOS();
+
+                switch(os) {
+                    case PlatformOS.WINDOWS:
+                        libraryName = $"aws-crt-dotnet-{arch}.dll";
+                        break;
+
+                    case PlatformOS.UNIX:
+                        libraryName = $"libaws-crt-dotnet-{arch}.so";
+                        break;
+
+                    case PlatformOS.MAC:
+                        libraryName = $"libaws-crt-dotnet-{arch}.dylib";
+                        break;
                 }
 
                 try
@@ -181,7 +194,7 @@ namespace Aws.Crt
                     try
                     {
                         libStream = new FileStream(extractedLibraryPath, FileMode.Create, FileAccess.Write);
-                        resourceStream.CopyTo(libStream);
+                        CopyStream(resourceStream, libStream);
                         return extractedLibraryPath;
                     }
                     catch (Exception ex)
@@ -207,33 +220,34 @@ namespace Aws.Crt
             private NativeException.NativeExceptionRecorder recordNativeException = NativeException.RecordNativeException;
             private void Init()
             {
-                var nativeInit = GetFunction<aws_dotnet_static_init>("aws_dotnet_static_init");
+                aws_dotnet_static_init nativeInit = (aws_dotnet_static_init) GetFunction<aws_dotnet_static_init>("aws_dotnet_static_init");
                 nativeInit();
 
-                var setExceptionCallback = GetFunction<NativeException.SetExceptionCallback>("aws_dotnet_set_exception_callback");
+                NativeException.SetExceptionCallback setExceptionCallback = (NativeException.SetExceptionCallback) GetFunction<NativeException.SetExceptionCallback>("aws_dotnet_set_exception_callback");
                 setExceptionCallback(recordNativeException);
             }
 
             private void Shutdown()
             {
-                var nativeShutdown = GetFunction<aws_dotnet_static_shutdown>("aws_dotnet_static_shutdown");
+                aws_dotnet_static_shutdown nativeShutdown = (aws_dotnet_static_shutdown) GetFunction<aws_dotnet_static_shutdown>("aws_dotnet_static_shutdown");
                 nativeShutdown();
             }
 
-            public DT GetFunction<DT>(string name)
+            public Object GetFunction<DT>(string name)
             {
                 IntPtr function = GetFunctionAddress(name);
                 if (function == IntPtr.Zero)
                 {
                     throw new InvalidOperationException($"Unable to resolve function {name}");
                 }
-
-                return Marshal.GetDelegateForFunctionPointer<DT>(function);
+                return Marshal.GetDelegateForFunctionPointer(function, typeof(DT));
             }
 
             public IntPtr GetFunctionAddress(string name) {
                 return CRT.Loader.GetFunction(crt.DangerousGetHandle(), name);
             }
+
+
         }
 
         internal static PlatformBinding Binding { get; private set; } = new PlatformBinding();
@@ -306,7 +320,7 @@ namespace Aws.Crt
                     return s_loader;
                 }
 
-                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                if (Environment.OSVersion.Platform == PlatformID.Win32NT)
                 {
                     return s_loader = new WindowsLoader();
                 }
@@ -320,7 +334,7 @@ namespace Aws.Crt
         // Base class for native resources. SafeHandle guarantees that when the handle
         // goes out of scope, the ReleaseHandle() function will be called, which each
         // Handle subclass will implement to free the resource
-        internal abstract class Handle : SafeHandle
+        public abstract class Handle : SafeHandle
         {
             protected Handle()
             : base((IntPtr)0, true)

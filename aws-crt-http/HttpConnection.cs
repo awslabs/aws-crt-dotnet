@@ -8,7 +8,6 @@ using System.IO;
 using System.Net;
 using System.Runtime.InteropServices;
 using System.Security;
-using System.Threading.Tasks;
 
 using Aws.Crt.IO;
 
@@ -190,7 +189,7 @@ namespace Aws.Crt.Http
             public static aws_dotnet_http_stream_activate activate = NativeAPI.Bind<aws_dotnet_http_stream_activate>();
         }
 
-        internal class Handle : CRT.Handle
+        public class Handle : CRT.Handle
         {
             protected override bool ReleaseHandle()
             {
@@ -199,7 +198,7 @@ namespace Aws.Crt.Http
             }
         }
 
-        internal Handle NativeHandle { get; set; }
+        public Handle NativeHandle { get; set; }
 
         public HttpClientConnection Connection { get; protected set; }
 
@@ -396,10 +395,10 @@ namespace Aws.Crt.Http
 
         private class ConnectionBootstrap
         {
-            public TaskCompletionSource<HttpClientConnection> TaskSource = new TaskCompletionSource<HttpClientConnection>();
+            public CrtResult<HttpClientConnection> Result = new CrtResult<HttpClientConnection>();
             public HttpClientConnection Connection;
         }
-        public static Task<HttpClientConnection> NewConnection(HttpClientConnectionOptions options)
+        public static CrtResult<HttpClientConnection> NewConnection(HttpClientConnectionOptions options)
         {
             options.Validate();
 
@@ -408,24 +407,24 @@ namespace Aws.Crt.Http
                 if (e.ErrorCode != 0)
                 {
                     var message = CRT.ErrorString(e.ErrorCode);
-                    bootstrap.TaskSource.SetException(new WebException(String.Format("Failed to connect: {0}", message)));
+                    bootstrap.Result.CompleteExceptionally(new WebException(String.Format("Failed to connect: {0}", message)));
                 }
                 else
                 {
-                    bootstrap.TaskSource.SetResult(bootstrap.Connection);
+                    bootstrap.Result.Complete(bootstrap.Connection);
                 }
             };
 
             bootstrap.Connection = new HttpClientConnection(options);
-            return bootstrap.TaskSource.Task;
+            return bootstrap.Result;
         }
 
         private class StreamBootstrap
         {
-            public TaskCompletionSource<StreamResult> TaskSource = new TaskCompletionSource<StreamResult>();
+            public CrtResult<StreamResult> Result = new CrtResult<StreamResult>();
             public HttpClientStream Stream;
         }
-        public Task<StreamResult> MakeRequest(HttpRequest request, HttpResponseStreamHandler responseHandler)
+        public CrtResult<StreamResult> MakeRequest(HttpRequest request, HttpResponseStreamHandler responseHandler)
         {
             var bootstrap = new StreamBootstrap();
             responseHandler.StreamComplete += (sender, e) => {
@@ -433,11 +432,11 @@ namespace Aws.Crt.Http
                 if (e.ErrorCode != 0)
                 {
                     var message = CRT.ErrorString(e.ErrorCode);
-                    bootstrap.TaskSource.SetException(new WebException($"Stream {bootstrap.Stream} failed: {message}"));
+                    bootstrap.Result.CompleteExceptionally(new WebException($"Stream {bootstrap.Stream} failed: {message}"));
                 }
                 else
                 {
-                    bootstrap.TaskSource.SetResult(new StreamResult(e.ErrorCode));
+                    bootstrap.Result.Complete(new StreamResult(e.ErrorCode));
                 }
             };
 
@@ -445,7 +444,7 @@ namespace Aws.Crt.Http
             streams.Add(bootstrap.Stream);
             bootstrap.Stream.Activate();
             
-            return bootstrap.TaskSource.Task;
+            return bootstrap.Result;
         }
 
         private void OnConnectionSetup(int errorCode)

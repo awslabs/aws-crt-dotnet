@@ -19,15 +19,15 @@ namespace Aws.Crt.IO {
             public static aws_dotnet_event_loop_group_destroy destroy = NativeAPI.Bind<aws_dotnet_event_loop_group_destroy>();
         }
 
-        internal class Handle : CRT.Handle
+        public class Handle : CRT.Handle
         {
             protected override bool ReleaseHandle() {
                 API.destroy(handle);
                 return true;
             }
         }
-        
-        internal Handle NativeHandle { get; private set; }
+
+        public Handle NativeHandle { get; private set; }
 
         public EventLoopGroup(int numThreads=1) {
             NativeHandle = API.make_new_default(numThreads);

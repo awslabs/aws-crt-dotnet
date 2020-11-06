@@ -18,7 +18,6 @@ using System.Collections.Generic;
 using System.Net;
 using System.Runtime.InteropServices;
 using System.Security;
-using System.Threading.Tasks;
 
 using Aws.Crt;
 using Aws.Crt.IO;
@@ -57,7 +56,7 @@ namespace Aws.Crt.Http
             public static aws_dotnet_http_client_connection_manager_destroy destroy = NativeAPI.Bind<aws_dotnet_http_client_connection_manager_destroy>();
         }
 
-        internal class Handle : CRT.Handle
+        public class Handle : CRT.Handle
         {
             protected override bool ReleaseHandle()
             {

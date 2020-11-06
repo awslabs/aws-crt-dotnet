@@ -50,12 +50,17 @@ struct aws_signing_config_native {
     uint64_t expiration_in_seconds;
 };
 
-typedef void(aws_dotnet_auth_on_signing_complete_fn)(
+typedef void(aws_dotnet_auth_on_http_request_signing_complete_fn)(
     uint64_t callback_id,
     int32_t error_code,
     const char *uri,
     struct aws_dotnet_http_header headers[],
     uint32_t header_count);
+
+typedef void(aws_dotnet_auth_on_canonical_request_signing_complete_fn)(
+    uint64_t callback_id,
+    int32_t error_code,
+    const char *authorization_value);
 
 struct aws_dotnet_signing_callback_state {
     struct aws_http_message *request;
@@ -66,7 +71,9 @@ struct aws_dotnet_signing_callback_state {
     struct aws_string *signed_body_value;
     aws_dotnet_auth_should_sign_header_fn *should_sign_header;
     uint64_t callback_id;
-    aws_dotnet_auth_on_signing_complete_fn *on_signing_complete;
+    aws_dotnet_auth_on_http_request_signing_complete_fn *on_http_request_signing_complete;
+    aws_dotnet_auth_on_canonical_request_signing_complete_fn *on_canonical_request_signing_complete;
+    enum aws_signature_type signature_type;
 };
 
 static void s_destroy_signing_callback_state(struct aws_dotnet_signing_callback_state *callback_state) {
@@ -172,10 +179,14 @@ static int s_initialize_signing_config(
 }
 
 static void s_complete_signing_exceptionally(struct aws_dotnet_signing_callback_state *callback_state, int error_code) {
-    callback_state->on_signing_complete(callback_state->callback_id, error_code, NULL, NULL, 0);
+    if (callback_state->on_http_request_signing_complete != NULL) {
+        callback_state->on_http_request_signing_complete(callback_state->callback_id, error_code, NULL, NULL, 0);
+    } else {
+        callback_state->on_canonical_request_signing_complete(callback_state->callback_id, error_code, NULL);
+    }
 }
 
-static void s_complete_signing_normally(struct aws_dotnet_signing_callback_state *callback_state) {
+static void s_complete_http_request_signing_normally(struct aws_dotnet_signing_callback_state *callback_state) {
     struct aws_allocator *allocator = aws_dotnet_get_allocator();
 
     struct aws_byte_cursor path_cursor;
@@ -209,7 +220,7 @@ static void s_complete_signing_normally(struct aws_dotnet_signing_callback_state
         dotnet_headers[header_idx].value = (const char *)header_strings[string_index + 1]->bytes;
     }
 
-    callback_state->on_signing_complete(
+    callback_state->on_http_request_signing_complete(
         callback_state->callback_id,
         AWS_ERROR_SUCCESS,
         (const char *)uri->bytes,
@@ -223,10 +234,36 @@ static void s_complete_signing_normally(struct aws_dotnet_signing_callback_state
     }
 }
 
-static void s_aws_signing_complete(struct aws_signing_result *result, int error_code, void *userdata) {
-
-    struct aws_dotnet_signing_callback_state *callback_state = userdata;
+static void s_complete_http_request_signing(
+    struct aws_dotnet_signing_callback_state *callback_state,
+    struct aws_signing_result *result) {
     struct aws_allocator *allocator = aws_dotnet_get_allocator();
+
+    if (aws_apply_signing_result_to_http_request(callback_state->request, allocator, result)) {
+        s_complete_signing_exceptionally(callback_state, aws_last_error());
+        return;
+    }
+
+    s_complete_http_request_signing_normally(callback_state);
+}
+
+static void s_complete_canonical_request_signing(
+    struct aws_dotnet_signing_callback_state *callback_state,
+    struct aws_signing_result *result) {
+    struct aws_string *authorization_result = NULL;
+
+    aws_signing_result_get_property(result, g_aws_signature_property_name, &authorization_result);
+
+    if (authorization_result == NULL) {
+        s_complete_signing_exceptionally(callback_state, AWS_ERROR_INVALID_STATE);
+    } else {
+        callback_state->on_canonical_request_signing_complete(
+            callback_state->callback_id, 0, (const char *)authorization_result->bytes);
+    }
+}
+
+static void s_aws_signing_complete(struct aws_signing_result *result, int error_code, void *userdata) {
+    struct aws_dotnet_signing_callback_state *callback_state = userdata;
 
     if (result == NULL || error_code != AWS_ERROR_SUCCESS) {
         s_complete_signing_exceptionally(
@@ -234,19 +271,18 @@ static void s_aws_signing_complete(struct aws_signing_result *result, int error_
         goto done;
     }
 
-    if (aws_apply_signing_result_to_http_request(callback_state->request, allocator, result)) {
-        s_complete_signing_exceptionally(callback_state, aws_last_error());
-        goto done;
+    if (callback_state->on_http_request_signing_complete != NULL) {
+        s_complete_http_request_signing(callback_state, result);
+    } else {
+        s_complete_canonical_request_signing(callback_state, result);
     }
-
-    s_complete_signing_normally(callback_state);
 
 done:
 
     s_destroy_signing_callback_state(callback_state);
 }
 
-AWS_DOTNET_API void aws_dotnet_auth_sign_request(
+AWS_DOTNET_API void aws_dotnet_auth_sign_http_request(
     const char *method,
     const char *uri,
     struct aws_dotnet_http_header headers[],
@@ -254,7 +290,7 @@ AWS_DOTNET_API void aws_dotnet_auth_sign_request(
     struct aws_dotnet_stream_function_table body_stream_delegates,
     struct aws_signing_config_native native_signing_config,
     uint64_t callback_id,
-    aws_dotnet_auth_on_signing_complete_fn *on_signing_complete) {
+    aws_dotnet_auth_on_http_request_signing_complete_fn *on_signing_complete) {
 
     int32_t error_code = AWS_ERROR_SUCCESS;
     struct aws_dotnet_signing_callback_state *continuation = NULL;
@@ -274,7 +310,8 @@ AWS_DOTNET_API void aws_dotnet_auth_sign_request(
     }
 
     continuation->callback_id = callback_id;
-    continuation->on_signing_complete = on_signing_complete;
+    continuation->on_http_request_signing_complete = on_signing_complete;
+    continuation->signature_type = native_signing_config.signature_type;
     continuation->should_sign_header = native_signing_config.should_sign_header;
     continuation->request = aws_build_http_request(method, uri, headers, header_count, &body_stream_delegates);
     if (continuation->request == NULL) {
@@ -308,4 +345,61 @@ on_error:
     }
 
     on_signing_complete(callback_id, error_code, NULL, NULL, 0);
+}
+
+AWS_DOTNET_API void aws_dotnet_auth_sign_canonical_request(
+    const char *canonical_request,
+    struct aws_signing_config_native native_signing_config,
+    uint64_t callback_id,
+    aws_dotnet_auth_on_canonical_request_signing_complete_fn *on_signing_complete) {
+
+    int32_t error_code = AWS_ERROR_SUCCESS;
+    struct aws_dotnet_signing_callback_state *continuation = NULL;
+
+    struct aws_signing_config_aws config;
+    AWS_ZERO_STRUCT(config);
+
+    struct aws_allocator *allocator = aws_dotnet_get_allocator();
+
+    continuation = aws_mem_calloc(allocator, 1, sizeof(struct aws_dotnet_signing_callback_state));
+    if (continuation == NULL) {
+        goto on_error;
+    }
+
+    if (s_initialize_signing_config(&config, &native_signing_config, continuation)) {
+        goto on_error;
+    }
+
+    continuation->callback_id = callback_id;
+    continuation->on_canonical_request_signing_complete = on_signing_complete;
+    continuation->signature_type = native_signing_config.signature_type;
+
+    struct aws_byte_cursor canonical_request_cursor = aws_byte_cursor_from_c_str(canonical_request);
+    continuation->original_request_signable = aws_signable_new_canonical_request(allocator, canonical_request_cursor);
+    if (continuation->original_request_signable == NULL) {
+        goto on_error;
+    }
+
+    /* Sign the native request */
+    if (aws_sign_request_aws(
+            allocator,
+            continuation->original_request_signable,
+            (struct aws_signing_config_base *)&config,
+            s_aws_signing_complete,
+            continuation)) {
+        goto on_error;
+    }
+
+    return;
+
+on_error:
+
+    s_destroy_signing_callback_state(continuation);
+
+    error_code = aws_last_error();
+    if (error_code == AWS_ERROR_SUCCESS) {
+        error_code = AWS_ERROR_UNKNOWN;
+    }
+
+    on_signing_complete(callback_id, error_code, NULL);
 }
