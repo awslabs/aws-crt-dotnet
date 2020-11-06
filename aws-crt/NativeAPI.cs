@@ -28,19 +28,20 @@ namespace Aws.Crt {
         // throw it when we return to CLR code
         internal static void RecordNativeException(int errorCode, string errorName, string message)
         {
-            exception.Value = new NativeException(errorCode, errorName, message);
+            exception = new NativeException(errorCode, errorName, message);
         }
 
         internal static void CheckNativeException()
         {
-            if (exception.Value != null) {
-                var ex = exception.Value;
-                exception.Value = null;
+            if (exception != null) {
+                var ex = exception;
+                exception = null;
                 throw ex;
             }
         }
 
-        private static ThreadLocal<NativeException> exception = new ThreadLocal<NativeException>();
+        [ThreadStatic]
+        private static NativeException exception = null;
     }
 
     public static class NativeAPI {
@@ -79,7 +80,7 @@ namespace Aws.Crt {
         // this returns dynamic because without delegate where clauses on generic functions (C# 7.3)
         // it is not possible to cast a Delegate to a generic parameter.  The Resolve functions are
         // perfectly capable of casting a dynamic -> generic parameter though
-        private static dynamic BindImpl<D>(string nativeFunctionName)
+        private static Object BindImpl<D>(string nativeFunctionName)
         {
             var delegateType = typeof(D);
 
@@ -97,15 +98,52 @@ namespace Aws.Crt {
             return Delegate.CreateDelegate(delegateType, callImpl.Target, callImpl.Method);
         }
 
-#region MakeCall/MakeVoidCall specializations
+        public delegate void CrtAction();
+        public delegate void CrtAction<T1>(T1 arg1);
+        public delegate void CrtAction<T1, T2>(T1 arg1, T2 arg2);
+        public delegate void CrtAction<T1, T2, T3>(T1 arg1, T2 arg2, T3 arg3);
+        public delegate void CrtAction<T1, T2, T3, T4>(T1 arg1, T2 arg2, T3 arg3, T4 arg4);
+        public delegate void CrtAction<T1, T2, T3, T4, T5>(T1 arg1, T2 arg2, T3 arg3, T4 arg4, T5 arg5);
+        public delegate void CrtAction<T1, T2, T3, T4, T5, T6>(T1 arg1, T2 arg2, T3 arg3, T4 arg4, T5 arg5, T6 arg6);
+        public delegate void CrtAction<T1, T2, T3, T4, T5, T6, T7>(T1 arg1, T2 arg2, T3 arg3, T4 arg4, T5 arg5, T6 arg6, T7 arg7);
+        public delegate void CrtAction<T1, T2, T3, T4, T5, T6, T7, T8>(T1 arg1, T2 arg2, T3 arg3, T4 arg4, T5 arg5, T6 arg6, T7 arg7, T8 arg8);
+        public delegate void CrtAction<T1, T2, T3, T4, T5, T6, T7, T8, T9>(T1 arg1, T2 arg2, T3 arg3, T4 arg4, T5 arg5, T6 arg6, T7 arg7, T8 arg8, T9 arg9);
+        public delegate void CrtAction<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>(T1 arg1, T2 arg2, T3 arg3, T4 arg4, T5 arg5, T6 arg6, T7 arg7, T8 arg8, T9 arg9, T10 arg10);
+        public delegate void CrtAction<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11>(T1 arg1, T2 arg2, T3 arg3, T4 arg4, T5 arg5, T6 arg6, T7 arg7, T8 arg8, T9 arg9, T10 arg10, T11 arg11);
+        public delegate void CrtAction<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12>(T1 arg1, T2 arg2, T3 arg3, T4 arg4, T5 arg5, T6 arg6, T7 arg7, T8 arg8, T9 arg9, T10 arg10, T11 arg11, T12 arg12);
+        public delegate void CrtAction<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13>(T1 arg1, T2 arg2, T3 arg3, T4 arg4, T5 arg5, T6 arg6, T7 arg7, T8 arg8, T9 arg9, T10 arg10, T11 arg11, T12 arg12, T13 arg13);
+        public delegate void CrtAction<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14>(T1 arg1, T2 arg2, T3 arg3, T4 arg4, T5 arg5, T6 arg6, T7 arg7, T8 arg8, T9 arg9, T10 arg10, T11 arg11, T12 arg12, T13 arg13, T14 arg14);
+        public delegate void CrtAction<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15>(T1 arg1, T2 arg2, T3 arg3, T4 arg4, T5 arg5, T6 arg6, T7 arg7, T8 arg8, T9 arg9, T10 arg10, T11 arg11, T12 arg12, T13 arg13, T14 arg14, T15 arg15);
+        public delegate void CrtAction<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16>(T1 arg1, T2 arg2, T3 arg3, T4 arg4, T5 arg5, T6 arg6, T7 arg7, T8 arg8, T9 arg9, T10 arg10, T11 arg11, T12 arg12, T13 arg13, T14 arg14, T15 arg15, T16 arg16);
+
+        public delegate TResult CrtFunc<TResult>();
+        public delegate TResult CrtFunc<T1, TResult>(T1 arg1);
+        public delegate TResult CrtFunc<T1, T2, TResult>(T1 arg1, T2 arg2);
+        public delegate TResult CrtFunc<T1, T2, T3, TResult>(T1 arg1, T2 arg2, T3 arg3);
+        public delegate TResult CrtFunc<T1, T2, T3, T4, TResult>(T1 arg1, T2 arg2, T3 arg3, T4 arg4);
+        public delegate TResult CrtFunc<T1, T2, T3, T4, T5, TResult>(T1 arg1, T2 arg2, T3 arg3, T4 arg4, T5 arg5);
+        public delegate TResult CrtFunc<T1, T2, T3, T4, T5, T6, TResult>(T1 arg1, T2 arg2, T3 arg3, T4 arg4, T5 arg5, T6 arg6);
+        public delegate TResult CrtFunc<T1, T2, T3, T4, T5, T6, T7, TResult>(T1 arg1, T2 arg2, T3 arg3, T4 arg4, T5 arg5, T6 arg6, T7 arg7);
+        public delegate TResult CrtFunc<T1, T2, T3, T4, T5, T6, T7, T8, TResult>(T1 arg1, T2 arg2, T3 arg3, T4 arg4, T5 arg5, T6 arg6, T7 arg7, T8 arg8);
+        public delegate TResult CrtFunc<T1, T2, T3, T4, T5, T6, T7, T8, T9, TResult>(T1 arg1, T2 arg2, T3 arg3, T4 arg4, T5 arg5, T6 arg6, T7 arg7, T8 arg8, T9 arg9);
+        public delegate TResult CrtFunc<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, TResult>(T1 arg1, T2 arg2, T3 arg3, T4 arg4, T5 arg5, T6 arg6, T7 arg7, T8 arg8, T9 arg9, T10 arg10);
+        public delegate TResult CrtFunc<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, TResult>(T1 arg1, T2 arg2, T3 arg3, T4 arg4, T5 arg5, T6 arg6, T7 arg7, T8 arg8, T9 arg9, T10 arg10, T11 arg11);
+        public delegate TResult CrtFunc<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, TResult>(T1 arg1, T2 arg2, T3 arg3, T4 arg4, T5 arg5, T6 arg6, T7 arg7, T8 arg8, T9 arg9, T10 arg10, T11 arg11, T12 arg12);
+        public delegate TResult CrtFunc<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, TResult>(T1 arg1, T2 arg2, T3 arg3, T4 arg4, T5 arg5, T6 arg6, T7 arg7, T8 arg8, T9 arg9, T10 arg10, T11 arg11, T12 arg12, T13 arg13);
+        public delegate TResult CrtFunc<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, TResult>(T1 arg1, T2 arg2, T3 arg3, T4 arg4, T5 arg5, T6 arg6, T7 arg7, T8 arg8, T9 arg9, T10 arg10, T11 arg11, T12 arg12, T13 arg13, T14 arg14);
+        public delegate TResult CrtFunc<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, TResult>(T1 arg1, T2 arg2, T3 arg3, T4 arg4, T5 arg5, T6 arg6, T7 arg7, T8 arg8, T9 arg9, T10 arg10, T11 arg11, T12 arg12, T13 arg13, T14 arg14, T15 arg15);
+        public delegate TResult CrtFunc<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, TResult>(T1 arg1, T2 arg2, T3 arg3, T4 arg4, T5 arg5, T6 arg6, T7 arg7, T8 arg8, T9 arg9, T10 arg10, T11 arg11, T12 arg12, T13 arg13, T14 arg14, T15 arg15, T16 arg16);
+
+
+        #region MakeCall/MakeVoidCall specializations
         public static Delegate MakeVoidCall(Delegate d) {
-            return new Action(() => {
+            return new CrtAction(() => {
                 d.DynamicInvoke(null);
                 NativeException.CheckNativeException();
             });
         }
         public static Delegate MakeCall<R>(Delegate d) {
-            return new Func<R>(() => {
+            return new CrtFunc<R>(() => {
                 R res = (R)d.DynamicInvoke(null);
                 NativeException.CheckNativeException();
                 return res;
@@ -114,7 +152,7 @@ namespace Aws.Crt {
 
         public static Delegate MakeVoidCall<T1>(Delegate d)
         {
-            return new Action<T1>((a1) =>
+            return new CrtAction<T1>((a1) =>
             {
                 d.DynamicInvoke(new object[] { a1 });
                 NativeException.CheckNativeException();
@@ -122,7 +160,7 @@ namespace Aws.Crt {
         }
         public static Delegate MakeCall<T1, R>(Delegate d)
         {
-            return new Func<T1, R>((a1) =>
+            return new CrtFunc<T1, R>((a1) =>
             {
                 R res = (R)d.DynamicInvoke(new object[] { a1 });
                 NativeException.CheckNativeException();
@@ -131,13 +169,13 @@ namespace Aws.Crt {
         }
 
         public static Delegate MakeVoidCall<T1, T2>(Delegate d) {
-            return new Action<T1, T2>((a1, a2) => {
+            return new CrtAction<T1, T2>((a1, a2) => {
                 d.DynamicInvoke(new object[] { a1, a2 });
                 NativeException.CheckNativeException();
             });
         }
         public static Delegate MakeCall<T1, T2, R>(Delegate d) {
-            return new Func<T1, T2, R>((a1, a2) => {
+            return new CrtFunc<T1, T2, R>((a1, a2) => {
                 R res = (R)d.DynamicInvoke(new object[] { a1, a2 });
                 NativeException.CheckNativeException();
                 return res;
@@ -146,7 +184,7 @@ namespace Aws.Crt {
 
         public static Delegate MakeVoidCall<T1, T2, T3>(Delegate d)
         {
-            return new Action<T1, T2, T3>((a1, a2, a3) =>
+            return new CrtAction<T1, T2, T3>((a1, a2, a3) =>
             {
                 d.DynamicInvoke(new object[] { a1, a2, a3 });
                 NativeException.CheckNativeException();
@@ -154,7 +192,7 @@ namespace Aws.Crt {
         }
         public static Delegate MakeCall<T1, T2, T3, R>(Delegate d)
         {
-            return new Func<T1, T2, T3, R>((a1, a2, a3) =>
+            return new CrtFunc<T1, T2, T3, R>((a1, a2, a3) =>
             {
                 R res = (R)d.DynamicInvoke(new object[] { a1, a2, a3 });
                 NativeException.CheckNativeException();
@@ -164,7 +202,7 @@ namespace Aws.Crt {
 
         public static Delegate MakeVoidCall<T1, T2, T3, T4>(Delegate d)
         {
-            return new Action<T1, T2, T3, T4>((a1, a2, a3, a4) =>
+            return new CrtAction<T1, T2, T3, T4>((a1, a2, a3, a4) =>
             {
                 d.DynamicInvoke(new object[] { a1, a2, a3, a4 });
                 NativeException.CheckNativeException();
@@ -172,7 +210,7 @@ namespace Aws.Crt {
         }
         public static Delegate MakeCall<T1, T2, T3, T4, R>(Delegate d)
         {
-            return new Func<T1, T2, T3, T4, R>((a1, a2, a3, a4) =>
+            return new CrtFunc<T1, T2, T3, T4, R>((a1, a2, a3, a4) =>
             {
                 R res = (R)d.DynamicInvoke(new object[] { a1, a2, a3, a4 });
                 NativeException.CheckNativeException();
@@ -182,7 +220,7 @@ namespace Aws.Crt {
 
         public static Delegate MakeVoidCall<T1, T2, T3, T4, T5>(Delegate d)
         {
-            return new Action<T1, T2, T3, T4, T5>((a1, a2, a3, a4, a5) =>
+            return new CrtAction<T1, T2, T3, T4, T5>((a1, a2, a3, a4, a5) =>
             {
                 d.DynamicInvoke(new object[] { a1, a2, a3, a4, a5 });
                 NativeException.CheckNativeException();
@@ -190,7 +228,7 @@ namespace Aws.Crt {
         }
         public static Delegate MakeCall<T1, T2, T3, T4, T5, R>(Delegate d)
         {
-            return new Func<T1, T2, T3, T4, T5, R>((a1, a2, a3, a4, a5) =>
+            return new CrtFunc<T1, T2, T3, T4, T5, R>((a1, a2, a3, a4, a5) =>
             {
                 R res = (R)d.DynamicInvoke(new object[] { a1, a2, a3, a4, a5 });
                 NativeException.CheckNativeException();
@@ -200,7 +238,7 @@ namespace Aws.Crt {
 
         public static Delegate MakeVoidCall<T1, T2, T3, T4, T5, T6>(Delegate d)
         {
-            return new Action<T1, T2, T3, T4, T5, T6>((a1, a2, a3, a4, a5, a6) =>
+            return new CrtAction<T1, T2, T3, T4, T5, T6>((a1, a2, a3, a4, a5, a6) =>
             {
                 d.DynamicInvoke(new object[] { a1, a2, a3, a4, a5, a6 });
                 NativeException.CheckNativeException();
@@ -208,7 +246,7 @@ namespace Aws.Crt {
         }
         public static Delegate MakeCall<T1, T2, T3, T4, T5, T6, R>(Delegate d)
         {
-            return new Func<T1, T2, T3, T4, T5, T6, R>((a1, a2, a3, a4, a5, a6) =>
+            return new CrtFunc<T1, T2, T3, T4, T5, T6, R>((a1, a2, a3, a4, a5, a6) =>
             {
                 R res = (R)d.DynamicInvoke(new object[] { a1, a2, a3, a4, a5, a6 });
                 NativeException.CheckNativeException();
@@ -218,7 +256,7 @@ namespace Aws.Crt {
 
         public static Delegate MakeVoidCall<T1, T2, T3, T4, T5, T6, T7>(Delegate d)
         {
-            return new Action<T1, T2, T3, T4, T5, T6, T7>((a1, a2, a3, a4, a5, a6, a7) =>
+            return new CrtAction<T1, T2, T3, T4, T5, T6, T7>((a1, a2, a3, a4, a5, a6, a7) =>
             {
                 d.DynamicInvoke(new object[] { a1, a2, a3, a4, a5, a6, a7 });
                 NativeException.CheckNativeException();
@@ -226,7 +264,7 @@ namespace Aws.Crt {
         }
         public static Delegate MakeCall<T1, T2, T3, T4, T5, T6, T7, R>(Delegate d)
         {
-            return new Func<T1, T2, T3, T4, T5, T6, T7, R>((a1, a2, a3, a4, a5, a6, a7) =>
+            return new CrtFunc<T1, T2, T3, T4, T5, T6, T7, R>((a1, a2, a3, a4, a5, a6, a7) =>
             {
                 R res = (R)d.DynamicInvoke(new object[] { a1, a2, a3, a4, a5, a6, a7 });
                 NativeException.CheckNativeException();
@@ -236,7 +274,7 @@ namespace Aws.Crt {
 
         public static Delegate MakeVoidCall<T1, T2, T3, T4, T5, T6, T7, T8>(Delegate d)
         {
-            return new Action<T1, T2, T3, T4, T5, T6, T7, T8>((a1, a2, a3, a4, a5, a6, a7, a8) =>
+            return new CrtAction<T1, T2, T3, T4, T5, T6, T7, T8>((a1, a2, a3, a4, a5, a6, a7, a8) =>
             {
                 d.DynamicInvoke(new object[] { a1, a2, a3, a4, a5, a6, a7, a8 });
                 NativeException.CheckNativeException();
@@ -244,7 +282,7 @@ namespace Aws.Crt {
         }
         public static Delegate MakeCall<T1, T2, T3, T4, T5, T6, T7, T8, R>(Delegate d)
         {
-            return new Func<T1, T2, T3, T4, T5, T6, T7, T8, R>((a1, a2, a3, a4, a5, a6, a7, a8) =>
+            return new CrtFunc<T1, T2, T3, T4, T5, T6, T7, T8, R>((a1, a2, a3, a4, a5, a6, a7, a8) =>
             {
                 R res = (R)d.DynamicInvoke(new object[] { a1, a2, a3, a4, a5, a6, a7, a8 });
                 NativeException.CheckNativeException();
@@ -254,7 +292,7 @@ namespace Aws.Crt {
 
         public static Delegate MakeVoidCall<T1, T2, T3, T4, T5, T6, T7, T8, T9>(Delegate d)
         {
-            return new Action<T1, T2, T3, T4, T5, T6, T7, T8, T9>((a1, a2, a3, a4, a5, a6, a7, a8, a9) =>
+            return new CrtAction<T1, T2, T3, T4, T5, T6, T7, T8, T9>((a1, a2, a3, a4, a5, a6, a7, a8, a9) =>
             {
                 d.DynamicInvoke(new object[] { a1, a2, a3, a4, a5, a6, a7, a8, a9 });
                 NativeException.CheckNativeException();
@@ -262,7 +300,7 @@ namespace Aws.Crt {
         }
         public static Delegate MakeCall<T1, T2, T3, T4, T5, T6, T7, T8, T9, R>(Delegate d)
         {
-            return new Func<T1, T2, T3, T4, T5, T6, T7, T8, T9, R>((a1, a2, a3, a4, a5, a6, a7, a8, a9) =>
+            return new CrtFunc<T1, T2, T3, T4, T5, T6, T7, T8, T9, R>((a1, a2, a3, a4, a5, a6, a7, a8, a9) =>
             {
                 R res = (R)d.DynamicInvoke(new object[] { a1, a2, a3, a4, a5, a6, a7, a8, a9 });
                 NativeException.CheckNativeException();
@@ -272,7 +310,7 @@ namespace Aws.Crt {
 
         public static Delegate MakeVoidCall<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>(Delegate d)
         {
-            return new Action<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>((a1, a2, a3, a4, a5, a6, a7, a8, a9, a10) =>
+            return new CrtAction<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>((a1, a2, a3, a4, a5, a6, a7, a8, a9, a10) =>
             {
                 d.DynamicInvoke(new object[] { a1, a2, a3, a4, a5, a6, a7, a8, a9, a10 });
                 NativeException.CheckNativeException();
@@ -280,7 +318,7 @@ namespace Aws.Crt {
         }
         public static Delegate MakeCall<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, R>(Delegate d)
         {
-            return new Func<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, R>((a1, a2, a3, a4, a5, a6, a7, a8, a9, a10) =>
+            return new CrtFunc<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, R>((a1, a2, a3, a4, a5, a6, a7, a8, a9, a10) =>
             {
                 R res = (R)d.DynamicInvoke(new object[] { a1, a2, a3, a4, a5, a6, a7, a8, a9, a10 });
                 NativeException.CheckNativeException();
@@ -290,7 +328,7 @@ namespace Aws.Crt {
 
         public static Delegate MakeVoidCall<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11>(Delegate d)
         {
-            return new Action<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11>((a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11) =>
+            return new CrtAction<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11>((a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11) =>
             {
                 d.DynamicInvoke(new object[] { a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11 });
                 NativeException.CheckNativeException();
@@ -298,7 +336,7 @@ namespace Aws.Crt {
         }
         public static Delegate MakeCall<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, R>(Delegate d)
         {
-            return new Func<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, R>((a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11) =>
+            return new CrtFunc<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, R>((a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11) =>
             {
                 R res = (R)d.DynamicInvoke(new object[] { a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11 });
                 NativeException.CheckNativeException();
@@ -308,7 +346,7 @@ namespace Aws.Crt {
 
         public static Delegate MakeVoidCall<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12>(Delegate d)
         {
-            return new Action<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12>((a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12) =>
+            return new CrtAction<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12>((a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12) =>
             {
                 d.DynamicInvoke(new object[] { a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12 });
                 NativeException.CheckNativeException();
@@ -316,7 +354,7 @@ namespace Aws.Crt {
         }
         public static Delegate MakeCall<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, R>(Delegate d)
         {
-            return new Func<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, R>((a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12) =>
+            return new CrtFunc<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, R>((a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12) =>
             {
                 R res = (R)d.DynamicInvoke(new object[] { a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12 });
                 NativeException.CheckNativeException();
@@ -326,7 +364,7 @@ namespace Aws.Crt {
 
         public static Delegate MakeVoidCall<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13>(Delegate d)
         {
-            return new Action<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13>((a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13) =>
+            return new CrtAction<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13>((a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13) =>
             {
                 d.DynamicInvoke(new object[] { a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13 });
                 NativeException.CheckNativeException();
@@ -334,7 +372,7 @@ namespace Aws.Crt {
         }
         public static Delegate MakeCall<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, R>(Delegate d)
         {
-            return new Func<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, R>((a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13) =>
+            return new CrtFunc<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, R>((a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13) =>
             {
                 R res = (R)d.DynamicInvoke(new object[] { a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13 });
                 NativeException.CheckNativeException();
@@ -344,7 +382,7 @@ namespace Aws.Crt {
 
         public static Delegate MakeVoidCall<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14>(Delegate d)
         {
-            return new Action<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14>((a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14) =>
+            return new CrtAction<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14>((a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14) =>
             {
                 d.DynamicInvoke(new object[] { a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14 });
                 NativeException.CheckNativeException();
@@ -352,7 +390,7 @@ namespace Aws.Crt {
         }
         public static Delegate MakeCall<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, R>(Delegate d)
         {
-            return new Func<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, R>((a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14) =>
+            return new CrtFunc<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, R>((a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14) =>
             {
                 R res = (R)d.DynamicInvoke(new object[] { a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14 });
                 NativeException.CheckNativeException();
@@ -362,7 +400,7 @@ namespace Aws.Crt {
 
         public static Delegate MakeVoidCall<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15>(Delegate d)
         {
-            return new Action<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15>((a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15) =>
+            return new CrtAction<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15>((a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15) =>
             {
                 d.DynamicInvoke(new object[] { a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15 });
                 NativeException.CheckNativeException();
@@ -370,7 +408,7 @@ namespace Aws.Crt {
         }
         public static Delegate MakeCall<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, R>(Delegate d)
         {
-            return new Func<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, R>((a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15) =>
+            return new CrtFunc<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, R>((a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15) =>
             {
                 R res = (R)d.DynamicInvoke(new object[] { a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15 });
                 NativeException.CheckNativeException();
@@ -380,7 +418,7 @@ namespace Aws.Crt {
 
         public static Delegate MakeVoidCall<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16>(Delegate d)
         {
-            return new Action<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16>((a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16) =>
+            return new CrtAction<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16>((a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16) =>
             {
                 d.DynamicInvoke(new object[] { a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16 });
                 NativeException.CheckNativeException();
@@ -388,7 +426,7 @@ namespace Aws.Crt {
         }
         public static Delegate MakeCall<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, R>(Delegate d)
         {
-            return new Func<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, R>((a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16) =>
+            return new CrtFunc<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, R>((a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16) =>
             {
                 R res = (R)d.DynamicInvoke(new object[] { a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16 });
                 NativeException.CheckNativeException();

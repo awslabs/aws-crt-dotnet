@@ -4,7 +4,6 @@
  */
 using System;
 using System.Runtime.InteropServices;
-using System.Threading.Tasks;
 
 using Aws.Crt.Http;
 using Aws.Crt.IO;
@@ -125,7 +124,7 @@ namespace Aws.Crt.Auth
                 SignatureType = config.SignatureType;
                 Region = config.Region;
                 Service = config.Service;
-                MillisecondsSinceEpoch = config.Timestamp.ToUnixTimeMilliseconds();
+                MillisecondsSinceEpoch = MillisecondsSinceEpoch = (long)(config.Timestamp.ToUniversalTime() - new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalMilliseconds;
 
                 Credentials creds = config.Credentials;
                 if (creds != null) {
@@ -177,8 +176,7 @@ namespace Aws.Crt.Auth
                                     [In] AwsSigningConfigNative signing_config,
                                     UInt64 future_id,
                                     CanonicalRequestSigningCompleteCallback completion_callback_delegate);     
-
-            
+         
             internal delegate bool AwsDotnetAuthVerifyV4aCanonicalSigning(
                                     [MarshalAs(UnmanagedType.LPStr)] string canonical_request,
                                     [In] AwsSigningConfigNative signing_config,
@@ -202,7 +200,7 @@ namespace Aws.Crt.Auth
         private class HttpRequestSigningCallback
         {
             public HttpRequest OriginalRequest;
-            public TaskCompletionSource<HttpRequest> TaskSource = new TaskCompletionSource<HttpRequest>();
+            public CrtResult<HttpRequest> Result = new CrtResult<HttpRequest>();
             public CrtStreamWrapper BodyStream;
             public ShouldSignHeaderCallback ShouldSignHeader;
         }
@@ -210,7 +208,7 @@ namespace Aws.Crt.Auth
         private class CanonicalRequestSigningCallback
         {
             public String OriginalCanonicalRequest;
-            public TaskCompletionSource<String> TaskSource = new TaskCompletionSource<String>();
+            public CrtResult<String> Result = new CrtResult<String>();
         }
 
         private static StrongReferenceVendor<HttpRequestSigningCallback> PendingHttpRequestSignings = new StrongReferenceVendor<HttpRequestSigningCallback>();
@@ -225,7 +223,7 @@ namespace Aws.Crt.Auth
 
             if (errorCode != 0)
             {
-                callback.TaskSource.SetException(new CrtException(errorCode));
+                callback.Result.CompleteExceptionally(new CrtException(errorCode));
             }
             else
             {
@@ -236,11 +234,11 @@ namespace Aws.Crt.Auth
                 signedRequest.Headers = headers;
                 signedRequest.BodyStream = sourceRequest.BodyStream;
 
-                callback.TaskSource.SetResult(signedRequest);
+                callback.Result.Complete(signedRequest);
             }
         }
 
-        public static Task<HttpRequest> SignHttpRequest(HttpRequest request, AwsSigningConfig signingConfig) 
+        public static CrtResult<HttpRequest> SignHttpRequest(HttpRequest request, AwsSigningConfig signingConfig) 
         {
             if (request == null || signingConfig == null) {
                 throw new CrtException("Null argument passed to SignRequest");
@@ -268,7 +266,7 @@ namespace Aws.Crt.Auth
 
             API.SignRequestNative(request.Method, request.Uri, request.Headers, headerCount, callback.BodyStream.Delegates, nativeConfig, id, API.OnHttpRequestSigningComplete);
 
-            return callback.TaskSource.Task;
+            return callback.Result;
         }
 
         private static void OnCanonicalRequestSigningComplete(ulong id, int errorCode, string authorizationValue)
@@ -280,15 +278,20 @@ namespace Aws.Crt.Auth
 
             if (errorCode != 0)
             {
-                callback.TaskSource.SetException(new CrtException(errorCode));
+                callback.Result.CompleteExceptionally(new CrtException(errorCode));
             }
             else
             {
-                callback.TaskSource.SetResult(authorizationValue);
+                callback.Result.Complete(authorizationValue);
             }
         }
 
-        public static Task<String> SignCanonicalRequest(String canonicalRequest, AwsSigningConfig signingConfig) 
+        public static bool VerifyV4aCanonicalSigning(String canonicalRequest, AwsSigningConfig signingConfig, String hexSignature, String eccPubX, String eccPubY) {
+            var nativeConfig = new AwsSigningConfigNative(signingConfig);
+            return API.VerifyV4aCanonicalSigningNative(canonicalRequest, nativeConfig, hexSignature, eccPubX, eccPubY);
+        }
+
+        public static CrtResult<String> SignCanonicalRequest(String canonicalRequest, AwsSigningConfig signingConfig) 
         {
             if (canonicalRequest == null || signingConfig == null) {
                 throw new CrtException("Null argument passed to SignRequest");
@@ -308,22 +311,7 @@ namespace Aws.Crt.Auth
 
             API.SignCanonicalRequestNative(canonicalRequest, nativeConfig, id, API.OnCanonicalRequestSigningComplete);
 
-            return callback.TaskSource.Task;
-        }
-
-        public static bool VerifyV4aCanonicalSigning(String canonicalRequest, AwsSigningConfig signingConfig, String hexSignature, String eccPubX, String eccPubY) {
-            if (canonicalRequest == null || signingConfig == null) {
-                throw new CrtException("Null argument passed to SignRequest");
-            }
-
-            if (signingConfig.SignatureType != AwsSignatureType.CANONICAL_REQUEST_VIA_HEADERS && 
-                signingConfig.SignatureType != AwsSignatureType.CANONICAL_REQUEST_VIA_QUERY_PARAMS) {
-                throw new CrtException("Illegal signing type for canonical request signing");
-            }
-
-            var nativeConfig = new AwsSigningConfigNative(signingConfig);
-
-            return API.VerifyV4aCanonicalSigningNative(canonicalRequest, nativeConfig, hexSignature, eccPubX, eccPubY);            
+            return callback.Result;
         }        
     }
 }
