@@ -8,6 +8,7 @@ using System;
 #if NETSTANDARD
 using System.Runtime.InteropServices;
 #else
+using System.IO;
 #endif
 
 namespace Aws.Crt
@@ -47,15 +48,15 @@ namespace Aws.Crt
             string windir = Environment.GetEnvironmentVariable("windir");
             if (!string.IsNullOrEmpty(windir) && windir.Contains(@"\") && Directory.Exists(windir))
             {
-                return PlatformOS.Windows;
+                return PlatformOS.WINDOWS;
             }
             else if (File.Exists(@"/proc/sys/kernel/ostype"))
             {
-                return PlatformOs.Unix;
+                return PlatformOS.UNIX;
             }
             else if (File.Exists(@"/System/Library/CoreServices/SystemVersion.plist"))
             {
-                return PlatformOS.Mac;
+                return PlatformOS.MAC;
             }
             else
             {
