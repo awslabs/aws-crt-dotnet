@@ -50,14 +50,14 @@ struct aws_signing_config_native {
     uint64_t expiration_in_seconds;
 };
 
-typedef void(aws_dotnet_auth_on_http_request_signing_complete_fn)(
+typedef void(DOTNET_CALL aws_dotnet_auth_on_http_request_signing_complete_fn)(
     uint64_t callback_id,
     int32_t error_code,
     const char *uri,
     struct aws_dotnet_http_header headers[],
     uint32_t header_count);
 
-typedef void(aws_dotnet_auth_on_canonical_request_signing_complete_fn)(
+typedef void(DOTNET_CALL aws_dotnet_auth_on_canonical_request_signing_complete_fn)(
     uint64_t callback_id,
     int32_t error_code,
     const char *authorization_value);
