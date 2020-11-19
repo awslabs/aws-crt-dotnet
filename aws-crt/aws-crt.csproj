@@ -60,7 +60,7 @@
     <MakeDir Directories="$(SolutionDir)/packages" />
   </Target>
 
-  <Target Name="BuildNativeLibrary" Condition="$(BuildNativeLibrary) == 'true'" BeforeTargets="EmbedNativeLibraries">
+  <Target Name="BuildNativeX64Library" Condition="$(BuildNativeLibrary) == 'true' AND ($(PlatformTarget) == 'AnyCPU' OR $(PlatformTarget) == 'x64')" BeforeTargets="BuildNativeX86Library">
     <Message Text="Configuring x64 CMake project" Importance="high" />
     <MakeDir Directories="$(CMakeBinaries)/x64" />
     <Exec Command="cmake -G&quot;$(CMakeGenerator64)&quot; -DCMAKE_BUILD_TYPE=$(CMakeConfig) -DCMAKE_EXPORT_COMPILE_COMMANDS=ON $(CMakeArch64) $(CMakeLibCrypto) $(ProjectDir)../native" WorkingDirectory="$(CMakeBinaries)/x64" ConsoleToMSBuild="true">
@@ -70,7 +70,9 @@
     <Exec Command="cmake --build . --config $(CMakeConfig)" WorkingDirectory="$(CMakeBinaries)/x64" ConsoleToMSBuild="true">
       <Output TaskParameter="ConsoleOutput" PropertyName="OutputOfExec" />
     </Exec>
+  </Target>
 
+  <Target Name="BuildNativeX86Library" Condition="$(BuildNativeLibrary) == 'true' AND ($(PlatformTarget) == 'AnyCPU' OR $(PlatformTarget) == 'x86')" BeforeTargets="EmbedNativeLibraries">
     <Message Text="Configuring x86 CMake project" Importance="high" />
     <MakeDir Directories="$(CMakeBinaries)/x86" />
     <Exec Command="cmake -G&quot;$(CMakeGenerator86)&quot; -DCMAKE_BUILD_TYPE=$(CMakeConfig) -DCMAKE_EXPORT_COMPILE_COMMANDS=ON $(CMakeArch86) $(CMakeLibCrypto) $(ProjectDir)../native" WorkingDirectory="$(CMakeBinaries)/x86" ConsoleToMSBuild="true">
@@ -82,7 +84,7 @@
     </Exec>
   </Target>
 
-  <Target Name="EmbedNativeLibraries" BeforeTargets="PrepareForBuild" AfterTargets="BuildNativeLibrary">
+  <Target Name="EmbedNativeLibraries" BeforeTargets="PrepareForBuild" AfterTargets="BuildNativeX86Library">
     <ItemGroup>
       <EmbeddedResource Include="$(CMakeBinaries)/*/lib/*aws-crt-dotnet*" Exclude="**/*.ilk" />
     </ItemGroup>
