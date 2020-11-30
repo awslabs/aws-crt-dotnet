@@ -120,8 +120,9 @@ namespace tests
             var config = BuildBaseSigningConfig();
             var request = BuildTestSuiteRequestWithoutBody();
 
-            CrtResult<HttpRequest> result = AwsSigner.SignHttpRequest(request, config);
-            HttpRequest signedRequest = result.Get();
+            CrtResult<AwsSigner.CrtSigningResult> result = AwsSigner.SignHttpRequest(request, config);
+            AwsSigner.CrtSigningResult signingResult = result.Get();
+            HttpRequest signedRequest = signingResult.SignedRequest;
 
             Assert.Equal("GET", signedRequest.Method);
             Assert.Equal("/?Param-3=Value3&Param=Value2&%E1%88%B4=Value1", signedRequest.Uri);
@@ -129,6 +130,9 @@ namespace tests
             Assert.True(HasHeader(signedRequest, "Host", "example.amazonaws.com"));
             Assert.True(HasHeader(signedRequest, "X-Amz-Date", "20150830T123600Z"));
             Assert.True(HasHeader(signedRequest, "Authorization", "AWS4-HMAC-SHA256 Credential=AKIDEXAMPLE/20150830/us-east-1/service/aws4_request, SignedHeaders=host;x-amz-date, Signature=371d3713e185cc334048618a97f809c9ffe339c62934c032af5a0e595648fcac"));
+
+            byte[] signature = signingResult.Signature;
+            Assert.True(signature.SequenceEqual(ASCIIEncoding.ASCII.GetBytes("371d3713e185cc334048618a97f809c9ffe339c62934c032af5a0e595648fcac")));
         }
 
         /* Sourced from the get-vanilla-query-order-encoded test case in aws-c-auth */
@@ -141,13 +145,17 @@ namespace tests
 
             var request = BuildTestSuiteRequestWithoutBody();
 
-            CrtResult<HttpRequest> result = AwsSigner.SignHttpRequest(request, config);
-            HttpRequest signedRequest = result.Get();
+            CrtResult<AwsSigner.CrtSigningResult> result = AwsSigner.SignHttpRequest(request, config);
+            AwsSigner.CrtSigningResult signingResult = result.Get();
+            HttpRequest signedRequest = signingResult.SignedRequest;
 
             Assert.Equal("GET", signedRequest.Method);
             Assert.Equal("/?Param-3=Value3&Param=Value2&%E1%88%B4=Value1&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIDEXAMPLE%2F20150830%2Fus-east-1%2Fservice%2Faws4_request&X-Amz-Date=20150830T123600Z&X-Amz-SignedHeaders=host&X-Amz-Expires=3600&X-Amz-Signature=c5f1848ceec943ac2ca68ee720460c23aaae30a2300586597ada94c4a65e4787", signedRequest.Uri);
             Assert.Equal(1, signedRequest.Headers.Length);
             Assert.True(HasHeader(signedRequest, "Host", "example.amazonaws.com"));
+
+            byte[] signature = signingResult.Signature;
+            Assert.True(signature.SequenceEqual(ASCIIEncoding.ASCII.GetBytes("c5f1848ceec943ac2ca68ee720460c23aaae30a2300586597ada94c4a65e4787")));
         }
 
         /* Sourced from the post-x-www-form-urlencoded test case in aws-c-auth */
@@ -159,8 +167,9 @@ namespace tests
 
             var request = BuildTestSuiteRequestWithBody();
 
-            CrtResult<HttpRequest> result = AwsSigner.SignHttpRequest(request, config);
-            HttpRequest signedRequest = result.Get();
+            CrtResult<AwsSigner.CrtSigningResult> result = AwsSigner.SignHttpRequest(request, config);
+            AwsSigner.CrtSigningResult signingResult = result.Get();
+            HttpRequest signedRequest = signingResult.SignedRequest;
 
             Assert.Equal("POST", signedRequest.Method);
             Assert.Equal("/", signedRequest.Uri);
@@ -171,6 +180,9 @@ namespace tests
             Assert.True(HasHeader(signedRequest, "Content-Type", "application/x-www-form-urlencoded"));
             Assert.True(HasHeader(signedRequest, "x-amz-content-sha256", "9095672bbd1f56dfc5b65f3e153adc8731a4a654192329106275f4c7b24d0b6e"));
             Assert.True(HasHeader(signedRequest, "Content-Length", "13"));
+
+            byte[] signature = signingResult.Signature;
+            Assert.True(signature.SequenceEqual(ASCIIEncoding.ASCII.GetBytes("d3875051da38690788ef43de4db0d8f280229d82040bfac253562e56c3f20e0b")));
         }      
 
         /* Sourced from the post-x-www-form-urlencoded test case in aws-c-auth */
@@ -195,10 +207,11 @@ namespace tests
                 "content-length;content-type;host;x-amz-content-sha256;x-amz-date",
                 "9095672bbd1f56dfc5b65f3e153adc8731a4a654192329106275f4c7b24d0b6e");
 
-            CrtResult<String> result = AwsSigner.SignCanonicalRequest(canonicalRequest, config);
-            String signatureValue = result.Get();
+            CrtResult<AwsSigner.CrtSigningResult> result = AwsSigner.SignCanonicalRequest(canonicalRequest, config);
+            AwsSigner.CrtSigningResult signingResult = result.Get();
+            byte[] signature = signingResult.Signature;
 
-            Assert.Equal("d3875051da38690788ef43de4db0d8f280229d82040bfac253562e56c3f20e0b", signatureValue);
+            Assert.True(signature.SequenceEqual(ASCIIEncoding.ASCII.GetBytes("d3875051da38690788ef43de4db0d8f280229d82040bfac253562e56c3f20e0b")));
         } 
 
         [Fact]
@@ -209,8 +222,9 @@ namespace tests
 
             var request = BuildRequestWithSkippedHeader();
 
-            CrtResult<HttpRequest> result = AwsSigner.SignHttpRequest(request, config);
-            HttpRequest signedRequest = result.Get();
+            CrtResult<AwsSigner.CrtSigningResult> result = AwsSigner.SignHttpRequest(request, config);
+            AwsSigner.CrtSigningResult signingResult = result.Get();
+            HttpRequest signedRequest = signingResult.SignedRequest;
 
             Assert.Equal("GET", signedRequest.Method);
             Assert.Equal("/", signedRequest.Uri);
@@ -231,13 +245,13 @@ namespace tests
 
             var request = BuildRequestWithIllegalHeader();
 
-            CrtResult<HttpRequest> result = AwsSigner.SignHttpRequest(request, config);
+            CrtResult<AwsSigner.CrtSigningResult> result = AwsSigner.SignHttpRequest(request, config);
 
             Assert.Throws<CrtException>(() => result.Get());
 
             int crtErrorCode = 0;
             try {
-                HttpRequest req = result.Get();
+                AwsSigner.CrtSigningResult signingResult = result.Get();
             } catch (CrtException e) {
                 crtErrorCode = e.ErrorCode;
             }
@@ -254,13 +268,13 @@ namespace tests
 
             var request = BuildTestSuiteRequestWithoutBody();
 
-            CrtResult<HttpRequest> result = AwsSigner.SignHttpRequest(request, config);
+            CrtResult<AwsSigner.CrtSigningResult> result = AwsSigner.SignHttpRequest(request, config);
 
             Assert.Throws<CrtException>(() => result.Get());
 
             int crtErrorCode = 0;
             try {
-                HttpRequest req = result.Get();
+                AwsSigner.CrtSigningResult signingResult = result.Get();
             } catch (CrtException e) {
                 crtErrorCode = e.ErrorCode;
             }
@@ -277,13 +291,13 @@ namespace tests
 
             var request = BuildTestSuiteRequestWithoutBody();
 
-            CrtResult<HttpRequest> result = AwsSigner.SignHttpRequest(request, config);
+            CrtResult<AwsSigner.CrtSigningResult> result = AwsSigner.SignHttpRequest(request, config);
 
             Assert.Throws<CrtException>(() => result.Get());
 
             int crtErrorCode = 0;
             try {
-                HttpRequest req = result.Get();
+                AwsSigner.CrtSigningResult signingResult = result.Get();
             } catch (CrtException e) {
                 crtErrorCode = e.ErrorCode;
             }
@@ -300,13 +314,13 @@ namespace tests
 
             var request = BuildTestSuiteRequestWithoutBody();
 
-            CrtResult<HttpRequest> result = AwsSigner.SignHttpRequest(request, config);
+            CrtResult<AwsSigner.CrtSigningResult> result = AwsSigner.SignHttpRequest(request, config);
 
             Assert.Throws<CrtException>(() => result.Get());
 
             int crtErrorCode = 0;
             try {
-                HttpRequest req = result.Get();
+                AwsSigner.CrtSigningResult signingResult = result.Get();
             } catch (CrtException e) {
                 crtErrorCode = e.ErrorCode;
             }
