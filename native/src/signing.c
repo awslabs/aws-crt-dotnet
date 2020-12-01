@@ -443,7 +443,8 @@ AWS_DOTNET_API void aws_dotnet_auth_sign_chunk(
         }
     }
 
-    continuation->original_request_signable = aws_signable_new_chunk(allocator, continuation->body_stream, previous_signature_cursor);
+    continuation->original_request_signable =
+        aws_signable_new_chunk(allocator, continuation->body_stream, previous_signature_cursor);
     if (continuation->original_request_signable == NULL) {
         goto on_error;
     }
@@ -470,4 +471,4 @@ on_error:
     }
 
     on_signing_complete(callback_id, error_code, NULL, 0, NULL, NULL, 0);
-}                                    
+}
