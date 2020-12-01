@@ -327,6 +327,134 @@ namespace tests
 
             /* AWS_AUTH_SIGNING_INVALID_CONFIGURATION */
             Assert.Equal(1024 * 6 + 7, crtErrorCode);
-        }           
+        }
+
+        /*
+        * Chunked encoding signing based on https://docs.aws.amazon.com/AmazonS3/latest/API/sigv4-streaming.html
+        */
+        private static string CHUNKED_ACCESS_KEY_ID = "AKIAIOSFODNN7EXAMPLE";
+        private static string CHUNKED_SECRET_ACCESS_KEY = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY";
+        private static string CHUNKED_TEST_REGION= "us-east-1";
+        private static string CHUNKED_TEST_SERVICE = "s3";
+        private static string CHUNKED_TEST_SIGNING_TIME = "2013-05-24T00:00:00Z";
+        private static DateTime CHUNKED_SIGNING_DATE = new DateTime(2013, 5, 24, 0, 0, 0, DateTimeKind.Utc);
+        private static int CHUNK1_SIZE = 65536;
+        private static int CHUNK2_SIZE = 1024;
+
+        private Credentials createChunkedTestCredentials() {
+            return new Credentials(CHUNKED_ACCESS_KEY_ID, CHUNKED_SECRET_ACCESS_KEY, null);
+        }
+
+        private AwsSigningConfig createChunkedRequestSigningConfig() {
+            AwsSigningConfig config = new AwsSigningConfig();
+            config.Algorithm = AwsSigningAlgorithm.SIGV4;
+            config.SignatureType = AwsSignatureType.HTTP_REQUEST_VIA_HEADERS;
+            config.Region = CHUNKED_TEST_REGION;
+            config.Service = CHUNKED_TEST_SERVICE;
+            config.Timestamp = new DateTimeOffset(CHUNKED_SIGNING_DATE);
+            config.UseDoubleUriEncode = false;
+            config.ShouldNormalizeUriPath = true;
+            config.SignedBodyHeader = AwsSignedBodyHeaderType.X_AMZ_CONTENT_SHA256;
+            config.SignedBodyValue = AwsSignedBodyValue.STREAMING_AWS4_HMAC_SHA256_PAYLOAD;
+            config.Credentials = createChunkedTestCredentials();
+
+            return config;
+        }
+
+        private AwsSigningConfig createChunkSigningConfig() {
+            AwsSigningConfig config = new AwsSigningConfig();
+            config.Algorithm = AwsSigningAlgorithm.SIGV4;
+            config.SignatureType = AwsSignatureType.HTTP_REQUEST_CHUNK;
+            config.Region = CHUNKED_TEST_REGION;
+            config.Service = CHUNKED_TEST_SERVICE;
+            config.Timestamp = new DateTimeOffset(CHUNKED_SIGNING_DATE);
+            config.UseDoubleUriEncode = false;
+            config.ShouldNormalizeUriPath = true;
+            config.SignedBodyHeader = AwsSignedBodyHeaderType.NONE;
+            config.Credentials = createChunkedTestCredentials();
+
+            return config;
+        }
+
+        private HttpRequest createChunkedTestRequest() {
+
+            string uri = "https://s3.amazonaws.com/examplebucket/chunkObject.txt";
+
+            HttpHeader[] requestHeaders =
+                    new HttpHeader[]{
+                            new HttpHeader("Host", "s3.amazonaws.com"),
+                            new HttpHeader("x-amz-storage-class", "REDUCED_REDUNDANCY"),
+                            new HttpHeader("Content-Encoding", "aws-chunked"),
+                            new HttpHeader("x-amz-decoded-content-length", "66560"),
+                            new HttpHeader("Content-Length", "66824")
+                    };
+
+            HttpRequest request = new HttpRequest();
+            request.Uri = uri;
+            request.Method = "PUT";
+            request.Headers = requestHeaders;
+            request.BodyStream = null;
+
+            return request;
+        }
+
+        private Stream createChunk1Stream() {
+            StringBuilder chunkBody = new StringBuilder();
+            for (int i = 0; i < CHUNK1_SIZE; ++i) {
+                chunkBody.Append('a');
+            }
+
+            return new MemoryStream(ASCIIEncoding.ASCII.GetBytes(chunkBody.ToString()));
+        }
+
+        private Stream createChunk2Stream() {
+            StringBuilder chunkBody = new StringBuilder();
+            for (int i = 0; i < CHUNK2_SIZE; ++i) {
+                chunkBody.Append('a');
+            }
+
+            return new MemoryStream(ASCIIEncoding.ASCII.GetBytes(chunkBody.ToString()));
+        }
+
+        private static string EXPECTED_CHUNK_REQUEST_AUTHORIZATION_HEADER =
+                "AWS4-HMAC-SHA256 Credential=AKIAIOSFODNN7EXAMPLE/20130524/us-east-1/s3/aws4_request, " +
+                "SignedHeaders=content-encoding;content-length;host;x-amz-content-sha256;x-amz-date;x-amz-decoded-content-length;x-" +
+                "amz-storage-class, Signature=4f232c4386841ef735655705268965c44a0e4690baa4adea153f7db9fa80a0a9";
+
+        private static byte[] EXPECTED_REQUEST_SIGNATURE = ASCIIEncoding.ASCII.GetBytes("4f232c4386841ef735655705268965c44a0e4690baa4adea153f7db9fa80a0a9");
+        private static byte[] EXPECTED_FIRST_CHUNK_SIGNATURE = ASCIIEncoding.ASCII.GetBytes("ad80c730a21e5b8d04586a2213dd63b9a0e99e0e2307b0ade35a65485a288648");
+        private static byte[] EXPECTED_SECOND_CHUNK_SIGNATURE = ASCIIEncoding.ASCII.GetBytes("0055627c9e194cb4542bae2aa5492e3c1575bbb81b612b7d234b86a503ef5497");
+        private static byte[] EXPECTED_FINAL_CHUNK_SIGNATURE = ASCIIEncoding.ASCII.GetBytes("b6c6ea8a5354eaf15b3cb7646744f4275b71ea724fed81ceb9323e279d449df9");
+       
+        [Fact]
+        public void SignChunkedRequest()
+        {
+            HttpRequest request = createChunkedTestRequest();
+
+            CrtResult<AwsSigner.CrtSigningResult> result = AwsSigner.SignHttpRequest(request, createChunkedRequestSigningConfig());
+            AwsSigner.CrtSigningResult signingResult = result.Get();
+            HttpRequest signedRequest = signingResult.SignedRequest;
+            Assert.NotNull(signedRequest);
+            Assert.Equal(GetHeaderValue(signedRequest, "Authorization"), EXPECTED_CHUNK_REQUEST_AUTHORIZATION_HEADER);
+
+            byte[] requestSignature = signingResult.Signature;
+            Assert.True(requestSignature.SequenceEqual(EXPECTED_REQUEST_SIGNATURE));
+
+            Stream chunk1 = createChunk1Stream();
+            CrtResult<AwsSigner.CrtSigningResult> chunk1Result = AwsSigner.SignChunk(chunk1, requestSignature, createChunkSigningConfig());
+
+            byte[] chunkSignature = chunk1Result.Get().Signature;
+            Assert.True(chunkSignature.SequenceEqual(EXPECTED_FIRST_CHUNK_SIGNATURE));
+
+            Stream chunk2 = createChunk2Stream();
+            CrtResult<AwsSigner.CrtSigningResult> chunk2Result = AwsSigner.SignChunk(chunk2, chunkSignature, createChunkSigningConfig());
+
+            chunkSignature = chunk2Result.Get().Signature;
+            Assert.True(chunkSignature.SequenceEqual(EXPECTED_SECOND_CHUNK_SIGNATURE));
+
+            CrtResult<AwsSigner.CrtSigningResult> finalChunkResult = AwsSigner.SignChunk(null, chunkSignature, createChunkSigningConfig());
+            chunkSignature = finalChunkResult.Get().Signature;
+            Assert.True(chunkSignature.SequenceEqual(EXPECTED_FINAL_CHUNK_SIGNATURE));
+        }        
     }
 }
