@@ -358,7 +358,7 @@ namespace Aws.Crt.Auth
             }
 
             if (signingConfig.SignatureType != AwsSignatureType.HTTP_REQUEST_CHUNK) {
-                throw new CrtException("Illegal signatrue type for chunked body signing");
+                throw new CrtException("Illegal signature type for chunked body signing");
             }
 
             var nativeConfig = new AwsSigningConfigNative(signingConfig);
