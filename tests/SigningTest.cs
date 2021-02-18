@@ -336,7 +336,6 @@ namespace tests
         private static string CHUNKED_SECRET_ACCESS_KEY = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY";
         private static string CHUNKED_TEST_REGION= "us-east-1";
         private static string CHUNKED_TEST_SERVICE = "s3";
-        private static string CHUNKED_TEST_SIGNING_TIME = "2013-05-24T00:00:00Z";
         private static DateTime CHUNKED_SIGNING_DATE = new DateTime(2013, 5, 24, 0, 0, 0, DateTimeKind.Utc);
         private static int CHUNK1_SIZE = 65536;
         private static int CHUNK2_SIZE = 1024;
