@@ -50,7 +50,7 @@ struct aws_signing_config_native {
     uint64_t expiration_in_seconds;
 };
 
-typedef void(aws_dotnet_auth_on_signing_complete_fn)(
+typedef void(DOTNET_CALL aws_dotnet_auth_on_signing_complete_fn)(
     uint64_t callback_id,
     int32_t error_code,
     const uint8_t *signature,
