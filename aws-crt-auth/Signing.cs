@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0.
  */
 using System;
+using System.IO;
 using System.Runtime.InteropServices;
 
 using Aws.Crt.Http;
@@ -146,14 +147,22 @@ namespace Aws.Crt.Auth
             }
         }
 
+        public class CrtSigningResult {
+            public byte[] Signature;
+
+            public HttpRequest SignedRequest;
+        }
+
         internal static class API
         {
-            internal delegate void HttpRequestSigningCompleteCallback(
+            internal delegate void OnSigningCompleteCallback(
                 UInt64 id, 
-                Int32 errorCode, 
-                [MarshalAs(UnmanagedType.LPStr)] string uri, 
-                [In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex=4)] HttpHeader[] headers, 
-                UInt32 count);
+                Int32 errorCode,
+                [In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex=3)] byte[] signatureBuffer,
+                UInt64 signatureBufferSize,
+                [MarshalAs(UnmanagedType.LPStr)] string signedUri, 
+                [In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex=6)] HttpHeader[] signedHeaders, 
+                UInt32 signedHeaderCount);
 
             internal delegate void AwsDotnetAuthSignHttpRequest(
                                     [MarshalAs(UnmanagedType.LPStr)] string method,
@@ -163,50 +172,66 @@ namespace Aws.Crt.Auth
                                     [In] CrtStreamWrapper.DelegateTable stream_delegate_table,
                                     [In] AwsSigningConfigNative signing_config,
                                     UInt64 future_id,
-                                    HttpRequestSigningCompleteCallback completion_callback_delegate);
-
-            internal delegate void CanonicalRequestSigningCompleteCallback(
-                UInt64 id, 
-                Int32 errorCode, 
-                [MarshalAs(UnmanagedType.LPStr)] string authorizationValue);
-
+                                    OnSigningCompleteCallback completion_callback_delegate);
             internal delegate void AwsDotnetAuthSignCanonicalRequest(
                                     [MarshalAs(UnmanagedType.LPStr)] string canonical_request,
                                     [In] AwsSigningConfigNative signing_config,
                                     UInt64 future_id,
-                                    CanonicalRequestSigningCompleteCallback completion_callback_delegate);                                    
+                                    OnSigningCompleteCallback completion_callback_delegate);    
+
+            internal delegate void AwsDotnetAuthSignChunk(
+                                    [In] CrtStreamWrapper.DelegateTable stream_delegate_table,
+                                    [In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex=2, ArraySubType=UnmanagedType.U1)] byte[] signature_buffer,
+                                    UInt32 signature_buffer_length,
+                                    [In] AwsSigningConfigNative signing_config,
+                                    UInt64 future_id,
+                                    OnSigningCompleteCallback completion_callback_delegate);                                                                       
 
             public static AwsDotnetAuthSignHttpRequest SignRequestNative = NativeAPI.Bind<AwsDotnetAuthSignHttpRequest>("aws_dotnet_auth_sign_http_request");
 
             public static AwsDotnetAuthSignCanonicalRequest SignCanonicalRequestNative = NativeAPI.Bind<AwsDotnetAuthSignCanonicalRequest>("aws_dotnet_auth_sign_canonical_request");
 
-            public static HttpRequestSigningCompleteCallback OnHttpRequestSigningComplete = AwsSigner.OnHttpRequestSigningComplete;
+            public static AwsDotnetAuthSignChunk SignChunkNative = NativeAPI.Bind<AwsDotnetAuthSignChunk>("aws_dotnet_auth_sign_chunk");
 
-            public static CanonicalRequestSigningCompleteCallback OnCanonicalRequestSigningComplete = AwsSigner.OnCanonicalRequestSigningComplete;
+            public static OnSigningCompleteCallback OnHttpRequestSigningComplete = AwsSigner.OnHttpRequestSigningComplete;
+
+            public static OnSigningCompleteCallback OnCanonicalRequestSigningComplete = AwsSigner.OnCanonicalRequestSigningComplete;
+
+            public static OnSigningCompleteCallback OnChunkSigningComplete = AwsSigner.OnChunkSigningComplete;
 
             private static LibraryHandle library = new LibraryHandle();
         }
 
-        private class HttpRequestSigningCallback
+        private class HttpRequestSigningCallbackData
         {
             public HttpRequest OriginalRequest;
-            public CrtResult<HttpRequest> Result = new CrtResult<HttpRequest>();
+            public CrtResult<CrtSigningResult> Result = new CrtResult<CrtSigningResult>();
             public CrtStreamWrapper BodyStream;
             public ShouldSignHeaderCallback ShouldSignHeader;
         }
 
-        private class CanonicalRequestSigningCallback
+        private class CanonicalRequestSigningCallbackData
         {
             public String OriginalCanonicalRequest;
-            public CrtResult<String> Result = new CrtResult<String>();
+            public CrtResult<CrtSigningResult> Result = new CrtResult<CrtSigningResult>();
         }
 
-        private static StrongReferenceVendor<HttpRequestSigningCallback> PendingHttpRequestSignings = new StrongReferenceVendor<HttpRequestSigningCallback>();
-        private static StrongReferenceVendor<CanonicalRequestSigningCallback> PendingCanonicalRequestSignings = new StrongReferenceVendor<CanonicalRequestSigningCallback>();
-
-        private static void OnHttpRequestSigningComplete(ulong id, int errorCode, string uri, HttpHeader[] headers, uint headerCount)
+        private class ChunkSigningCallbackData
         {
-            HttpRequestSigningCallback callback = PendingHttpRequestSignings.ReleaseStrongReference(id);
+            public CrtStreamWrapper OriginalChunkBodyStream;
+
+            public byte[] PreviousSignature;
+
+            public CrtResult<CrtSigningResult> Result = new CrtResult<CrtSigningResult>();
+        }
+
+        private static StrongReferenceVendor<HttpRequestSigningCallbackData> PendingHttpRequestSignings = new StrongReferenceVendor<HttpRequestSigningCallbackData>();
+        private static StrongReferenceVendor<CanonicalRequestSigningCallbackData> PendingCanonicalRequestSignings = new StrongReferenceVendor<CanonicalRequestSigningCallbackData>();
+        private static StrongReferenceVendor<ChunkSigningCallbackData> PendingChunkSignings = new StrongReferenceVendor<ChunkSigningCallbackData>();
+
+        private static void OnHttpRequestSigningComplete(ulong id, int errorCode, byte[] signatureBuffer, ulong signatureBufferSize, string uri, HttpHeader[] headers, uint headerCount)
+        {
+            HttpRequestSigningCallbackData callback = PendingHttpRequestSignings.ReleaseStrongReference(id);
             if (callback == null) {
                 return;
             }
@@ -224,14 +249,18 @@ namespace Aws.Crt.Auth
                 signedRequest.Headers = headers;
                 signedRequest.BodyStream = sourceRequest.BodyStream;
 
-                callback.Result.Complete(signedRequest);
+                CrtSigningResult result = new CrtSigningResult();
+                result.SignedRequest = signedRequest;
+                result.Signature = signatureBuffer;
+
+                callback.Result.Complete(result);
             }
         }
 
-        public static CrtResult<HttpRequest> SignHttpRequest(HttpRequest request, AwsSigningConfig signingConfig) 
+        public static CrtResult<CrtSigningResult> SignHttpRequest(HttpRequest request, AwsSigningConfig signingConfig) 
         {
             if (request == null || signingConfig == null) {
-                throw new CrtException("Null argument passed to SignRequest");
+                throw new CrtException("Null argument passed to SignHttpRequest");
             }
 
             if (request.BodyStream != null) {
@@ -247,7 +276,7 @@ namespace Aws.Crt.Auth
                 headerCount = (uint) request.Headers.Length;
             }
 
-            HttpRequestSigningCallback callback = new HttpRequestSigningCallback();
+            HttpRequestSigningCallbackData callback = new HttpRequestSigningCallbackData();
             callback.OriginalRequest = request; /* needed to build final signed request */
             callback.ShouldSignHeader = signingConfig.ShouldSignHeader; /* prevent GC while signing */
             callback.BodyStream = new CrtStreamWrapper(request.BodyStream);
@@ -259,9 +288,9 @@ namespace Aws.Crt.Auth
             return callback.Result;
         }
 
-        private static void OnCanonicalRequestSigningComplete(ulong id, int errorCode, string authorizationValue)
+        private static void OnCanonicalRequestSigningComplete(ulong id, int errorCode, byte[] signatureBuffer, ulong signatureBufferSize, string uri, HttpHeader[] headers, uint headerCount)
         {
-            CanonicalRequestSigningCallback callback = PendingCanonicalRequestSignings.ReleaseStrongReference(id);
+            CanonicalRequestSigningCallbackData callback = PendingCanonicalRequestSignings.ReleaseStrongReference(id);
             if (callback == null) {
                 return;
             }
@@ -272,14 +301,17 @@ namespace Aws.Crt.Auth
             }
             else
             {
-                callback.Result.Complete(authorizationValue);
+                CrtSigningResult result = new CrtSigningResult();
+                result.Signature = signatureBuffer;
+
+                callback.Result.Complete(result);
             }
         }
 
-        public static CrtResult<String> SignCanonicalRequest(String canonicalRequest, AwsSigningConfig signingConfig) 
+        public static CrtResult<CrtSigningResult> SignCanonicalRequest(String canonicalRequest, AwsSigningConfig signingConfig) 
         {
             if (canonicalRequest == null || signingConfig == null) {
-                throw new CrtException("Null argument passed to SignRequest");
+                throw new CrtException("Null argument passed to SignCanonicalRequest");
             }
 
             if (signingConfig.SignatureType != AwsSignatureType.CANONICAL_REQUEST_VIA_HEADERS && 
@@ -289,7 +321,7 @@ namespace Aws.Crt.Auth
 
             var nativeConfig = new AwsSigningConfigNative(signingConfig);
 
-            CanonicalRequestSigningCallback callback = new CanonicalRequestSigningCallback();
+            CanonicalRequestSigningCallbackData callback = new CanonicalRequestSigningCallbackData();
             callback.OriginalCanonicalRequest = canonicalRequest;
 
             ulong id = PendingCanonicalRequestSignings.AcquireStrongReference(callback);
@@ -297,6 +329,49 @@ namespace Aws.Crt.Auth
             API.SignCanonicalRequestNative(canonicalRequest, nativeConfig, id, API.OnCanonicalRequestSigningComplete);
 
             return callback.Result;
-        }        
+        }     
+
+        private static void OnChunkSigningComplete(ulong id, int errorCode, byte[] signatureBuffer, ulong signatureBufferSize, string uri, HttpHeader[] headers, uint headerCount)
+        {
+            ChunkSigningCallbackData callback = PendingChunkSignings.ReleaseStrongReference(id);
+            if (callback == null) {
+                return;
+            }
+
+            if (errorCode != 0)
+            {
+                callback.Result.CompleteExceptionally(new CrtException(errorCode));
+            }
+            else
+            {
+                CrtSigningResult result = new CrtSigningResult();
+                result.Signature = signatureBuffer;
+
+                callback.Result.Complete(result);
+            }
+        }
+
+        public static CrtResult<CrtSigningResult> SignChunk(Stream chunkBodyStream, byte[] previousSignature, AwsSigningConfig signingConfig) 
+        {
+            if (previousSignature == null || signingConfig == null) {
+                throw new CrtException("Null argument passed to SignChunk");
+            }
+
+            if (signingConfig.SignatureType != AwsSignatureType.HTTP_REQUEST_CHUNK) {
+                throw new CrtException("Illegal signature type for chunked body signing");
+            }
+
+            var nativeConfig = new AwsSigningConfigNative(signingConfig);
+
+            ChunkSigningCallbackData callback = new ChunkSigningCallbackData();
+            callback.OriginalChunkBodyStream = new CrtStreamWrapper(chunkBodyStream);
+            callback.PreviousSignature = previousSignature;
+
+            ulong id = PendingChunkSignings.AcquireStrongReference(callback);
+
+            API.SignChunkNative(callback.OriginalChunkBodyStream.Delegates, callback.PreviousSignature, (uint) callback.PreviousSignature.Length, nativeConfig, id, API.OnChunkSigningComplete);
+
+            return callback.Result;
+        }   
     }
 }
