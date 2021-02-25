@@ -2,8 +2,7 @@
 
   <PropertyGroup>
     <TargetFrameworks>netstandard2.0;net35;net45</TargetFrameworks>
-    <PlatformTarget Condition="$(PlatformTarget) == '' AND $(OS) == 'Windows_NT' AND ($(CMakeGenerator) == 'Visual Studio 14 2015' OR $(CMakeGenerator) == 'Visual Studio 15 2017')">x86</PlatformTarget>
-    <PlatformTarget Condition="$(PlatformTarget) == ''">x64</PlatformTarget>
+    <PlatformTarget Condition="$(PlatformTarget) == ''">AnyCPU</PlatformTarget>
     <DefineConstants Condition="$(TargetFramework) == 'netstandard2.0'">$(DefineConstants);NETSTANDARD</DefineConstants>
     <DefineConstants Condition="$(TargetFramework) == 'net35'">$(DefineConstants);BCL;BCL35</DefineConstants>
     <DefineConstants Condition="$(TargetFramework) == 'net45'">$(DefineConstants);BCL;BCL45</DefineConstants>
@@ -32,13 +31,18 @@
     <Copyright>Amazon Web Services</Copyright>
     <Description>AWS Common Runtime bindings for .NET</Description>
 
-    <CMakeGenerator Condition="$(CMakeGenerator) == '' AND $(OS) == 'Windows_NT' AND $(PlatformTarget) == 'x64' AND $(VisualStudioVersion) == '14.0'">Visual Studio 14 2015 Win64</CMakeGenerator>
-    <CMakeGenerator Condition="$(CMakeGenerator) == '' AND $(OS) == 'Windows_NT' AND $(PlatformTarget) == 'x64' AND $(VisualStudioVersion) == '15.0'">Visual Studio 15 2017 Win64</CMakeGenerator>
-    <CMakeGenerator Condition="$(CMakeGenerator) == '' AND $(OS) == 'Windows_NT' AND $(PlatformTarget) == 'x64' AND $(VisualStudioVersion) == '16.0'">Visual Studio 16 2019</CMakeGenerator>
-    <CMakeGenerator Condition="$(CMakeGenerator) == '' AND $(OS) == 'Windows_NT' AND $(PlatformTarget) == 'x86' AND $(VisualStudioVersion) == '14.0'">Visual Studio 14 2015</CMakeGenerator>
-    <CMakeGenerator Condition="$(CMakeGenerator) == '' AND $(OS) == 'Windows_NT' AND $(PlatformTarget) == 'x86' AND $(VisualStudioVersion) == '15.0'">Visual Studio 15 2017</CMakeGenerator>
-    <CMakeGenerator Condition="$(CMakeGenerator) == '' AND $(OS) == 'Unix'">Unix Makefiles</CMakeGenerator>
-    <CMakeArch Condition="$(CMakeGenerator) == 'Visual Studio 16 2019'">-A x64</CMakeArch>
+    <CMakeGenerator64 Condition="$(CMakeGenerator64) == '' AND $(OS) == 'Windows_NT' AND $(VisualStudioVersion) == '14.0'">Visual Studio 14 2015 Win64</CMakeGenerator64>
+    <CMakeGenerator64 Condition="$(CMakeGenerator64) == '' AND $(OS) == 'Windows_NT' AND $(VisualStudioVersion) == '15.0'">Visual Studio 15 2017 Win64</CMakeGenerator64>
+    <CMakeGenerator64 Condition="$(CMakeGenerator64) == '' AND $(OS) == 'Windows_NT' AND $(VisualStudioVersion) == '16.0'">Visual Studio 16 2019</CMakeGenerator64>
+    <CMakeGenerator64 Condition="$(CMakeGenerator64) == '' AND $(OS) == 'Unix'">Unix Makefiles</CMakeGenerator64>
+    <CMakeArch64 Condition="$(CMakeGenerator64) == 'Visual Studio 16 2019'">-A x64</CMakeArch64>
+
+    <CMakeGenerator86 Condition="$(CMakeGenerator86) == '' AND $(OS) == 'Windows_NT' AND $(VisualStudioVersion) == '14.0'">Visual Studio 14 2015</CMakeGenerator86>
+    <CMakeGenerator86 Condition="$(CMakeGenerator86) == '' AND $(OS) == 'Windows_NT' AND $(VisualStudioVersion) == '15.0'">Visual Studio 15 2017</CMakeGenerator86>
+    <CMakeGenerator86 Condition="$(CMakeGenerator86) == '' AND $(OS) == 'Windows_NT' AND $(VisualStudioVersion) == '16.0'">Visual Studio 16 2019</CMakeGenerator86>
+    <CMakeGenerator86 Condition="$(CMakeGenerator86) == '' AND $(OS) == 'Unix'">Unix Makefiles</CMakeGenerator86>
+    <CMakeArch86 Condition="$(CMakeGenerator86) == 'Visual Studio 16 2019'">-A Win32</CMakeArch86>
+
     <CMakeBinaries Condition="$(OS) == 'Windows_NT' AND $(CODEBUILD_SRC_DIR) != ''">c:/build-$(MSBuildProjectName)</CMakeBinaries>
     <CMakeBinaries Condition="$(OS) == 'Windows_NT' AND $(CODEBUILD_SRC_DIR) == ''">$(ProjectDir)../build</CMakeBinaries>
     <CMakeBinaries Condition="$(OS) != 'Windows_NT'">$(ProjectDir)../build</CMakeBinaries>
@@ -56,28 +60,34 @@
     <MakeDir Directories="$(SolutionDir)/packages" />
   </Target>
 
-  <Target Name="BuildNativeLibrary"
-    Condition="$(BuildNativeLibrary) == 'true'"
-    BeforeTargets="PrepareForBuild">
-    <MakeDir Directories="$(CMakeBinaries)" />
-    <Message Text="Configuring CMake project" Importance="high"/>
-    <Exec Command="cmake -G&quot;$(CMakeGenerator)&quot; -DCMAKE_BUILD_TYPE=$(CMakeConfig) -DCMAKE_EXPORT_COMPILE_COMMANDS=ON $(CMakeArch) $(CMakeLibCrypto) $(ProjectDir)../native"
-      WorkingDirectory="$(CMakeBinaries)"
-      ConsoleToMSBuild="true">
+  <Target Name="BuildNativeX64Library" Condition="$(BuildNativeLibrary) == 'true' AND ($(PlatformTarget) == 'AnyCPU' OR $(PlatformTarget) == 'x64')" BeforeTargets="BuildNativeX86Library">
+    <Message Text="Configuring x64 CMake project" Importance="high" />
+    <MakeDir Directories="$(CMakeBinaries)/x64" />
+    <Exec Command="cmake -G&quot;$(CMakeGenerator64)&quot; -DCMAKE_BUILD_TYPE=$(CMakeConfig) -DCMAKE_EXPORT_COMPILE_COMMANDS=ON $(CMakeArch64) $(CMakeLibCrypto) $(ProjectDir)../native" WorkingDirectory="$(CMakeBinaries)/x64" ConsoleToMSBuild="true">
       <Output TaskParameter="ConsoleOutput" PropertyName="OutputOfExec" />
     </Exec>
-    <Message Text="Building native library" Importance="high"/>
-    <Exec Command="cmake --build . --config $(CMakeConfig)" WorkingDirectory="$(CMakeBinaries)" ConsoleToMSBuild="true">
+    <Message Text="Building x64 native library" Importance="high" />
+    <Exec Command="cmake --build . --config $(CMakeConfig)" WorkingDirectory="$(CMakeBinaries)/x64" ConsoleToMSBuild="true">
       <Output TaskParameter="ConsoleOutput" PropertyName="OutputOfExec" />
     </Exec>
   </Target>
 
-  <Target Name="EmbedNativeLibraries"
-    BeforeTargets="PrepareForBuild"
-    AfterTargets="BuildNativeLibrary">
+  <Target Name="BuildNativeX86Library" Condition="$(BuildNativeLibrary) == 'true' AND ($(PlatformTarget) == 'AnyCPU' OR $(PlatformTarget) == 'x86')" BeforeTargets="EmbedNativeLibraries">
+    <Message Text="Configuring x86 CMake project" Importance="high" />
+    <MakeDir Directories="$(CMakeBinaries)/x86" />
+    <Exec Command="cmake -G&quot;$(CMakeGenerator86)&quot; -DCMAKE_BUILD_TYPE=$(CMakeConfig) -DCMAKE_EXPORT_COMPILE_COMMANDS=ON $(CMakeArch86) $(CMakeLibCrypto) $(ProjectDir)../native" WorkingDirectory="$(CMakeBinaries)/x86" ConsoleToMSBuild="true">
+      <Output TaskParameter="ConsoleOutput" PropertyName="OutputOfExec" />
+    </Exec>
+    <Message Text="Building x86 native library" Importance="high" />
+    <Exec Command="cmake --build . --config $(CMakeConfig)" WorkingDirectory="$(CMakeBinaries)/x86" ConsoleToMSBuild="true">
+      <Output TaskParameter="ConsoleOutput" PropertyName="OutputOfExec" />
+    </Exec>
+  </Target>
+
+  <Target Name="EmbedNativeLibraries" BeforeTargets="PrepareForBuild" AfterTargets="BuildNativeX86Library">
     <ItemGroup>
-      <EmbeddedResource Include="$(CMakeBinaries)/lib/*aws-crt-dotnet*" Exclude="**/*.ilk" />
+      <EmbeddedResource Include="$(CMakeBinaries)/*/lib/*aws-crt-dotnet*" Exclude="**/*.ilk" />
     </ItemGroup>
-    <Message Text="Embedded library: %(EmbeddedResource.Identity)" Importance="High"/>
+    <Message Text="Embedded library: %(EmbeddedResource.Identity)" Importance="High" />
   </Target>
 </Project>
