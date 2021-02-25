@@ -546,5 +546,7 @@ AWS_DOTNET_API bool aws_dotnet_auth_verify_v4a_signature(
     int result = aws_validate_v4a_authorization_value(
         allocator, ecc_key, aws_byte_cursor_from_c_str(string_to_sign), signature_cursor);
 
+    aws_ecc_key_pair_release(ecc_key);
+
     return result == AWS_OP_SUCCESS;
 }
