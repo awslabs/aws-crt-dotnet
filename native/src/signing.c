@@ -12,6 +12,7 @@
 #include <aws/auth/signing.h>
 #include <aws/auth/signing_config.h>
 #include <aws/auth/signing_result.h>
+#include <aws/cal/ecc.h>
 #include <aws/common/string.h>
 #include <aws/http/request_response.h>
 #include <aws/io/stream.h>
@@ -521,6 +522,29 @@ AWS_DOTNET_API bool aws_dotnet_auth_verify_v4a_canonical_signing(
 done:
 
     s_destroy_signing_callback_state(continuation);
+
+    return result == AWS_OP_SUCCESS;
+}
+
+AWS_DOTNET_API bool aws_dotnet_auth_verify_v4a_signature(
+    const char *string_to_sign,
+    uint8_t *signature,
+    uint32_t signature_size,
+    const char *ecc_pub_x,
+    const char *ecc_pub_y) {
+
+    struct aws_allocator *allocator = aws_dotnet_get_allocator();
+
+    struct aws_ecc_key_pair *ecc_key = aws_ecc_key_new_from_hex_coordinates(
+        allocator, AWS_CAL_ECDSA_P256, aws_byte_cursor_from_c_str(ecc_pub_x), aws_byte_cursor_from_c_str(ecc_pub_y));
+
+    struct aws_byte_cursor signature_cursor = {
+        .ptr = signature,
+        .len = signature_size,
+    };
+
+    int result = aws_validate_v4a_authorization_value(
+        allocator, ecc_key, aws_byte_cursor_from_c_str(string_to_sign), signature_cursor);
 
     return result == AWS_OP_SUCCESS;
 }

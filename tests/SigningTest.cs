@@ -486,6 +486,17 @@ namespace tests
             CrtResult<AwsSigner.CrtSigningResult> finalChunkResult = AwsSigner.SignChunk(null, chunkSignature, createChunkSigningConfig());
             chunkSignature = finalChunkResult.Get().Signature;
             Assert.True(chunkSignature.SequenceEqual(EXPECTED_FINAL_CHUNK_SIGNATURE));
-        }        
+        }     
+
+        private static string VERIFIER_TEST_ECC_PUB_X = "18b7d04643359f6ec270dcbab8dce6d169d66ddc9778c75cfb08dfdb701637ab";
+        private static string VERIFIER_TEST_ECC_PUB_Y = "fa36b35e4fe67e3112261d2e17a956ef85b06e44712d2850bcd3c2161e9993f2";
+        private static string VERIFIER_TEST_STRING_TO_SIGN = "AWS4-ECDSA-P256-SHA256-PAYLOAD\n20130524T000000Z\n20130524/s3/aws4_request\n3044022023cfe85576d032aa102003a8f0397a79e95c653948e5ddc14aef866d06d4bb90022070c3ce70537a3e8d67237ada26044b990cb61d3443bdb453d479a7ec5b9b7a84\ne3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\nbf718b6f653bebc184e1479f1935b8da974d701b893afcf49e701f3e2f9f9c5a";
+        private static byte[] VERIFIER_SIGNATURE = ASCIIEncoding.ASCII.GetBytes("3045022062ee82ba2ef3cf7661494e4bd3f0eabaf3154dcdccb29bb811d66db0b986eb44022100977cb9a3082fa9d287ba03d4c52652904da263047a5e12e901617663d24baba5");
+
+        [Fact]
+        public void CheckSigv4aSignatureValueVerifier()
+        {
+            Assert.True(AwsSigner.VerifyV4aSignature(VERIFIER_TEST_STRING_TO_SIGN, VERIFIER_SIGNATURE, VERIFIER_TEST_ECC_PUB_X, VERIFIER_TEST_ECC_PUB_Y));
+        }   
     }
 }
