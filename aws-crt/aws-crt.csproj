@@ -72,7 +72,7 @@
     </Exec>
   </Target>
 
-  <Target Name="BuildNativeX86Library" Condition="$(BuildNativeLibrary) == 'true' AND ($(PlatformTarget) == 'AnyCPU' OR $(PlatformTarget) == 'x86')" BeforeTargets="EmbedNativeLibraries">
+  <Target Name="BuildNativeX86Library" Condition="$(BuildNativeLibrary) == 'true' AND ($(PlatformTarget) == 'AnyCPU' OR $(PlatformTarget) == 'x86') AND $(OS) == 'Windows_NT'" BeforeTargets="EmbedNativeLibraries">
     <Message Text="Configuring x86 CMake project" Importance="high" />
     <MakeDir Directories="$(CMakeBinaries)/x86" />
     <Exec Command="cmake -G&quot;$(CMakeGenerator86)&quot; -DCMAKE_BUILD_TYPE=$(CMakeConfig) -DCMAKE_EXPORT_COMPILE_COMMANDS=ON $(CMakeArch86) $(CMakeLibCrypto) $(ProjectDir)../native" WorkingDirectory="$(CMakeBinaries)/x86" ConsoleToMSBuild="true">
