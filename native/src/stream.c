@@ -20,7 +20,7 @@ static int s_aws_input_stream_dotnet_seek(
     enum aws_stream_seek_basis basis) {
 
     struct aws_input_stream_dotnet_impl *impl = stream->impl;
-    bool success = success = impl->delegates.seek((int64_t)offset, (int32_t)basis);
+    bool success = impl->delegates.seek((int64_t)offset, (int32_t)basis);
 
     return success ? AWS_OP_SUCCESS : AWS_OP_ERR;
 }

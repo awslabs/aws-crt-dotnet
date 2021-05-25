@@ -8,6 +8,8 @@
 
 #include <aws/common/common.h>
 
+#include "crt.h"
+
 struct aws_input_stream;
 
 enum aws_stream_state {
@@ -15,8 +17,8 @@ enum aws_stream_state {
     STREAM_STATE_DONE,
 };
 
-typedef int(aws_dotnet_stream_read_fn)(uint8_t *buffer, uint64_t buffer_size, uint64_t *bytes_written);
-typedef bool(aws_dotnet_stream_seek_fn)(int64_t offset, int32_t basis);
+typedef int(DOTNET_CALL aws_dotnet_stream_read_fn)(uint8_t *buffer, uint64_t buffer_size, uint64_t *bytes_written);
+typedef bool(DOTNET_CALL aws_dotnet_stream_seek_fn)(int64_t offset, int32_t basis);
 
 struct aws_dotnet_stream_function_table {
     aws_dotnet_stream_read_fn *read;

@@ -19,3 +19,6 @@
 [submodule "aws-common-runtime/aws-c-auth"]
 	path = crt/aws-c-auth
 	url = git@github.com:awslabs/aws-c-auth-staging.git
+[submodule "crt/aws-lc"]
+	path = crt/aws-lc
+	url = https://github.com/awslabs/aws-lc.git
