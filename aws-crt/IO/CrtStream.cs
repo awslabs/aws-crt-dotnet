@@ -70,7 +70,7 @@ namespace Aws.Crt.IO
             {
                 var bufferStream = new MemoryStream(buffer);
                 long prevPosition = BodyStream.Position;
-                CRT.CopyStream(BodyStream, bufferStream);
+                CRT.CopyStream(BodyStream, bufferStream, (int)size);
                 bytesWritten = (ulong)(BodyStream.Position - prevPosition);
                 if (BodyStream.Position != BodyStream.Length)
                 {

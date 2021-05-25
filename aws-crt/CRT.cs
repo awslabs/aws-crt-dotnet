@@ -32,13 +32,23 @@ namespace Aws.Crt
             public static aws_dotnet_error_name error_name = NativeAPI.Bind<aws_dotnet_error_name>();
         }
 
-        public static void CopyStream(Stream source, Stream dest)
+        public static void CopyStream(Stream source, Stream dest, int destSize)
         {
             byte[] buffer = new byte[4096];
+            int copied = 0;
+            int maximumRead = buffer.Length;
+            if (destSize > 0) {
+                maximumRead = Math.Min(maximumRead, destSize);
+            }
+
             int read;
-            while ((read = source.Read(buffer, 0, buffer.Length)) > 0)
+            while ((read = source.Read(buffer, 0, maximumRead)) > 0)
             {
                 dest.Write(buffer, 0, read);
+                copied += read;
+                if (destSize > 0) {
+                    maximumRead = Math.Min(destSize - copied, buffer.Length);
+                }
             }
         }
 
@@ -194,7 +204,7 @@ namespace Aws.Crt
                     try
                     {
                         libStream = new FileStream(extractedLibraryPath, FileMode.Create, FileAccess.Write);
-                        CopyStream(resourceStream, libStream);
+                        CopyStream(resourceStream, libStream, 0);
                         return extractedLibraryPath;
                     }
                     catch (Exception ex)
