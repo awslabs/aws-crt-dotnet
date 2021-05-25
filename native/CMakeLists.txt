@@ -53,29 +53,28 @@ if (BUILD_DEPS)
     if (UNIX AND NOT APPLE)
 
         # aws-lc build nuttiness
-	
-        # including the aws-lc cmake will do an immediate build of aws-lc
-	# the config expects some cmake directory variables to be setup in a certain
-	# way and so we do this ugly push and pop
 
-	# save off the old values; we don't need to restore CMAKE_INSTALL_PREFIX
-	# that shouldn't be set under any circumstances
+        # the config expects some cmake directory variables to be setup in a certain
+        # way and so we do this ugly push and pop
+
+        # save off the old values; we don't need to restore CMAKE_INSTALL_PREFIX
+        # that shouldn't be set under any circumstances
         set(OLD_CMAKE_CURRENT_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
-	set(OLD_CMAKE_CURRENT_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR})
+        set(OLD_CMAKE_CURRENT_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR})
 
-	# set the values to what's needed by aws-lc.cmake
-	get_filename_component(CMAKE_CURRENT_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR} DIRECTORY)
-	set(CMAKE_INSTALL_PREFIX ${CMAKE_CURRENT_BINARY_DIR}/deps)
-	set(CMAKE_CURRENT_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/deps)
+        # set the values to what's needed by aws-lc.cmake
+        get_filename_component(CMAKE_CURRENT_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR} DIRECTORY)
+        set(CMAKE_INSTALL_PREFIX ${CMAKE_CURRENT_BINARY_DIR}/deps)
+        set(CMAKE_CURRENT_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/deps)
 
-	# invoke the aws-lc build
+        # invoke the aws-lc build
         include(../crt/aws-c-cal/cmake/modules/aws-lc.cmake)
 
-	# restore the modified variables
-	set(CMAKE_CURRENT_SOURCE_DIR ${OLD_CMAKE_CURRENT_SOURCE_DIR})
-	set(CMAKE_CURRENT_BINARY_DIR ${OLD_CMAKE_CURRENT_BINARY_DIR})
+        # restore the modified variables
+        set(CMAKE_CURRENT_SOURCE_DIR ${OLD_CMAKE_CURRENT_SOURCE_DIR})
+        set(CMAKE_CURRENT_BINARY_DIR ${OLD_CMAKE_CURRENT_BINARY_DIR})
 
-	# s2n, so much easier
+        # s2n, so much easier
         add_subdirectory(../crt/s2n ${CMAKE_BINARY_DIR}/deps/s2n)
     endif()
     add_subdirectory(../crt/aws-c-io ${CMAKE_BINARY_DIR}/deps/aws-c-io)
