@@ -8,19 +8,19 @@
 #include "exports.h"
 
 AWS_DOTNET_API
-struct aws_hash *aws_dotnet_sha1_new() {
+struct aws_hash *aws_dotnet_sha1_new(void) {
     struct aws_allocator *allocator = aws_dotnet_get_allocator();
     return aws_sha1_new(allocator);
 }
 
 AWS_DOTNET_API
-struct aws_hash *aws_dotnet_sha256_new() {
+struct aws_hash *aws_dotnet_sha256_new(void) {
     struct aws_allocator *allocator = aws_dotnet_get_allocator();
     return aws_sha256_new(allocator);
 }
 
 AWS_DOTNET_API
-struct aws_hash *aws_dotnet_md5_new() {
+struct aws_hash *aws_dotnet_md5_new(void) {
     struct aws_allocator *allocator = aws_dotnet_get_allocator();
     return aws_md5_new(allocator);
 }
