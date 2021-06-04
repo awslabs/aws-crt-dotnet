@@ -1,7 +1,7 @@
 
 @setlocal enableextensions enabledelayedexpansion
 
-dotnet build --configuration Release -p:CMakeGenerator=%1 || goto error
+dotnet build -f netstandard2.0 --configuration Release -p:PlatformTarget=x64 -p:CMakeGenerator=%1 || goto error
 
 md ..\dist\x86
 for /R c:\build-aws-crt\lib %%F IN (*) do (
