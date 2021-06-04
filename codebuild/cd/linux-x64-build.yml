@@ -3,27 +3,31 @@ version: 0.2
 phases:
   install:
     commands:
-      - sudo apt-get install -y clang-3.9
+      - wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
+      - sudo add-apt-repository ppa:ubuntu-toolchain-r/test
+      - sudo apt-add-repository "deb http://apt.llvm.org/xenial/ llvm-toolchain-xenial-12 main"
+      - sudo apt-get update -y
+      - sudo apt-get install clang-12 cmake3 -y -f
       # .NET Core install instructions taken from: https://dotnet.microsoft.com/download/linux-package-manager/ubuntu16-04/sdk-current
       - curl -L https://packages.microsoft.com/config/ubuntu/16.04/packages-microsoft-prod.deb --output /tmp/packages-microsoft-prod.deb
       - sudo dpkg -i /tmp/packages-microsoft-prod.deb
       - sudo apt-get install apt-transport-https
       - sudo apt-get update -y
-      - sudo apt-get install dotnet-sdk-2.2 -y
+      - sudo apt-get install dotnet-sdk-5.0 -y
   pre_build:
     commands:
-      - export CC=clang-3.9
-      - export CXX=clang++-3.9
+      - export CC=clang-12
+      - export CXX=clang++-12
   build:
     commands:
       - cd aws-crt-dotnet
       - mkdir packages
-      - dotnet build --configuration Release
+      - dotnet build -f netstandard2.0 -p:PlatformTarget=x64 --configuration Release
   post_build:
     commands:
       # get the shared libs from the native build
       - mkdir -p ../dist/x64
-      - cp -rv build/lib/libaws-crt-dotnet-x64.so ../dist/
+      - cp -rv build/x64/lib/libaws-crt-dotnet-x64.so ../dist/x64
 
 artifacts:
   files:
