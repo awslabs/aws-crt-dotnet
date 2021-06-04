@@ -1,0 +1,34 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>netstandard2.0;net35;net45</TargetFrameworks>
+    <DefineConstants Condition="$(TargetFramework) == 'netstandard2.0'">$(DefineConstants);NETSTANDARD</DefineConstants>
+    <DefineConstants Condition="$(TargetFramework) == 'net35'">$(DefineConstants);BCL;BCL35</DefineConstants>
+    <DefineConstants Condition="$(TargetFramework) == 'net45'">$(DefineConstants);BCL;BCL45</DefineConstants>
+    <RootNamespace>Aws.Crt.Checksums</RootNamespace>
+
+    <!-- workaround per https://github.com/Microsoft/msbuild/issues/1333 -->
+    <FrameworkPathOverride Condition="'$(TargetFramework)' == 'net35'">C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v3.5\Profile\Client</FrameworkPathOverride>
+
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageOutputPath>$(ProjectDir)../packages</PackageOutputPath>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+
+    <PackageId>AWSCRT-CHECKSUMS</PackageId>
+    <Title>AWS CRT - CHECKSUMS</Title>
+    <Version>1.0.0-dev</Version>
+    <Authors>aws-sdk-common-runtime</Authors>
+    <Company>Amazon</Company>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <PackageTags>AWS,native,Amazon</PackageTags>
+    <RepositoryUrl>https://github.com/awslabs/aws-crt-dotnet.git</RepositoryUrl>
+    <Copyright>Amazon Web Services, 2019</Copyright>
+    <Description>AWS Common Runtime Checksums bindings/API</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\aws-crt\aws-crt.csproj" />
+  </ItemGroup>
+
+</Project>

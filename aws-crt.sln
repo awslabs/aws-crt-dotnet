@@ -9,6 +9,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "aws-crt-http", "aws-crt-htt
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "aws-crt-auth", "aws-crt-auth\aws-crt-auth.csproj", "{1C9211AC-2849-4476-82CA-87D77FDC4734}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "aws-crt-cal", "aws-crt-cal\aws-crt-cal.csproj", "{C7FBEF3C-040B-4F65-9D08-F225FB4AAD28}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "aws-crt-checksums", "aws-crt-checksums\aws-crt-checksums.csproj", "{FE31CE7F-3BC4-406C-AF44-9EA42BB979DB}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -41,6 +45,22 @@ Global
 		{1C9211AC-2849-4476-82CA-87D77FDC4734}.Release|x64.Build.0 = Release|Any CPU
 		{1C9211AC-2849-4476-82CA-87D77FDC4734}.Release|x86.ActiveCfg = Release|Any CPU
 		{1C9211AC-2849-4476-82CA-87D77FDC4734}.Release|x86.Build.0 = Release|Any CPU
+		{C7FBEF3C-040B-4F65-9D08-F225FB4AAD28}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{C7FBEF3C-040B-4F65-9D08-F225FB4AAD28}.Debug|x64.Build.0 = Debug|Any CPU
+		{C7FBEF3C-040B-4F65-9D08-F225FB4AAD28}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{C7FBEF3C-040B-4F65-9D08-F225FB4AAD28}.Debug|x86.Build.0 = Debug|Any CPU
+		{C7FBEF3C-040B-4F65-9D08-F225FB4AAD28}.Release|x64.ActiveCfg = Release|Any CPU
+		{C7FBEF3C-040B-4F65-9D08-F225FB4AAD28}.Release|x64.Build.0 = Release|Any CPU
+		{C7FBEF3C-040B-4F65-9D08-F225FB4AAD28}.Release|x86.ActiveCfg = Release|Any CPU
+		{C7FBEF3C-040B-4F65-9D08-F225FB4AAD28}.Release|x86.Build.0 = Release|Any CPU
+		{FE31CE7F-3BC4-406C-AF44-9EA42BB979DB}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{FE31CE7F-3BC4-406C-AF44-9EA42BB979DB}.Debug|x64.Build.0 = Debug|Any CPU
+		{FE31CE7F-3BC4-406C-AF44-9EA42BB979DB}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{FE31CE7F-3BC4-406C-AF44-9EA42BB979DB}.Debug|x86.Build.0 = Debug|Any CPU
+		{FE31CE7F-3BC4-406C-AF44-9EA42BB979DB}.Release|x64.ActiveCfg = Release|Any CPU
+		{FE31CE7F-3BC4-406C-AF44-9EA42BB979DB}.Release|x64.Build.0 = Release|Any CPU
+		{FE31CE7F-3BC4-406C-AF44-9EA42BB979DB}.Release|x86.ActiveCfg = Release|Any CPU
+		{FE31CE7F-3BC4-406C-AF44-9EA42BB979DB}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
