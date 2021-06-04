@@ -34,6 +34,7 @@ phases:
       - cd packages
       - dotnet nuget push AWSCRT.${PKG_VERSION}.nupkg -k $NUGET_KEY -s https://api.nuget.org/v3/index.json
       - dotnet nuget push AWSCRT-HTTP.${PKG_VERSION}.nupkg -k $NUGET_KEY -s https://api.nuget.org/v3/index.json
+      - dotnet nuget push AWSCRT-AUTH.${PKG_VERSION}.nupkg -k $NUGET_KEY -s https://api.nuget.org/v3/index.json
   post_build:
     commands:
       # wait for the package to become available on nuget
