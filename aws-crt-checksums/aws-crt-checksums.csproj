@@ -29,7 +29,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\aws-crt\aws-crt.csproj" />
-    <ProjectReference Include="..\aws-crt-http\aws-crt-http.csproj" />
   </ItemGroup>
 
 </Project>
