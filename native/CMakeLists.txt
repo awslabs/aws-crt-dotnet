@@ -82,6 +82,7 @@ if (BUILD_DEPS)
     add_subdirectory(../crt/aws-c-compression ${CMAKE_BINARY_DIR}/deps/aws-c-compression)
     add_subdirectory(../crt/aws-c-http ${CMAKE_BINARY_DIR}/deps/aws-c-http)
     add_subdirectory(../crt/aws-c-auth ${CMAKE_BINARY_DIR}/deps/aws-c-auth)
+    add_subdirectory(../crt/aws-checksums ${CMAKE_BINARY_DIR}/deps/aws-checksums)
 else()
     include(AwsFindPackage)
     set(IN_SOURCE_BUILD OFF)
@@ -100,6 +101,7 @@ add_library(${PROJECT_NAME} SHARED ${AWS_CRT_DOTNET_HEADERS} ${AWS_CRT_DOTNET_SR
 
 # AWS Common Runtime dependencies
 aws_use_package(aws-c-auth)
+aws_use_package(aws-checksums)
 
 target_link_libraries(${PROJECT_NAME} ${DEP_AWS_LIBS})
 
