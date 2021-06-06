@@ -13,6 +13,7 @@ if ! type -P dotnet &> /dev/null; then
 fi
 
 mkdir packages
-dotnet build --configuration Release
+git submodule update --init
+dotnet build -f netstandard2.0 --configuration Release -p:PlatformTarget=x64
 mkdir -p ../dist
 cp -rv build/lib/libaws-crt-dotnet-x64.dylib ../dist/
