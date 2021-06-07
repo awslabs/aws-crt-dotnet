@@ -5,9 +5,9 @@ phases:
     commands:
       - curl -L https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
       - sudo add-apt-repository ppa:ubuntu-toolchain-r/test
-      - sudo apt-add-repository "deb http://apt.llvm.org/xenial/ llvm-toolchain-xenial-12 main"
+      - sudo apt-add-repository "deb http://apt.llvm.org/xenial/ llvm-toolchain-xenial-11 main"
       - sudo apt-get update -y
-      - sudo apt-get install clang-12 cmake -y -f
+      - sudo apt-get install clang-11 cmake -y -f
       # .NET Core install instructions taken from: https://dotnet.microsoft.com/download/linux-package-manager/ubuntu16-04/sdk-current
       - curl -L https://packages.microsoft.com/config/ubuntu/16.04/packages-microsoft-prod.deb --output /tmp/packages-microsoft-prod.deb
       - sudo dpkg -i /tmp/packages-microsoft-prod.deb
@@ -16,8 +16,8 @@ phases:
       - sudo apt-get install dotnet-sdk-5.0 -y
   pre_build:
     commands:
-      - export CC=clang-12
-      - export CXX=clang++-12
+      - export CC=clang-11
+      - export CXX=clang++-11
   build:
     commands:
       - cd aws-crt-dotnet
