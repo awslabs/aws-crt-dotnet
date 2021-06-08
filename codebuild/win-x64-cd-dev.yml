@@ -5,7 +5,8 @@ phases:
       - cd $env:CODEBUILD_SRC_DIR\aws-crt-dotnet
       - git submodule update --init
       - md packages
-      - dotnet build -f netstandard2.0 --configuration Release -p:PlatformTarget=x64 -p:CMakeGenerator64="Visual Studio 14 2015 Win64" -p:CMakeGenerator86="Visual Studio 14 2015"
+      - "C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\Common7\Tools\VsDevCmd.bat"
+      - dotnet build -f netstandard2.0 --configuration Release -p:PlatformTarget=x64
 
 artifacts:
   files:
