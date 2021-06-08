@@ -5,8 +5,7 @@ phases:
       - cd $env:CODEBUILD_SRC_DIR
       - git submodule update --init
       - md packages
-      - call "C:/Program Files (x86)/Microsoft Visual Studio/2019/BuildTools/Common7/Tools/VsDevCmd.bat"
-      - dotnet build -f netstandard2.0 --configuration Release -p:PlatformTarget=x64
+      - ./codebuild/win-build-x64-cd.bat
 
 artifacts:
   files:
