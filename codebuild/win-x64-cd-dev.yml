@@ -2,7 +2,7 @@ version: 0.2
 phases:
   build:
     commands:
-      - cd $env:CODEBUILD_SRC_DIR\aws-crt-dotnet
+      - cd $env:CODEBUILD_SRC_DIR
       - git submodule update --init
       - md packages
       - "C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\BuildTools\\Common7\\Tools\\VsDevCmd.bat"
