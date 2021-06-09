@@ -11,11 +11,11 @@ aws secretsmanager get-secret-value --secret-id "NuGet/push" --query SecretStrin
 set /P NUGET_KEY=<nuget_key.txt
    
 cd packages      
-dotnet nuget push AWSCRT.%PKG_VERSION%-rc.nupkg -k %NUGET_KEY% -s https://api.nuget.org/v3/index.json || goto :error
-dotnet nuget push AWSCRT-HTTP.%PKG_VERSION%-rc.nupkg -k %NUGET_KEY% -s https://api.nuget.org/v3/index.json || goto :error
-dotnet nuget push AWSCRT-AUTH.%PKG_VERSION%-rc.nupkg -k %NUGET_KEY% -s https://api.nuget.org/v3/index.json || goto :error
-dotnet nuget push AWSCRT-CAL.%PKG_VERSION%-rc.nupkg -k %NUGET_KEY% -s https://api.nuget.org/v3/index.json || goto :error
-dotnet nuget push AWSCRT-CHECKSUMS.%PKG_VERSION%-rc.nupkg -k %NUGET_KEY% -s https://api.nuget.org/v3/index.json || goto :error
+dotnet nuget push AWSCRT.%PKG_VERSION%-rc.nupkg -k %NUGET_KEY% -s https://api.nuget.org/v3/index.json --skip-duplicate || goto :error
+dotnet nuget push AWSCRT-HTTP.%PKG_VERSION%-rc.nupkg -k %NUGET_KEY% -s https://api.nuget.org/v3/index.json --skip-duplicate || goto :error
+dotnet nuget push AWSCRT-AUTH.%PKG_VERSION%-rc.nupkg -k %NUGET_KEY% -s https://api.nuget.org/v3/index.json --skip-duplicate || goto :error
+dotnet nuget push AWSCRT-CAL.%PKG_VERSION%-rc.nupkg -k %NUGET_KEY% -s https://api.nuget.org/v3/index.json --skip-duplicate || goto :error
+dotnet nuget push AWSCRT-CHECKSUMS.%PKG_VERSION%-rc.nupkg -k %NUGET_KEY% -s https://api.nuget.org/v3/index.json --skip-duplicate || goto :error
 
 goto :EOF
 
