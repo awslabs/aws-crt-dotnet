@@ -6,7 +6,6 @@ set /P PKG_VERSION=<version.txt
 echo %PKG_VERSION%
 
 dotnet build --configuration Release -p:Version=%PKG_VERSION% -p:PackageVersion=%PKG_VERSION%-rc -p:BuildNativeLibrary=false || goto :error
-dotnet pack --no-build --include-symbols --configuration Release
 
 aws secretsmanager get-secret-value --secret-id "NuGet/push" --query SecretString | cut -f2 -d\ > nuget_key.txt || goto :error
 set /P NUGET_KEY=<nuget_key.txt
