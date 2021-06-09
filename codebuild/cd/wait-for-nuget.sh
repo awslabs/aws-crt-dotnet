@@ -15,8 +15,10 @@ while true; do
     awscrt_status=$(curl -IsL https://api.nuget.org/v3/registration3/awscrt/${version}.json | grep -e ^HTTP | tail -1 | grep -c 200 || true) 
     awscrthttp_status=$(curl -IsL https://api.nuget.org/v3/registration3/awscrt-http/${version}.json | grep -e ^HTTP | tail -1 | grep -c 200 || true)
     awscrtauth_status=$(curl -IsL https://api.nuget.org/v3/registration3/awscrt-auth/${version}.json | grep -e ^HTTP | tail -1 | grep -c 200 || true)
-    echo "t=${delta}s AWSCRT=${awscrt_status} AWSCRT-HTTP=${awscrthttp_status} AWSCRT-AUTH=${awscrtauth_status}"
-    if [ $awscrt_status -gt 0 ] && [ $awscrthttp_status -gt 0 ] && [ $awscrtauth_status -gt 0 ]; then
+    awscrtcal_status=$(curl -IsL https://api.nuget.org/v3/registration3/awscrt-cal/${version}.json | grep -e ^HTTP | tail -1 | grep -c 200 || true)
+    awscrtchecksums_status=$(curl -IsL https://api.nuget.org/v3/registration3/awscrt-checksums/${version}.json | grep -e ^HTTP | tail -1 | grep -c 200 || true)
+    echo "t=${delta}s AWSCRT=${awscrt_status} AWSCRT-HTTP=${awscrthttp_status} AWSCRT-AUTH=${awscrtauth_status} AWSCRT-CAL=${awscrtcal_status} AWSCRT-CHECKSUMS=${awscrtchecksums_status}"
+    if [ $awscrt_status -gt 0 ] && [ $awscrthttp_status -gt 0 ] && [ $awscrtauth_status -gt 0 ] && [ $awscrtcal_status -gt 0 ] && [ $awscrtchecksums_status -gt 0 ]; then
         echo "Package(s) with version $version found in NuGet."
         break
     fi
