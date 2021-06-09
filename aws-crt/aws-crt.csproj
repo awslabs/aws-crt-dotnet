@@ -46,9 +46,7 @@
     <CMakeGenerator86 Condition="$(CMakeGenerator86) == '' AND $(OS) == 'Unix'">Unix Makefiles</CMakeGenerator86>
     <CMakeArch86 Condition="$(CMakeGenerator86) == 'Visual Studio 16 2019'">-A Win32</CMakeArch86>
 
-    <CMakeBinaries Condition="$(OS) == 'Windows_NT' AND $(CODEBUILD_SRC_DIR) != ''">c:/build-$(MSBuildProjectName)</CMakeBinaries>
-    <CMakeBinaries Condition="$(OS) == 'Windows_NT' AND $(CODEBUILD_SRC_DIR) == ''">$(ProjectDir)../build</CMakeBinaries>
-    <CMakeBinaries Condition="$(OS) != 'Windows_NT'">$(ProjectDir)../build</CMakeBinaries>
+    <CMakeBinaries>$(ProjectDir)../build</CMakeBinaries>
     <CMakeConfig Condition="$(Configuration) == 'Debug'">Debug</CMakeConfig>
     <CMakeConfig Condition="$(CMakeConfig) == ''">RelWithDebInfo</CMakeConfig>
     <CMakeLibCrypto Condition="$(LibCryptoPath) != ''">-DLibCrypto_INCLUDE_DIR=$(LibCryptoPath)/include -DLibCrypto_STATIC_LIBRARY=$(LibCryptoPath)/lib/libcrypto.a</CMakeLibCrypto>
@@ -89,7 +87,7 @@
 
   <Target Name="EmbedNativeLibraries" BeforeTargets="PrepareForBuild" AfterTargets="BuildNativeX86Library">
     <ItemGroup>
-      <EmbeddedResource Include="$(CMakeBinaries)/*/lib/*aws-crt-dotnet*" Exclude="**/*.ilk" />
+      <EmbeddedResource Include="$(CMakeBinaries)/lib/*/*aws-crt-dotnet*" Exclude="**/*.ilk" />
     </ItemGroup>
     <Message Text="Embedded library: %(EmbeddedResource.Identity)" Importance="High" />
   </Target>
