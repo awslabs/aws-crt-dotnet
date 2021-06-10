@@ -8,11 +8,12 @@ using System.IO;
 using System.Net;
 using System.Runtime.InteropServices;
 using System.Security;
+using System.Text;
 
 using Aws.Crt.IO;
 
 namespace Aws.Crt.Http
-{
+{    
     public enum HeaderBlock 
     {
         Main = 0,
@@ -136,16 +137,43 @@ namespace Aws.Crt.Http
     [StructLayout(LayoutKind.Sequential, CharSet=CharSet.Ansi)]
     public struct HttpHeader
     {
-        [MarshalAs(UnmanagedType.LPStr)]
-        public string Name;
+        private static Encoding encoding = UTF8Encoding.UTF8;
 
-        [MarshalAs(UnmanagedType.LPStr)]
-        public string Value;
+        [MarshalAs(UnmanagedType.LPArray)]
+        private byte[] name;
+        private int nameSize;
+
+        [MarshalAs(UnmanagedType.LPArray)]
+        private byte[] value; 
+
+        private int valueSize;       
+
+        public String Name 
+        {
+            get { return encoding.GetString(name); }
+            set 
+            { 
+                this.name = encoding.GetBytes(value);
+                this.nameSize = this.name.Length;
+            }
+        }
+
+        public String Value
+        {
+            get { return encoding.GetString(this.value); }
+            set 
+            { 
+                this.value = encoding.GetBytes(value); 
+                this.valueSize = this.value.Length;
+            }
+        }
 
         public HttpHeader(string name, string value)
         {
-            Name = name;
-            Value = value;
+            this.name = encoding.GetBytes(name);
+            this.nameSize = this.name.Length;
+            this.value = encoding.GetBytes(value);
+            this.valueSize = this.value.Length;
         }
     }
 

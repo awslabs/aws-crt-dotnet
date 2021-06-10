@@ -204,8 +204,10 @@ static void s_complete_http_request_signing_normally(
         header_strings[string_index] = aws_string_new_from_array(allocator, header.name.ptr, header.name.len);
         header_strings[string_index + 1] = aws_string_new_from_array(allocator, header.value.ptr, header.value.len);
 
-        dotnet_headers[header_idx].name = (const char *)header_strings[string_index]->bytes;
-        dotnet_headers[header_idx].value = (const char *)header_strings[string_index + 1]->bytes;
+        dotnet_headers[header_idx].name = (uint8_t *)aws_string_bytes(header_strings[string_index]);
+        dotnet_headers[header_idx].name_len = (int)header_strings[string_index]->len;
+        dotnet_headers[header_idx].value = (uint8_t *)aws_string_bytes(header_strings[string_index + 1]);
+        dotnet_headers[header_idx].value_len = (int)header_strings[string_index + 1]->len;
     }
 
     callback_state->on_signing_complete(
