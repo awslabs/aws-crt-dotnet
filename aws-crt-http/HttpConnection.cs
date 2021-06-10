@@ -139,11 +139,11 @@ namespace Aws.Crt.Http
     {
         private static Encoding encoding = UTF8Encoding.UTF8;
 
-        [MarshalAs(UnmanagedType.LPArray)]
+        [MarshalAs(UnmanagedType.ByValArray)]
         private byte[] name;
         private int nameSize;
 
-        [MarshalAs(UnmanagedType.LPArray)]
+        [MarshalAs(UnmanagedType.ByValArray)]
         private byte[] value; 
 
         private int valueSize;       
