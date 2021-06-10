@@ -9,7 +9,7 @@ phases:
   build:
     commands:
       - cd $env:CODEBUILD_SRC_DIR\aws-crt-dotnet
-      - \codebuild\cd\publish-rc-build.bat
+      - .\codebuild\cd\publish-rc-build.bat
 
   post_build:
     commands:
