@@ -5,7 +5,7 @@ phases:
       - cd $env:CODEBUILD_SRC_DIR\aws-crt-dotnet
       - git submodule update --init
       - md packages
-      - .\codebuild\cd\win-build-x64.bat 
+      - .\codebuild\cd\win-build.bat x64
 
 artifacts:
   files:

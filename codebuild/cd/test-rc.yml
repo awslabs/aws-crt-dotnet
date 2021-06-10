@@ -27,6 +27,8 @@ phases:
       - dotnet add tests package AWSCRT --version ${CRT_VERSION}-rc --no-restore
       - dotnet add tests package AWSCRT-HTTP --version ${CRT_VERSION}-rc --no-restore
       - dotnet add tests package AWSCRT-AUTH --version ${CRT_VERSION}-rc --no-restore
+      - dotnet add tests package AWSCRT-CAL --version ${CRT_VERSION}-rc --no-restore
+      - dotnet add tests package AWSCRT-CHECKSUMS --version ${CRT_VERSION}-rc --no-restore
       # ...and then manually restore without the cache, avoiding NuGet.org's eventual consistency
       - dotnet restore --no-cache
       # build the tests without dependencies (since they should be in the package cache)
