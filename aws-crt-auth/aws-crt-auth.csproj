@@ -28,6 +28,11 @@
     <RepositoryUrl>https://github.com/awslabs/aws-crt-dotnet.git</RepositoryUrl>
     <Copyright>Amazon Web Services, 2019</Copyright>
     <Description>AWS Common Runtime Auth bindings/API</Description>
+
+    <AssemblyOriginatorKeyFile Condition=" '$(AWSKeyFile)' != '' ">$(AWSKeyFile)</AssemblyOriginatorKeyFile>
+    <AssemblyOriginatorKeyFile Condition=" '$(AWSKeyFile)' == '' ">..\awssdk.dll.snk</AssemblyOriginatorKeyFile>
+    <SignAssembly>true</SignAssembly>
+
   </PropertyGroup>
 
   <ItemGroup>

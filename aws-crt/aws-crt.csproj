@@ -34,6 +34,10 @@
     <Copyright>Amazon Web Services</Copyright>
     <Description>AWS Common Runtime bindings for .NET</Description>
 
+    <AssemblyOriginatorKeyFile Condition=" '$(AWSKeyFile)' != '' ">$(AWSKeyFile)</AssemblyOriginatorKeyFile>
+    <AssemblyOriginatorKeyFile Condition=" '$(AWSKeyFile)' == '' ">..\awssdk.dll.snk</AssemblyOriginatorKeyFile>
+    <SignAssembly>true</SignAssembly>
+    
     <CMakeGenerator64 Condition="$(CMakeGenerator64) == '' AND $(OS) == 'Windows_NT' AND $(VisualStudioVersion) == '14.0'">Visual Studio 14 2015 Win64</CMakeGenerator64>
     <CMakeGenerator64 Condition="$(CMakeGenerator64) == '' AND $(OS) == 'Windows_NT' AND $(VisualStudioVersion) == '15.0'">Visual Studio 15 2017 Win64</CMakeGenerator64>
     <CMakeGenerator64 Condition="$(CMakeGenerator64) == '' AND $(OS) == 'Windows_NT' AND $(VisualStudioVersion) == '16.0'">Visual Studio 16 2019</CMakeGenerator64>
