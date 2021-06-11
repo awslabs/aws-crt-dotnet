@@ -15,7 +15,7 @@ rm $TEMP/creds.txt
 #aws --region us-west-2 secretsmanager get-secret-value --secret-id arn:aws:secretsmanager:us-west-2:582595803497:secret:prod/build-infrastructure/teamcert-kIcScQ --query SecretString | sed -n 's/{\\"Key\\":\\"\(.*\)\\"}/\1/p' | sed -n 's/"\(.*\)"/\1/p' > $TEMP/cert_pass
 
 # strong name key
-aws --region us-west-2 secretsmanager get-secret-value --secret-id arn:aws:secretsmanager:us-west-2:582595803497:secret:prod/build-infrastructure/snk-kz1uH0 --query SecretBinary | sed -n 's/^"\(.*\)"/\1/p' > $TEMP/snk_key
+aws --region us-west-2 secretsmanager get-secret-value --secret-id arn:aws:secretsmanager:us-west-2:582595803497:secret:prod/build-infrastructure/snk-kz1uH0 --query SecretBinary | sed -n 's/^"\(.*\)"/\1/p' | base64 -d > $TEMP/snk_key
 cp $TEMP/snk_key ./awssdk.dll.snk 
 
 
