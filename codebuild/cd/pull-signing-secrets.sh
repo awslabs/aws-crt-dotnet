@@ -2,7 +2,7 @@
 
 set -e
 
-aws --region us-west-2 sts assume-role --role-arn arn:aws:iam::582595803497:role/aws-common-runtime-secrets-role --role-session-name DotnetCrtCD --query Credentials > $TEMP/creds.txt
+MSYS_NO_PATHCONV=1 aws --region us-west-2 sts assume-role --role-arn arn:aws:iam::582595803497:role/aws-common-runtime-secrets-role --role-session-name DotnetCrtCD --query Credentials > $TEMP/creds.txt
 
 # these will unset when the script ends
 export AWS_ACCESS_KEY_ID=$(cat ${TEMP}/creds.txt | sed -n 's/.*"AccessKeyId": "\(.*\)".*/\1/p')
