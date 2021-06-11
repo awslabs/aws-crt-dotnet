@@ -7,7 +7,7 @@ echo %PKG_VERSION%
 
 call "C:/Program Files (x86)/Microsoft Visual Studio/2019/BuildTools/Common7/Tools/VsDevCmd.bat"
 
-bash .\codebuild\cd\pull-signing-secrets.sh
+bash .\codebuild\cd\pull-signing-secrets.sh || goto :error
 
 dotnet build --configuration Release -p:Version=%PKG_VERSION% -p:PackageVersion=%PKG_VERSION% -p:BuildNativeLibrary=false -p:AWSKeyFile=%TEMP%\snk || goto :error
 
