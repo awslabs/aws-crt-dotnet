@@ -15,8 +15,4 @@ phases:
     commands:
       - .\codebuild\cd\promote-release-post-build.bat
 
-artifacts:
-  discard-paths: yes
-  files:
-    - $CODEBUILD_SRC_DIR/aws-crt-dotnet/packages/*.nupkg
  
