@@ -12,6 +12,7 @@
 #include <aws/auth/signing.h>
 #include <aws/auth/signing_config.h>
 #include <aws/auth/signing_result.h>
+#include <aws/cal/ecc.h>
 #include <aws/common/string.h>
 #include <aws/http/request_response.h>
 #include <aws/io/stream.h>
@@ -471,4 +472,81 @@ on_error:
     }
 
     on_signing_complete(callback_id, error_code, NULL, 0, NULL, NULL, 0);
+}
+
+AWS_DOTNET_API bool aws_dotnet_auth_verify_v4a_canonical_signing(
+    const char *canonical_request,
+    struct aws_signing_config_native native_signing_config,
+    const char *hex_signature,
+    const char *ecc_pub_x,
+    const char *ecc_pub_y) {
+
+    (void)canonical_request;
+    (void)native_signing_config;
+    (void)hex_signature;
+    (void)ecc_pub_x;
+    (void)ecc_pub_y;
+
+    struct aws_byte_cursor canonical_request_cursor = aws_byte_cursor_from_c_str(canonical_request);
+
+    struct aws_allocator *allocator = aws_dotnet_get_allocator();
+
+    int result = AWS_OP_ERR;
+    struct aws_dotnet_signing_callback_state *continuation =
+        aws_mem_calloc(allocator, 1, sizeof(struct aws_dotnet_signing_callback_state));
+    if (continuation == NULL) {
+        return false;
+    }
+
+    struct aws_signing_config_aws config;
+    AWS_ZERO_STRUCT(config);
+
+    if (s_initialize_signing_config(&config, &native_signing_config, continuation)) {
+        goto done;
+    }
+
+    struct aws_signable *signable = aws_signable_new_canonical_request(allocator, canonical_request_cursor);
+    if (signable == NULL) {
+        goto done;
+    }
+
+    result = aws_verify_sigv4a_signing(
+        allocator,
+        signable,
+        (struct aws_signing_config_base *)&config,
+        aws_byte_cursor_from_c_str(canonical_request),
+        aws_byte_cursor_from_c_str(hex_signature),
+        aws_byte_cursor_from_c_str(ecc_pub_x),
+        aws_byte_cursor_from_c_str(ecc_pub_y));
+
+done:
+
+    s_destroy_signing_callback_state(continuation);
+
+    return result == AWS_OP_SUCCESS;
+}
+
+AWS_DOTNET_API bool aws_dotnet_auth_verify_v4a_signature(
+    const char *string_to_sign,
+    uint8_t *signature,
+    uint32_t signature_size,
+    const char *ecc_pub_x,
+    const char *ecc_pub_y) {
+
+    struct aws_allocator *allocator = aws_dotnet_get_allocator();
+
+    struct aws_ecc_key_pair *ecc_key = aws_ecc_key_new_from_hex_coordinates(
+        allocator, AWS_CAL_ECDSA_P256, aws_byte_cursor_from_c_str(ecc_pub_x), aws_byte_cursor_from_c_str(ecc_pub_y));
+
+    struct aws_byte_cursor signature_cursor = {
+        .ptr = signature,
+        .len = signature_size,
+    };
+
+    int result = aws_validate_v4a_authorization_value(
+        allocator, ecc_key, aws_byte_cursor_from_c_str(string_to_sign), signature_cursor);
+
+    aws_ecc_key_pair_release(ecc_key);
+
+    return result == AWS_OP_SUCCESS;
 }

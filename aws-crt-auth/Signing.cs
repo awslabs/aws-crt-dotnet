@@ -12,7 +12,8 @@ using Aws.Crt.IO;
 namespace Aws.Crt.Auth
 {
     public enum AwsSigningAlgorithm {
-        SIGV4 = 0
+        SIGV4 = 0,
+        SIGV4A = 1,
     }
 
     public enum AwsSignatureType {
@@ -187,11 +188,28 @@ namespace Aws.Crt.Auth
                                     UInt64 future_id,
                                     OnSigningCompleteCallback completion_callback_delegate);                                                                       
 
+            internal delegate bool AwsDotnetAuthVerifyV4aCanonicalSigning(
+                                    [MarshalAs(UnmanagedType.LPStr)] string canonical_request,
+                                    [In] AwsSigningConfigNative signing_config,
+                                    [MarshalAs(UnmanagedType.LPStr)] string signature,
+                                    [MarshalAs(UnmanagedType.LPStr)] string ecc_pub_x,
+                                    [MarshalAs(UnmanagedType.LPStr)] string ecc_pub_y);     
+
+            internal delegate bool AwsDotnetAuthVerifyV4aSignature(
+                                    [MarshalAs(UnmanagedType.LPStr)] string string_to_sign,
+                                    [In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex=2, ArraySubType=UnmanagedType.U1)] byte[] signature_buffer,
+                                    UInt32 signature_buffer_length,
+                                    [MarshalAs(UnmanagedType.LPStr)] string ecc_pub_x,
+                                    [MarshalAs(UnmanagedType.LPStr)] string ecc_pub_y);                                       
             public static AwsDotnetAuthSignHttpRequest SignRequestNative = NativeAPI.Bind<AwsDotnetAuthSignHttpRequest>("aws_dotnet_auth_sign_http_request");
 
             public static AwsDotnetAuthSignCanonicalRequest SignCanonicalRequestNative = NativeAPI.Bind<AwsDotnetAuthSignCanonicalRequest>("aws_dotnet_auth_sign_canonical_request");
 
             public static AwsDotnetAuthSignChunk SignChunkNative = NativeAPI.Bind<AwsDotnetAuthSignChunk>("aws_dotnet_auth_sign_chunk");
+
+            public static AwsDotnetAuthVerifyV4aCanonicalSigning VerifyV4aCanonicalSigningNative = NativeAPI.Bind<AwsDotnetAuthVerifyV4aCanonicalSigning>("aws_dotnet_auth_verify_v4a_canonical_signing");
+
+            public static AwsDotnetAuthVerifyV4aSignature VerifyV4aSignatureNative = NativeAPI.Bind<AwsDotnetAuthVerifyV4aSignature>("aws_dotnet_auth_verify_v4a_signature");
 
             public static OnSigningCompleteCallback OnHttpRequestSigningComplete = AwsSigner.OnHttpRequestSigningComplete;
 
@@ -306,6 +324,15 @@ namespace Aws.Crt.Auth
 
                 callback.Result.Complete(result);
             }
+        }
+
+        public static bool VerifyV4aCanonicalSigning(String canonicalRequest, AwsSigningConfig signingConfig, String hexSignature, String eccPubX, String eccPubY) {
+            var nativeConfig = new AwsSigningConfigNative(signingConfig);
+            return API.VerifyV4aCanonicalSigningNative(canonicalRequest, nativeConfig, hexSignature, eccPubX, eccPubY);
+        }
+
+        public static bool VerifyV4aSignature(String stringToSign, byte[] signature, String eccPubX, String eccPubY) {
+            return API.VerifyV4aSignatureNative(stringToSign, signature, (uint) signature.Length, eccPubX, eccPubY);
         }
 
         public static CrtResult<CrtSigningResult> SignCanonicalRequest(String canonicalRequest, AwsSigningConfig signingConfig) 
