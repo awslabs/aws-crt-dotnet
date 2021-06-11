@@ -9,7 +9,7 @@ call "C:/Program Files (x86)/Microsoft Visual Studio/2019/BuildTools/Common7/Too
 
 bash .\codebuild\cd\pull-signing-secrets.sh
 
-dotnet build --configuration Release -p:Version=%PKG_VERSION% -p:PackageVersion=%PKG_VERSION% -p:BuildNativeLibrary=false || goto :error
+dotnet build --configuration Release -p:Version=%PKG_VERSION% -p:PackageVersion=%PKG_VERSION% -p:BuildNativeLibrary=false -p:AWSKeyFile=%TEMP%/snk || goto :error
 
 aws secretsmanager get-secret-value --secret-id "NuGet/push" --query SecretString | cut -f2 -d\ > nuget_key.txt || goto :error
 set /P NUGET_KEY=<nuget_key.txt
