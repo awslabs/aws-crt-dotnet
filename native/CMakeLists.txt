@@ -117,3 +117,7 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE "-DAWS_DOTNET_EXPORTS")
 target_include_directories(${PROJECT_NAME} PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>)
+
+if (CMAKE_BUILD_TYPE STREQUAL Release)
+    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD COMMAND ${CMAKE_STRIP} $<TARGET_FILE:${PROJECT_NAME}>)
+endif()
