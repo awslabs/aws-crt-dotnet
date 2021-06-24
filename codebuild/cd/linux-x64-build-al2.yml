@@ -10,7 +10,7 @@ phases:
     commands:
       - export CC=clang
       - export CXX=clang++
-      - [ -z "$(which cmake)" ] && ln -s `which cmake3` /usr/bin/cmake
+      - if [[ -z "$(which cmake)" ]]; then ln -s `which cmake3` /usr/bin/cmake; fi
   build:
     commands:
       - cd aws-crt-dotnet
