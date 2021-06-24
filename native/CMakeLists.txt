@@ -118,8 +118,8 @@ target_include_directories(${PROJECT_NAME} PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>)
 
-# Strip debug symbols from s2n and libcrypto to keep the .so size down
-if (UNIX AND NOT APPLE AND CMAKE_BUILD_TYPE STREQUAL Release AND CMAKE_STRIP AND CMAKE_OBJCOPY)
+# Strip debug symbols from the .so and link it to the symbol ELF
+if (UNIX AND CMAKE_BUILD_TYPE MATCHES Rel AND CMAKE_STRIP AND CMAKE_OBJCOPY)
     add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
         COMMAND ${CMAKE_OBJCOPY} --only-keep-debug $<TARGET_FILE:${PROJECT_NAME}> $<TARGET_FILE:${PROJECT_NAME}>.dbg
         COMMAND ${CMAKE_STRIP} --strip-debug --strip-unneeded $<TARGET_FILE:${PROJECT_NAME}>
