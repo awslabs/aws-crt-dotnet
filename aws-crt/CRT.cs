@@ -57,21 +57,23 @@ namespace Aws.Crt
             return Marshal.PtrToStringAnsi(API.error_name(errorCode));
         }
 
+
+
         // This will only ever be instantiated on dlopen platforms
         internal static class dl
         {
             public const int RTLD_NOW = 0x002;
 
-            [DllImport("libdl", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("libdl.so.2", CallingConvention = CallingConvention.Cdecl)]
             public static extern IntPtr dlopen(string fileName, int flags);
 
-            [DllImport("libdl", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("libdl.so.2", CallingConvention = CallingConvention.Cdecl)]
             public static extern IntPtr dlsym(IntPtr handle, string name);
 
-            [DllImport("libdl", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("libdl.so.2", CallingConvention = CallingConvention.Cdecl)]
             public static extern int dlclose(IntPtr handle);
 
-            [DllImport("libdl", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("libdl.so.2", CallingConvention = CallingConvention.Cdecl)]
             public static extern string dlerror();
         }
 
@@ -150,7 +152,7 @@ namespace Aws.Crt
 
                     // Work around virus scanners munching on a newly found DLL
                     int tries = 0;
-                    do 
+                    do
                     {
                         crt = CRT.Loader.LoadLibrary(libraryPath);
                         if (crt.IsInvalid)
@@ -158,7 +160,7 @@ namespace Aws.Crt
                             Thread.Sleep(10);
                         }
                     } while (crt.IsInvalid && tries++ < 100);
-                    
+
                     if (crt.IsInvalid)
                     {
                         string error = CRT.Loader.GetLastError();
@@ -169,7 +171,7 @@ namespace Aws.Crt
                 {
                     throw new InvalidOperationException($"Unable to load {libraryPath}, exception occurred", ex);
                 }
-                
+
 
                 Init();
             }
@@ -178,6 +180,8 @@ namespace Aws.Crt
             {
                 Shutdown();
             }
+
+
 
             private string ExtractLibrary(string libraryName)
             {
@@ -289,6 +293,31 @@ namespace Aws.Crt
 
         private class DlopenLoader : PlatformLoader
         {
+#if NETCOREAPP3_1
+            public DlopenLoader() {
+                NativeLibrary.SetDllImportResolver(typeof(PlatformBinding).Assembly, ImportResolver);
+            }
+
+            // https://developers.redhat.com/blog/2019/09/06/interacting-with-native-libraries-in-net-core-3-0#nativelibrary
+            private static IntPtr ImportResolver(string libraryName, Assembly assembly, DllImportSearchPath? searchPath)
+            {
+                IntPtr libHandle = IntPtr.Zero;
+                if (libraryName == "libdl")
+                {
+                    var dlVersions = new string[] { "libdl.so.2", "libdl.so" };
+                    foreach (string libName in dlVersions)
+                    {
+                        NativeLibrary.TryLoad(libName, out libHandle);
+                        if (libHandle != IntPtr.Zero)
+                        {
+                            break;
+                        }
+                    }
+                }
+                return libHandle;
+            }
+    #endif
+
             public override LibraryHandle LoadLibrary(string name)
             {
                 string path = name;
@@ -304,7 +333,7 @@ namespace Aws.Crt
             {
                 dl.dlclose(handle);
             }
-            
+
             public override IntPtr GetFunction(IntPtr handle, string name)
             {
                 return dl.dlsym(handle, name);
@@ -317,7 +346,7 @@ namespace Aws.Crt
         }
 
         private static PlatformLoader s_loader = null;
-        internal static PlatformLoader Loader 
+        internal static PlatformLoader Loader
         {
             get {
                 if (s_loader != null)

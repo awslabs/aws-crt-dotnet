@@ -14,7 +14,6 @@
     <!-- workaround per https://github.com/dotnet/msbuild/issues/5985 -->
     <AutomaticallyUseReferenceAssemblyPackages Condition="'$(TargetFramework)' == 'net35'">false</AutomaticallyUseReferenceAssemblyPackages>
 
-    <LibCryptoPath></LibCryptoPath>
     <BuildNativeLibrary>true</BuildNativeLibrary>
 
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
