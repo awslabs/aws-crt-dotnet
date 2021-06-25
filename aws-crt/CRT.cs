@@ -197,8 +197,6 @@ namespace Aws.Crt
                 Shutdown();
             }
 
-
-
             private string ExtractLibrary(string libraryName)
             {
                 var crtAsm = Assembly.GetAssembly(typeof(CRT));
