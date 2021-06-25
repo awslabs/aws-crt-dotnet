@@ -2,8 +2,8 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0.
 
-from fetch import fetch_script
-from project import Import
+from builder.core.fetch import fetch_script
+import Builder
 
 from pathlib import Path
 import os
@@ -16,7 +16,7 @@ URLs = {
 }
 
 
-class DotNet(Import):
+class DotNet(Builder.Import):
     def __init__(self, **kwargs):
         super().__init__(config={}, **kwargs)
         self.path = None
@@ -45,7 +45,7 @@ class DotNet(Import):
 
         install_dir = os.path.join(env.deps_dir, self.name)
         sh.mkdir(install_dir)
-        self.path = str(Path(install_dir).relative_to(env.source_dir))
+        self.path = str(Path(install_dir).relative_to(env.root_dir))
         script = script_url[script_url.rfind('/')+1:]
         script = os.path.join(install_dir, script)
 
@@ -86,3 +86,13 @@ class DotNetCore31(DotNetCore):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.channel = '3.1'
+
+class DotNetCore50(DotNetCore):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.channel = '5.0'
+
+class DotNetCore60(DotNetCore):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.channel = '6.0'

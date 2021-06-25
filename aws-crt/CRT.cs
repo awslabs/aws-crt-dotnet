@@ -57,37 +57,6 @@ namespace Aws.Crt
             return Marshal.PtrToStringAnsi(API.error_name(errorCode));
         }
 
-        // This will only ever be instantiated on dlopen platforms
-        internal static class dl
-        {
-            public const int RTLD_NOW = 0x002;
-
-            [DllImport("libdl", CallingConvention = CallingConvention.Cdecl)]
-            public static extern IntPtr dlopen(string fileName, int flags);
-
-            [DllImport("libdl", CallingConvention = CallingConvention.Cdecl)]
-            public static extern IntPtr dlsym(IntPtr handle, string name);
-
-            [DllImport("libdl", CallingConvention = CallingConvention.Cdecl)]
-            public static extern int dlclose(IntPtr handle);
-
-            [DllImport("libdl", CallingConvention = CallingConvention.Cdecl)]
-            public static extern string dlerror();
-        }
-
-        // This will only ever be instantiated on Windows/XboxOne
-        internal static class kernel32
-        {
-            [DllImport("kernel32", SetLastError=true)]
-            public static extern IntPtr LoadLibrary(string fileName);
-
-            [DllImport("kernel32")]
-            public static extern IntPtr GetProcAddress(IntPtr module, string procName);
-
-            [DllImport("kernel32")]
-            public static extern int FreeLibrary(IntPtr module);
-        }
-
         internal class LibraryHandle : Handle
         {
             private string libraryPath;
@@ -150,7 +119,7 @@ namespace Aws.Crt
 
                     // Work around virus scanners munching on a newly found DLL
                     int tries = 0;
-                    do 
+                    do
                     {
                         crt = CRT.Loader.LoadLibrary(libraryPath);
                         if (crt.IsInvalid)
@@ -158,7 +127,7 @@ namespace Aws.Crt
                             Thread.Sleep(10);
                         }
                     } while (crt.IsInvalid && tries++ < 100);
-                    
+
                     if (crt.IsInvalid)
                     {
                         string error = CRT.Loader.GetLastError();
@@ -169,7 +138,6 @@ namespace Aws.Crt
                 {
                     throw new InvalidOperationException($"Unable to load {libraryPath}, exception occurred", ex);
                 }
-                
 
                 Init();
             }
@@ -251,14 +219,24 @@ namespace Aws.Crt
             public IntPtr GetFunctionAddress(string name) {
                 return CRT.Loader.GetFunction(crt.DangerousGetHandle(), name);
             }
-
-
         }
 
         internal static PlatformBinding Binding { get; private set; } = new PlatformBinding();
 
         private class WindowsLoader : PlatformLoader
         {
+            internal static class kernel32
+            {
+                [DllImport("kernel32", SetLastError = true)]
+                public static extern IntPtr LoadLibrary(string fileName);
+
+                [DllImport("kernel32")]
+                public static extern IntPtr GetProcAddress(IntPtr module, string procName);
+
+                [DllImport("kernel32")]
+                public static extern int FreeLibrary(IntPtr module);
+            }
+
             public override LibraryHandle LoadLibrary(string name)
             {
                 string path = name;
@@ -287,8 +265,26 @@ namespace Aws.Crt
             }
         }
 
-        private class DlopenLoader : PlatformLoader
+        private class GlibcLoader : PlatformLoader
         {
+            // Look specifically for libdl.so.2 on linux/glibc platforms
+            internal static class glibc
+            {
+                public const int RTLD_NOW = 0x002;
+
+                [DllImport("libdl.so.2", CallingConvention = CallingConvention.Cdecl)]
+                public static extern IntPtr dlopen(string fileName, int flags);
+
+                [DllImport("libdl.so.2", CallingConvention = CallingConvention.Cdecl)]
+                public static extern IntPtr dlsym(IntPtr handle, string name);
+
+                [DllImport("libdl.so.2", CallingConvention = CallingConvention.Cdecl)]
+                public static extern int dlclose(IntPtr handle);
+
+                [DllImport("libdl.so.2", CallingConvention = CallingConvention.Cdecl)]
+                public static extern string dlerror();
+            }
+
             public override LibraryHandle LoadLibrary(string name)
             {
                 string path = name;
@@ -297,27 +293,74 @@ namespace Aws.Crt
                     Assembly crtAsm = Assembly.GetAssembly(typeof(CRT));
                     path = crtAsm.Location.Replace(crtAsm.GetName().Name + ".dll", name);
                 }
-                return new LibraryHandle(dl.dlopen(path, dl.RTLD_NOW), path);
+                return new LibraryHandle(glibc.dlopen(path, glibc.RTLD_NOW), path);
             }
 
             public override void FreeLibrary(IntPtr handle)
             {
-                dl.dlclose(handle);
+                glibc.dlclose(handle);
             }
-            
+
             public override IntPtr GetFunction(IntPtr handle, string name)
             {
-                return dl.dlsym(handle, name);
+                return glibc.dlsym(handle, name);
             }
 
             public override string GetLastError()
             {
-                return dl.dlerror();
+                return glibc.dlerror();
+            }
+        }
+
+        private class DarwinLoader : PlatformLoader
+        {
+            // Darwin shims libdl, so just look for it undecorated/no SOVERSION
+            internal static class darwin
+            {
+                public const int RTLD_NOW = 0x002;
+
+                [DllImport("libdl", CallingConvention = CallingConvention.Cdecl)]
+                public static extern IntPtr dlopen(string fileName, int flags);
+
+                [DllImport("libdl", CallingConvention = CallingConvention.Cdecl)]
+                public static extern IntPtr dlsym(IntPtr handle, string name);
+
+                [DllImport("libdl", CallingConvention = CallingConvention.Cdecl)]
+                public static extern int dlclose(IntPtr handle);
+
+                [DllImport("libdl", CallingConvention = CallingConvention.Cdecl)]
+                public static extern string dlerror();
+            }
+
+            public override LibraryHandle LoadLibrary(string name)
+            {
+                string path = name;
+                if (!Path.IsPathRooted(name))
+                {
+                    Assembly crtAsm = Assembly.GetAssembly(typeof(CRT));
+                    path = crtAsm.Location.Replace(crtAsm.GetName().Name + ".dll", name);
+                }
+                return new LibraryHandle(darwin.dlopen(path, darwin.RTLD_NOW), path);
+            }
+
+            public override void FreeLibrary(IntPtr handle)
+            {
+                darwin.dlclose(handle);
+            }
+
+            public override IntPtr GetFunction(IntPtr handle, string name)
+            {
+                return darwin.dlsym(handle, name);
+            }
+
+            public override string GetLastError()
+            {
+                return darwin.dlerror();
             }
         }
 
         private static PlatformLoader s_loader = null;
-        internal static PlatformLoader Loader 
+        internal static PlatformLoader Loader
         {
             get {
                 if (s_loader != null)
@@ -325,14 +368,20 @@ namespace Aws.Crt
                     return s_loader;
                 }
 
-                if (Environment.OSVersion.Platform == PlatformID.Win32NT)
+                if (Platform.GetRuntimePlatformOS() == PlatformOS.WINDOWS)
                 {
                     return s_loader = new WindowsLoader();
                 }
-                else
+                else if (Platform.GetRuntimePlatformOS() == PlatformOS.MAC)
                 {
-                    return s_loader = new DlopenLoader();
+                    return s_loader = new DarwinLoader();
                 }
+                else if (Platform.GetRuntimePlatformOS() == PlatformOS.UNIX)
+                {
+                    return s_loader = new GlibcLoader();
+                }
+
+                return null;
             }
         }
 
