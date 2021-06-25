@@ -368,16 +368,15 @@ namespace Aws.Crt
                     return s_loader;
                 }
 
-                if (Environment.OSVersion.Platform == PlatformID.Win32NT)
+                if (Platform.GetRuntimePlatformOS() == PlatformOS.WINDOWS)
                 {
                     return s_loader = new WindowsLoader();
                 }
-                else if (Environment.OSVersion.Platform == PlatformID.MacOSX ||
-                        File.Exists(@"/System/Library/CoreServices/SystemVersion.plist"))
+                else if (Platform.GetRuntimePlatformOS() == PlatformOS.MAC)
                 {
                     return s_loader = new DarwinLoader();
                 }
-                else if (Environment.OSVersion.Platform == PlatformID.Unix)
+                else if (Platform.GetRuntimePlatformOS() == PlatformOS.UNIX)
                 {
                     return s_loader = new GlibcLoader();
                 }
