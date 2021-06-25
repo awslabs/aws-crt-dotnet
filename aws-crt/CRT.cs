@@ -57,6 +57,7 @@ namespace Aws.Crt
             return Marshal.PtrToStringAnsi(API.error_name(errorCode));
         }
 
+        // Darwin shims libdl, so just look for it undecorated/no SOVERSION
         internal static class darwin
         {
             public const int RTLD_NOW = 0x002;
@@ -74,7 +75,7 @@ namespace Aws.Crt
             public static extern string dlerror();
         }
 
-        // This will only ever be instantiated on dlopen platforms
+        // Look specifically for libdl.so.2 on linux/glibc platforms
         internal static class glibc
         {
             public const int RTLD_NOW = 0x002;
