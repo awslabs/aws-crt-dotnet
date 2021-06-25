@@ -45,7 +45,7 @@ class DotNet(Builder.Import):
 
         install_dir = os.path.join(env.deps_dir, self.name)
         sh.mkdir(install_dir)
-        self.path = str(Path(install_dir).relative_to(env.source_dir))
+        self.path = str(Path(install_dir).relative_to(env.root_dir))
         script = script_url[script_url.rfind('/')+1:]
         script = os.path.join(install_dir, script)
 
