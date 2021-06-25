@@ -368,17 +368,17 @@ namespace Aws.Crt
                     return s_loader;
                 }
 
-                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                if (Environment.OSVersion.Platform == PlatformID.Win32NT)
                 {
                     return s_loader = new WindowsLoader();
                 }
-                else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-                {
-                    return s_loader = new GlibcLoader();
-                }
-                else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+                else if (Environment.OSVersion.Platform == PlatformID.MacOSX)
                 {
                     return s_loader = new DarwinLoader();
+                }
+                else if (Environment.OSVersion.Platform == PlatformID.Unix)
+                {
+                    return s_loader = new GlibcLoader();
                 }
 
                 return null;
