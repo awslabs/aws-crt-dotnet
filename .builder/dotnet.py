@@ -2,7 +2,7 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0.
 
-from builder.actions.fetch import fetch_script
+from builder.core.fetch import fetch_script
 import Builder
 
 from pathlib import Path
