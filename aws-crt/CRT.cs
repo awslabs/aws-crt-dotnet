@@ -372,7 +372,8 @@ namespace Aws.Crt
                 {
                     return s_loader = new WindowsLoader();
                 }
-                else if (Environment.OSVersion.Platform == PlatformID.MacOSX)
+                else if (Environment.OSVersion.Platform == PlatformID.MacOSX ||
+                        File.Exists(@"/System/Library/CoreServices/SystemVersion.plist"))
                 {
                     return s_loader = new DarwinLoader();
                 }
