@@ -86,3 +86,13 @@ class DotNetCore31(DotNetCore):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.channel = '3.1'
+
+class DotNetCore50(DotNetCore):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.channel = '5.0'
+
+class DotNetCore60(DotNetCore):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.channel = '6.0'
