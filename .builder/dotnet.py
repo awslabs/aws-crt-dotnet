@@ -2,8 +2,8 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0.
 
-from fetch import fetch_script
-from project import Import
+from builder.actions.fetch import fetch_script
+import Builder
 
 from pathlib import Path
 import os
@@ -16,7 +16,7 @@ URLs = {
 }
 
 
-class DotNet(Import):
+class DotNet(Builder.Import):
     def __init__(self, **kwargs):
         super().__init__(config={}, **kwargs)
         self.path = None
