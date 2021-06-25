@@ -139,7 +139,6 @@ namespace Aws.Crt
                     throw new InvalidOperationException($"Unable to load {libraryPath}, exception occurred", ex);
                 }
 
-
                 Init();
             }
 
@@ -220,8 +219,6 @@ namespace Aws.Crt
             public IntPtr GetFunctionAddress(string name) {
                 return CRT.Loader.GetFunction(crt.DangerousGetHandle(), name);
             }
-
-
         }
 
         internal static PlatformBinding Binding { get; private set; } = new PlatformBinding();
