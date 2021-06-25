@@ -89,7 +89,7 @@
 
   <Target Name="EmbedNativeLibraries" BeforeTargets="PrepareForBuild" AfterTargets="BuildNativeX86Library">
     <ItemGroup>
-      <EmbeddedResource Include="$(CMakeBinaries)/*/lib/*aws-crt-dotnet*" Exclude="**/*.ilk" />
+      <EmbeddedResource Include="$(CMakeBinaries)/*/lib/*aws-crt-dotnet*" Exclude="**/*.ilk;**/*.dbg" />
     </ItemGroup>
     <Message Text="Embedded library: %(EmbeddedResource.Identity)" Importance="High" />
   </Target>
