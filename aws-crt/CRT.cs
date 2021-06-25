@@ -57,10 +57,25 @@ namespace Aws.Crt
             return Marshal.PtrToStringAnsi(API.error_name(errorCode));
         }
 
+        internal static class darwin
+        {
+            public const int RTLD_NOW = 0x002;
 
+            [DllImport("libdl", CallingConvention = CallingConvention.Cdecl)]
+            public static extern IntPtr dlopen(string fileName, int flags);
+
+            [DllImport("libdl", CallingConvention = CallingConvention.Cdecl)]
+            public static extern IntPtr dlsym(IntPtr handle, string name);
+
+            [DllImport("libdl", CallingConvention = CallingConvention.Cdecl)]
+            public static extern int dlclose(IntPtr handle);
+
+            [DllImport("libdl", CallingConvention = CallingConvention.Cdecl)]
+            public static extern string dlerror();
+        }
 
         // This will only ever be instantiated on dlopen platforms
-        internal static class dl
+        internal static class glibc
         {
             public const int RTLD_NOW = 0x002;
 
@@ -291,33 +306,8 @@ namespace Aws.Crt
             }
         }
 
-        private class DlopenLoader : PlatformLoader
+        private class GlibcLoader : PlatformLoader
         {
-#if NETCOREAPP3_1
-            public DlopenLoader() {
-                NativeLibrary.SetDllImportResolver(typeof(PlatformBinding).Assembly, ImportResolver);
-            }
-
-            // https://developers.redhat.com/blog/2019/09/06/interacting-with-native-libraries-in-net-core-3-0#nativelibrary
-            private static IntPtr ImportResolver(string libraryName, Assembly assembly, DllImportSearchPath? searchPath)
-            {
-                IntPtr libHandle = IntPtr.Zero;
-                if (libraryName == "libdl")
-                {
-                    var dlVersions = new string[] { "libdl.so.2", "libdl.so" };
-                    foreach (string libName in dlVersions)
-                    {
-                        NativeLibrary.TryLoad(libName, out libHandle);
-                        if (libHandle != IntPtr.Zero)
-                        {
-                            break;
-                        }
-                    }
-                }
-                return libHandle;
-            }
-    #endif
-
             public override LibraryHandle LoadLibrary(string name)
             {
                 string path = name;
@@ -326,22 +316,51 @@ namespace Aws.Crt
                     Assembly crtAsm = Assembly.GetAssembly(typeof(CRT));
                     path = crtAsm.Location.Replace(crtAsm.GetName().Name + ".dll", name);
                 }
-                return new LibraryHandle(dl.dlopen(path, dl.RTLD_NOW), path);
+                return new LibraryHandle(glibc.dlopen(path, glibc.RTLD_NOW), path);
             }
 
             public override void FreeLibrary(IntPtr handle)
             {
-                dl.dlclose(handle);
+                glibc.dlclose(handle);
             }
 
             public override IntPtr GetFunction(IntPtr handle, string name)
             {
-                return dl.dlsym(handle, name);
+                return glibc.dlsym(handle, name);
             }
 
             public override string GetLastError()
             {
-                return dl.dlerror();
+                return glibc.dlerror();
+            }
+        }
+
+        private class DarwinLoader : PlatformLoader
+        {
+            public override LibraryHandle LoadLibrary(string name)
+            {
+                string path = name;
+                if (!Path.IsPathRooted(name))
+                {
+                    Assembly crtAsm = Assembly.GetAssembly(typeof(CRT));
+                    path = crtAsm.Location.Replace(crtAsm.GetName().Name + ".dll", name);
+                }
+                return new LibraryHandle(darwin.dlopen(path, darwin.RTLD_NOW), path);
+            }
+
+            public override void FreeLibrary(IntPtr handle)
+            {
+                darwin.dlclose(handle);
+            }
+
+            public override IntPtr GetFunction(IntPtr handle, string name)
+            {
+                return darwin.dlsym(handle, name);
+            }
+
+            public override string GetLastError()
+            {
+                return darwin.dlerror();
             }
         }
 
@@ -354,14 +373,20 @@ namespace Aws.Crt
                     return s_loader;
                 }
 
-                if (Environment.OSVersion.Platform == PlatformID.Win32NT)
+                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 {
                     return s_loader = new WindowsLoader();
                 }
-                else
+                else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
                 {
-                    return s_loader = new DlopenLoader();
+                    return s_loader = new GlibcLoader();
                 }
+                else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+                {
+                    return s_loader = new DarwinLoader();
+                }
+
+                return null;
             }
         }
 
