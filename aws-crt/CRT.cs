@@ -57,55 +57,6 @@ namespace Aws.Crt
             return Marshal.PtrToStringAnsi(API.error_name(errorCode));
         }
 
-        // Darwin shims libdl, so just look for it undecorated/no SOVERSION
-        internal static class darwin
-        {
-            public const int RTLD_NOW = 0x002;
-
-            [DllImport("libdl", CallingConvention = CallingConvention.Cdecl)]
-            public static extern IntPtr dlopen(string fileName, int flags);
-
-            [DllImport("libdl", CallingConvention = CallingConvention.Cdecl)]
-            public static extern IntPtr dlsym(IntPtr handle, string name);
-
-            [DllImport("libdl", CallingConvention = CallingConvention.Cdecl)]
-            public static extern int dlclose(IntPtr handle);
-
-            [DllImport("libdl", CallingConvention = CallingConvention.Cdecl)]
-            public static extern string dlerror();
-        }
-
-        // Look specifically for libdl.so.2 on linux/glibc platforms
-        internal static class glibc
-        {
-            public const int RTLD_NOW = 0x002;
-
-            [DllImport("libdl.so.2", CallingConvention = CallingConvention.Cdecl)]
-            public static extern IntPtr dlopen(string fileName, int flags);
-
-            [DllImport("libdl.so.2", CallingConvention = CallingConvention.Cdecl)]
-            public static extern IntPtr dlsym(IntPtr handle, string name);
-
-            [DllImport("libdl.so.2", CallingConvention = CallingConvention.Cdecl)]
-            public static extern int dlclose(IntPtr handle);
-
-            [DllImport("libdl.so.2", CallingConvention = CallingConvention.Cdecl)]
-            public static extern string dlerror();
-        }
-
-        // This will only ever be instantiated on Windows/XboxOne
-        internal static class kernel32
-        {
-            [DllImport("kernel32", SetLastError=true)]
-            public static extern IntPtr LoadLibrary(string fileName);
-
-            [DllImport("kernel32")]
-            public static extern IntPtr GetProcAddress(IntPtr module, string procName);
-
-            [DllImport("kernel32")]
-            public static extern int FreeLibrary(IntPtr module);
-        }
-
         internal class LibraryHandle : Handle
         {
             private string libraryPath;
@@ -277,6 +228,18 @@ namespace Aws.Crt
 
         private class WindowsLoader : PlatformLoader
         {
+            internal static class kernel32
+            {
+                [DllImport("kernel32", SetLastError = true)]
+                public static extern IntPtr LoadLibrary(string fileName);
+
+                [DllImport("kernel32")]
+                public static extern IntPtr GetProcAddress(IntPtr module, string procName);
+
+                [DllImport("kernel32")]
+                public static extern int FreeLibrary(IntPtr module);
+            }
+
             public override LibraryHandle LoadLibrary(string name)
             {
                 string path = name;
@@ -307,6 +270,24 @@ namespace Aws.Crt
 
         private class GlibcLoader : PlatformLoader
         {
+            // Look specifically for libdl.so.2 on linux/glibc platforms
+            internal static class glibc
+            {
+                public const int RTLD_NOW = 0x002;
+
+                [DllImport("libdl.so.2", CallingConvention = CallingConvention.Cdecl)]
+                public static extern IntPtr dlopen(string fileName, int flags);
+
+                [DllImport("libdl.so.2", CallingConvention = CallingConvention.Cdecl)]
+                public static extern IntPtr dlsym(IntPtr handle, string name);
+
+                [DllImport("libdl.so.2", CallingConvention = CallingConvention.Cdecl)]
+                public static extern int dlclose(IntPtr handle);
+
+                [DllImport("libdl.so.2", CallingConvention = CallingConvention.Cdecl)]
+                public static extern string dlerror();
+            }
+
             public override LibraryHandle LoadLibrary(string name)
             {
                 string path = name;
@@ -336,6 +317,24 @@ namespace Aws.Crt
 
         private class DarwinLoader : PlatformLoader
         {
+            // Darwin shims libdl, so just look for it undecorated/no SOVERSION
+            internal static class darwin
+            {
+                public const int RTLD_NOW = 0x002;
+
+                [DllImport("libdl", CallingConvention = CallingConvention.Cdecl)]
+                public static extern IntPtr dlopen(string fileName, int flags);
+
+                [DllImport("libdl", CallingConvention = CallingConvention.Cdecl)]
+                public static extern IntPtr dlsym(IntPtr handle, string name);
+
+                [DllImport("libdl", CallingConvention = CallingConvention.Cdecl)]
+                public static extern int dlclose(IntPtr handle);
+
+                [DllImport("libdl", CallingConvention = CallingConvention.Cdecl)]
+                public static extern string dlerror();
+            }
+
             public override LibraryHandle LoadLibrary(string name)
             {
                 string path = name;
