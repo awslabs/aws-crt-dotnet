@@ -6,11 +6,12 @@ phases:
   install:
     commands:
       # .NET Core install instructions taken from: https://dotnet.microsoft.com/download/linux-package-manager/ubuntu16-04/sdk-current
-      - curl -L https://packages.microsoft.com/config/ubuntu/16.04/packages-microsoft-prod.deb --output /tmp/packages-microsoft-prod.deb
+      - curl -L https://packages.microsoft.com/config/ubuntu/18.04/packages-microsoft-prod.deb --output /tmp/packages-microsoft-prod.deb
       - sudo dpkg -i /tmp/packages-microsoft-prod.deb
       - sudo apt-get install apt-transport-https
       - sudo apt-get update -y
-      - sudo apt-get install dotnet-sdk-2.2 -y
+      - sudo apt-get install dotnet-sdk-2.1 -y
+      - sudo apt-get install dotnet-sdk-3.1 -y
 
   pre_build:
     commands:
