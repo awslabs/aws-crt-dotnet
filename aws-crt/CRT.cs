@@ -93,10 +93,19 @@ namespace Aws.Crt
             private LibraryHandle crt;
             private string libraryPath;
 
+#if NETSTANDARD
+            private bool IsAarch64() {
+                return System.Runtime.InteropServices.RuntimeInformation.ProcessArchitecture == Architecture.Arm64;
+            }
+#else
+            private bool IsAarch64() {
+                return false;
+            }
+#endif
             public PlatformBinding()
             {
                 string libraryName = null;
-                string arch = (Is64Bit) ? "x64" : "x86";
+                string arch = (Is64Bit) ? (IsAarch64() ? "ARM64" : "x64") : "x86";
                 PlatformOS os = Aws.Crt.Platform.GetRuntimePlatformOS();
 
                 switch(os) {
