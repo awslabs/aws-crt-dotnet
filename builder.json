@@ -5,8 +5,8 @@
         "dotnet pack -p:TargetFrameworks=netstandard2.0 -p:AwsCrtPlatformTarget={aws_crt_platform_target}"
     ],
     "test_steps": [
-        "dotnet build tests/tests.csproj --runtime={test_runtime} -p:PlatformTarget={platform_target}",
-        "dotnet test tests/tests.csproj --no-build --runtime={test_runtime}"
+        "dotnet build tests/tests.csproj {build_tests_args}",
+        "dotnet test tests/tests.csproj --no-build {run_tests_args}"
     ],
     "imports": [
         "dotnetcore"
@@ -32,7 +32,8 @@
                     },
                     "variables": {
                         "platform_target": "x64",
-                        "test_runtime" : "linux-x64",
+                        "build_tests_args" : "",
+                        "run_tests_args" : "",
                         "aws_crt_platform_target" : "x64"
                     }                    
                 },
@@ -42,7 +43,8 @@
                     },
                     "variables": {
                         "platform_target": "Arm64",
-                        "test_runtime" : "linux-arm64",
+                        "run_tests_args" : "--runtime=linux-arm64",
+                        "build_tests_args": "-p:PlatformTarget=Arm64 --runtime=linux-arm64",
                         "aws_crt_platform_target" : "arm64"
                     }                    
                 }                
@@ -53,14 +55,28 @@
                 "x86": {
                     "variables": {
                         "platform_target": "x86",
-                        "test_runtime" : "windows-x86",
+                        "build_tests_args" : "",
+                        "run_tests_args" : "",
                         "aws_crt_platform_target" : "x86"
                     }
                 },
                 "x64": {
                     "variables": {
                         "platform_target": "x64",
-                        "test_runtime" : "windows-x64",
+                        "build_tests_args" : "",
+                        "run_tests_args" : "",
+                        "aws_crt_platform_target" : "x64"                        
+                    }
+                }
+            }
+        },
+        "osx" :{
+            "architectures": {
+                "x64": {
+                    "variables": {
+                        "platform_target": "x64",
+                        "build_tests_args" : "",
+                        "run_tests_args" : "",
                         "aws_crt_platform_target" : "x64"                        
                     }
                 }
