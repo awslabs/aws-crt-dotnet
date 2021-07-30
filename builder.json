@@ -70,7 +70,7 @@
                 }
             }
         },
-        "osx" :{
+        "macos" :{
             "architectures": {
                 "x64": {
                     "variables": {
