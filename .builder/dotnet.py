@@ -8,7 +8,6 @@ import Builder
 from pathlib import Path
 import os
 import urllib.parse
-import pdb
 
 URLs = {
     'linux': 'https://dot.net/v1/dotnet-install.sh',
@@ -28,7 +27,6 @@ class DotNet(Builder.Import):
         return True
 
     def install(self, env):
-        pdb.set_trace()
 
         if self.installed:
             return
