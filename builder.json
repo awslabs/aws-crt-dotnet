@@ -12,7 +12,6 @@
         "dotnetcore"
     ],
     "variables": {
-        "platform_target": "x64",
         "dotnet_args": ""
     },
     "hosts": {
