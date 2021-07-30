@@ -5,7 +5,8 @@
         "dotnet pack -p:TargetFrameworks=netstandard2.0 -p:PlatformTarget={platform_target} ."
     ],
     "test_steps": [
-        "dotnet test tests/tests.csproj -v normal -p:PlatformTarget={platform_target}"
+        "dotnet build tests/tests.csproj -v normal -p:PlatformTarget={platform_target}",
+        "dotnet test tests/tests.csproj --no-build -v normal -p:PlatformTarget={platform_target}"
     ],
     "imports": [
         "dotnetcore"
@@ -35,8 +36,19 @@
                 "x64": {
                     "build_env": {
                         "AWS_DOTNET_RUNTIME": "linux-x64"
-                    }
-                }
+                    },
+                    "variables": {
+                        "platform_target": "x64"
+                    }                    
+                },
+                "arm64": {
+                    "build_env": {
+                        "AWS_DOTNET_RUNTIME": "linux-arm64"
+                    },
+                    "variables": {
+                        "platform_target": "arm64"
+                    }                    
+                }                
             }
         },
         "windows": {
