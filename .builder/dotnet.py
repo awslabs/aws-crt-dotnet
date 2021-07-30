@@ -21,12 +21,13 @@ class DotNet(Builder.Import):
         super().__init__(config={}, **kwargs)
         self.path = None
         self.installed = False
-        self.channel = 'LTS'
+        self.channels = ['LTS']
 
     def resolved(self):
         return True
 
     def install(self, env):
+
         if self.installed:
             return
 
@@ -55,16 +56,18 @@ class DotNet(Builder.Import):
 
         fetch_script(script_url, script)
 
-        arch = env.spec.arch
-        if env.spec.target == 'windows':
-            command = '{} -Channel {} -Architecture {} -InstallDir {}'.format(
-                script, self.channel, arch, install_dir).split(' ')
-        else:
-            command = '{} --channel {} --architecture {} --install-dir {}'.format(
-                script, self.channel, arch, install_dir).split(' ')
+        for version in self.channels:
+            arch = env.spec.arch
+            if env.spec.target == 'windows':
+                command = '{} -Channel {} -Architecture {} -InstallDir {}'.format(
+                    script, version, arch, install_dir).split(' ')
+            else:
+                command = '{} --channel {} --architecture {} --install-dir {}'.format(
+                    script, version, arch, install_dir).split(' ')
 
-        # Run installer
-        sh.exec(command, check=True)
+            # Run installer
+            sh.exec(command, check=True)
+
         # Add to PATH
         sh.setenv('PATH', '{}:{}'.format(sh.getenv('PATH'), install_dir))
         self.installed = True
@@ -73,26 +76,26 @@ class DotNet(Builder.Import):
 class DotNetCore(DotNet):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.channel = 'LTS'
+        self.channels = ['2.1', '3.1', '5.0']
 
 
 class DotNetCore21(DotNetCore):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.channel = '2.1'
+        self.channels = ['2.1']
 
 
 class DotNetCore31(DotNetCore):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.channel = '3.1'
+        self.channels = ['3.1']
 
 class DotNetCore50(DotNetCore):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.channel = '5.0'
+        self.channels = ['5.0']
 
 class DotNetCore60(DotNetCore):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.channel = '6.0'
+        self.channels = ['6.0']
