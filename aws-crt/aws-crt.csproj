@@ -63,14 +63,14 @@
     <MakeDir Directories="$(SolutionDir)/packages" />
   </Target>
 
-  <Target Name="BuildNativeARM64Library" Condition="$(BuildNativeLibrary) == 'true' AND ($(PlatformTarget) == 'AnyCPU' OR $(PlatformTarget) == 'ARM64')" BeforeTargets="BuildNativeX64Library">
-    <Message Text="Configuring ARM64 CMake project" Importance="high" />
-    <MakeDir Directories="$(CMakeBinaries)/ARM64" />
-    <Exec Command="cmake -G&quot;$(CMakeGenerator64)&quot; -DCMAKE_BUILD_TYPE=$(CMakeConfig) -DBUILD_TESTING=OFF -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON $(CMakeArch64) $(ProjectDir)../native" WorkingDirectory="$(CMakeBinaries)/ARM64" ConsoleToMSBuild="true">
+  <Target Name="BuildNativeArm64Library" Condition="$(BuildNativeLibrary) == 'true' AND ($(PlatformTarget) == 'AnyCPU' OR $(PlatformTarget) == 'Arm64')" BeforeTargets="BuildNativeX64Library">
+    <Message Text="Configuring Arm64 CMake project" Importance="high" />
+    <MakeDir Directories="$(CMakeBinaries)/Arm64" />
+    <Exec Command="cmake -G&quot;$(CMakeGenerator64)&quot; -DCMAKE_BUILD_TYPE=$(CMakeConfig) -DBUILD_TESTING=OFF -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON $(CMakeArch64) $(ProjectDir)../native" WorkingDirectory="$(CMakeBinaries)/Arm64" ConsoleToMSBuild="true">
       <Output TaskParameter="ConsoleOutput" PropertyName="OutputOfExec" />
     </Exec>
-    <Message Text="Building ARM64 native library" Importance="high" />
-    <Exec Command="cmake --build . --config $(CMakeConfig)" WorkingDirectory="$(CMakeBinaries)/ARM64" ConsoleToMSBuild="true">
+    <Message Text="Building Arm64 native library" Importance="high" />
+    <Exec Command="cmake --build . --config $(CMakeConfig)" WorkingDirectory="$(CMakeBinaries)/Arm64" ConsoleToMSBuild="true">
       <Output TaskParameter="ConsoleOutput" PropertyName="OutputOfExec" />
     </Exec>
   </Target>
