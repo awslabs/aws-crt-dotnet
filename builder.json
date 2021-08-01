@@ -1,12 +1,12 @@
 {
     "name": "aws-crt-dotnet",
     "build_steps": [
-        "dotnet build -f netstandard2.0 -v normal -p:AwsCrtPlatformTarget={aws_crt_platform_target}",
+        "dotnet build -f netstandard2.0 -p:AwsCrtPlatformTarget={aws_crt_platform_target}",
         "dotnet pack -p:TargetFrameworks=netstandard2.0 -p:AwsCrtPlatformTarget={aws_crt_platform_target}"
     ],
     "test_steps": [
         "dotnet build tests/tests.csproj {build_tests_args}",
-        "dotnet test tests/tests.csproj --no-build {run_tests_args}"
+        "dotnet test tests --no-build {run_tests_args}"
     ],
     "imports": [
         "dotnetcore"
@@ -43,8 +43,8 @@
                     },
                     "variables": {
                         "platform_target": "Arm64",
-                        "run_tests_args" : "--runtime=linux-arm64",
-                        "build_tests_args": "-p:PlatformTarget=Arm64 --runtime=linux-arm64",
+                        "run_tests_args" : "--runtime linux-arm64 -p:PlatformTarget=Arm -p:Platform=Arm",
+                        "build_tests_args": "-p:AwsCrtPlatformTarget=Arm64 -p:Platform=Arm64 -p:PlatformTarget=Arm64 --runtime linux-arm64 && mv tests/bin/Arm64 tests/bin/Arm",
                         "aws_crt_platform_target" : "arm64"
                     }                    
                 }                
