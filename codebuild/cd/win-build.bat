@@ -3,7 +3,7 @@
 
 call "C:/Program Files (x86)/Microsoft Visual Studio/2019/BuildTools/Common7/Tools/VsDevCmd.bat"
 
-dotnet build -f netstandard2.0 --configuration Release -p:PlatformTarget=%1 || goto error
+dotnet build -f netstandard2.0 --configuration Release -p:AwsCrtPlatformTarget=%1 || goto error
 
 md ..\dist\%1\lib
 for /R .\build\%1\lib %%F IN (*) do (

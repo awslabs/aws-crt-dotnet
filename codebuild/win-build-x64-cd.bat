@@ -7,7 +7,7 @@ set PATH=%PATH%;"C:/Program Files/Git/usr/bin"
 
 bash .\codebuild\cd\pull-signing-secrets.sh
 
-dotnet build -f netstandard2.0 --configuration Release -p:PlatformTarget=x64 || goto error
+dotnet build -f netstandard2.0 --configuration Release -p:AwsCrtPlatformTarget=x64 || goto error
 
 md ..\dist\x64
 for /R c:\build-aws-crt\lib %%F IN (*) do (

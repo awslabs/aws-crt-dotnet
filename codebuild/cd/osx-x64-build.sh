@@ -14,6 +14,6 @@ fi
 
 mkdir packages
 git submodule update --init
-dotnet build -f netstandard2.0 --configuration Release -p:PlatformTarget=x64
+dotnet build -f netstandard2.0 --configuration Release -p:AwsCrtPlatformTarget=x64
 mkdir -p ../dist/x64/lib
 cp -rv build/x64/lib/libaws-crt-dotnet-x64.dylib ../dist/x64/lib

@@ -1,19 +1,16 @@
 {
     "name": "aws-crt-dotnet",
     "build_steps": [
-        "dotnet build -f netstandard2.0 -v normal -p:PlatformTarget={platform_target} {dotnet_args}",
-        "dotnet pack -p:TargetFrameworks=netstandard2.0 -p:PlatformTarget={platform_target} ."
+        "dotnet build -f netstandard2.0 -p:AwsCrtPlatformTarget={aws_crt_platform_target}",
+        "dotnet pack -p:TargetFrameworks=netstandard2.0 -p:AwsCrtPlatformTarget={aws_crt_platform_target}"
     ],
     "test_steps": [
-        "dotnet test tests/tests.csproj -v normal -p:PlatformTarget={platform_target}"
+        "dotnet build tests/tests.csproj {build_tests_args}",
+        "dotnet test tests --no-build {run_tests_args}"
     ],
     "imports": [
         "dotnetcore"
     ],
-    "variables": {
-        "platform_target": "x64",
-        "dotnet_args": ""
-    },
     "hosts": {
         "al2": {
             "packages": [
@@ -28,27 +25,59 @@
             "imports": [
                 "s2n"
             ],
-            "variables": {
-                "dotnet_args": "-p:LibCryptoPath={source_dir}/{libcrypto_path}"
-            },
             "architectures": {
                 "x64": {
                     "build_env": {
                         "AWS_DOTNET_RUNTIME": "linux-x64"
-                    }
-                }
+                    },
+                    "variables": {
+                        "platform_target": "x64",
+                        "build_tests_args" : "",
+                        "run_tests_args" : "",
+                        "aws_crt_platform_target" : "x64"
+                    }                    
+                },
+                "arm64": {
+                    "build_env": {
+                        "AWS_DOTNET_RUNTIME": "linux-arm64"
+                    },
+                    "variables": {
+                        "platform_target": "Arm64",
+                        "run_tests_args" : "--runtime linux-arm64 -p:PlatformTarget=Arm -p:Platform=Arm",
+                        "build_tests_args": "-p:AwsCrtPlatformTarget=Arm64 -p:Platform=Arm64 -p:PlatformTarget=Arm64 --runtime linux-arm64 && mv tests/bin/Arm64 tests/bin/Arm",
+                        "aws_crt_platform_target" : "arm64"
+                    }                    
+                }                
             }
         },
         "windows": {
             "architectures": {
                 "x86": {
                     "variables": {
-                        "platform_target": "x86"
+                        "platform_target": "x86",
+                        "build_tests_args" : "",
+                        "run_tests_args" : "",
+                        "aws_crt_platform_target" : "x86"
                     }
                 },
                 "x64": {
                     "variables": {
-                        "platform_target": "x64"
+                        "platform_target": "x64",
+                        "build_tests_args" : "",
+                        "run_tests_args" : "",
+                        "aws_crt_platform_target" : "x64"                        
+                    }
+                }
+            }
+        },
+        "macos" :{
+            "architectures": {
+                "x64": {
+                    "variables": {
+                        "platform_target": "x64",
+                        "build_tests_args" : "",
+                        "run_tests_args" : "",
+                        "aws_crt_platform_target" : "x64"                        
                     }
                 }
             }
