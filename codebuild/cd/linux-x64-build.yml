@@ -23,7 +23,7 @@ phases:
       - cd aws-crt-dotnet
       - git submodule update --init
       - mkdir packages
-      - dotnet build -f netstandard2.0 -p:PlatformTarget=x64 --configuration Release
+      - dotnet build -f netstandard2.0 -p:AwsCrtPlatformTarget=x64 --configuration Release
   post_build:
     commands:
       # get the shared libs from the native build
