@@ -16,6 +16,10 @@ fi
 
 mkdir packages
 git submodule update --init
+
+# temporary workaround until we manually build and install a new version of libicu on the arm64 build instance
+export DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1
+
 dotnet build -f netstandard2.0 --configuration Release -p:AwsCrtPlatformTarget=Arm64
 mkdir -p ../dist/Arm64/lib
 cp -rv build/Arm64/lib/*.so ../dist/Arm64/lib
