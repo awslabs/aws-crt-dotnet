@@ -12,6 +12,7 @@ phases:
       - sudo apt-get update -y
       - sudo apt-get install dotnet-sdk-2.1 -y
       - sudo apt-get install dotnet-sdk-3.1 -y
+      - sudo apt-get install dotnet-sdk-5.0 -y
 
   pre_build:
     commands:
