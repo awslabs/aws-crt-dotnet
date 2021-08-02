@@ -93,6 +93,9 @@ namespace Aws.Crt
             private LibraryHandle crt;
             private string libraryPath;
 
+/*
+ * We build for net35, net45 and netstandard2 and this did not become available until net47ish
+*/
 #if NETSTANDARD
             private bool IsAarch64() {
                 return System.Runtime.InteropServices.RuntimeInformation.ProcessArchitecture == Architecture.Arm64;

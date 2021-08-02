@@ -8,6 +8,7 @@ xcopy /S /Y %CODEBUILD_SRC_DIR_win_x86%\dist\* %CODEBUILD_SRC_DIR%\aws-crt-dotne
 xcopy /S /Y %CODEBUILD_SRC_DIR_win_x64%\dist\* %CODEBUILD_SRC_DIR%\aws-crt-dotnet\build\ || goto :error
 xcopy /S /Y %CODEBUILD_SRC_DIR_osx_x64%\* %CODEBUILD_SRC_DIR%\aws-crt-dotnet\build\ || goto :error
 
+:: codebuild's 5 input artifact limit forces us to "import" the native binaries for additional targets from s3
 git describe --tags | cut -f1 -d'-' | cut -f2 -dv > version.txt
 set /P PKG_VERSION=<version.txt
 

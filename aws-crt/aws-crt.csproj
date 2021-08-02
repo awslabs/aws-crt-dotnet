@@ -63,6 +63,11 @@
     <MakeDir Directories="$(SolutionDir)/packages" />
   </Target>
 
+  <!-- 
+    AwsCrtPlatformTarget is a non-msbuild property that tells the crt build system what target to build the native source for.  We need it separate and independent from msbuild's PlatformTarget property because
+    the dotnet cli still has one or more bugs that make it very difficult to work with arm64 builds.  These issues can be worked around by not specifying a platform target until the final test step, but we still
+    need to be able to control what architecture the native code gets built for, hence the need for the new property.
+    -->
   <Target Name="BuildNativeArm64Library" Condition="$(BuildNativeLibrary) == 'true' AND (($(PlatformTarget) == 'AnyCPU' AND $(AwsCrtPlatformTarget) == 'Arm64') OR $(PlatformTarget) == 'Arm64')" BeforeTargets="BuildNativeX64Library">
     <Message Text="Configuring Arm64 CMake project" Importance="high" />
     <MakeDir Directories="$(CMakeBinaries)/Arm64" />
