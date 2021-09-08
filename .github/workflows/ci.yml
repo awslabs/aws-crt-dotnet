@@ -46,7 +46,7 @@ jobs:
         docker pull $DOCKER_IMAGE
         docker run --env GITHUB_REF $DOCKER_IMAGE --version=${{env.BUILDER_VERSION}} build -p ${{ env.PACKAGE_NAME }} --target=linux-${{ matrix.arch }} 
 
-  linux-compiler-compat::
+  linux-compiler-compat:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -80,7 +80,7 @@ jobs:
         run: |
           aws s3 cp s3://aws-crt-test-stuff/ci/${{ env.BUILDER_VERSION }}/linux-container-ci.sh ./linux-container-ci.sh && chmod a+x ./linux-container-ci.sh
           ./linux-container-ci.sh ${{ env.BUILDER_VERSION }} aws-crt-${{ env.LINUX_BASE_IMAGE }} build -p ${{ env.PACKAGE_NAME }} --compiler=clang-11 --cmake-extra=-DENABLE_SANITIZERS=ON --cmake-extra=-DSANITIZERS="${{ matrix.sanitizers }}"
-          
+
   windows-vc16:
     runs-on: windows-latest
     strategy:
