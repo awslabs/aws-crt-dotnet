@@ -58,6 +58,9 @@ class DotNet(Builder.Import):
 
         for version in self.channels:
             arch = env.spec.arch
+            if arch == 'armv8':
+                arch = 'arm64'
+                
             if env.spec.target == 'windows':
                 command = '{} -Channel {} -Architecture {} -InstallDir {}'.format(
                     script, version, arch, install_dir).split(' ')
