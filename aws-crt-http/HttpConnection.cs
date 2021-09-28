@@ -167,6 +167,8 @@ namespace Aws.Crt.Http
             internal delegate void OnStreamCompleteNative(int errorCode);
 
             private static LibraryHandle library = new LibraryHandle();
+
+            [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl)]
             public delegate Handle aws_dotnet_http_stream_new(
                                     IntPtr connection,
                                     [MarshalAs(UnmanagedType.LPStr)] string method,
@@ -178,8 +180,14 @@ namespace Aws.Crt.Http
                                     OnIncomingHeaderBlockDoneNative onIncomingHeaderBlockDone,
                                     OnIncomingBodyNative onIncomingBody,
                                     OnStreamCompleteNative onStreamComplete);
+
+            [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl)]
             public delegate void aws_dotnet_http_stream_destroy(IntPtr stream);
+
+            [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl)]
             public delegate void aws_dotnet_http_stream_update_window(IntPtr stream, UInt64 incrementSize);
+
+            [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl)]
             internal delegate void aws_dotnet_http_stream_activate(IntPtr stream);
 
             public static aws_dotnet_http_stream_new make_new = NativeAPI.Bind<aws_dotnet_http_stream_new>();
@@ -347,6 +355,8 @@ namespace Aws.Crt.Http
             public delegate void OnConnectionShutdown(int errorCode);
 
             static private LibraryHandle library = new LibraryHandle();
+
+            [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl)]
             public delegate Handle aws_dotnet_http_connection_new(
                                     IntPtr clientBootstrap,
                                     UInt64 initialWindowSize,
@@ -356,6 +366,8 @@ namespace Aws.Crt.Http
                                     IntPtr tlsConnectionOptions,
                                     OnConnectionSetup onSetup,
                                     OnConnectionShutdown onShutdown);
+
+            [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl)]
             public delegate void aws_dotnet_http_connection_destroy(IntPtr connection);
 
             public static aws_dotnet_http_connection_new make_new = NativeAPI.Bind<aws_dotnet_http_connection_new>();

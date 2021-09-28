@@ -23,7 +23,10 @@ namespace Aws.Crt {
         public string ErrorName { get; private set; }
 
         public delegate void NativeExceptionRecorder(int errorCode, string errorName, string message);
+
+        [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl)]
         internal delegate void SetExceptionCallback(NativeExceptionRecorder callback);
+        
         // Called from native code as a callback, store the exception in TLS and
         // throw it when we return to CLR code
         internal static void RecordNativeException(int errorCode, string errorName, string message)

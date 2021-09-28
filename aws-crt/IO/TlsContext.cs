@@ -89,6 +89,7 @@ namespace Aws.Crt.IO
         [SecuritySafeCritical]
         internal static class API
         {
+            [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl)]
             public delegate Handle aws_dotnet_tls_ctx_new_client(Int32 min_tls_version,
                                                                 [MarshalAs(UnmanagedType.LPStr)] string ca_file,
                                                                 [MarshalAs(UnmanagedType.LPStr)] string ca_path,
@@ -99,6 +100,8 @@ namespace Aws.Crt.IO
                                                                 [MarshalAs(UnmanagedType.LPStr)] string pkcs12_password,
                                                                 UInt32 max_fragment_size,
                                                                 byte verify_peer);
+
+            [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl)]
             public delegate Handle aws_dotnet_tls_ctx_new_server(Int32 min_tls_version,
                                                                 [MarshalAs(UnmanagedType.LPStr)] string ca_file,
                                                                 [MarshalAs(UnmanagedType.LPStr)] string ca_path,
@@ -109,6 +112,8 @@ namespace Aws.Crt.IO
                                                                 [MarshalAs(UnmanagedType.LPStr)] string pkcs12_password,
                                                                 UInt32 max_fragment_size,
                                                                 byte verify_peer);
+
+            [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl)]
             public delegate void aws_dotnet_tls_ctx_destroy(IntPtr ctx);
 
             public static aws_dotnet_tls_ctx_new_client make_new_client = NativeAPI.Bind<aws_dotnet_tls_ctx_new_client>();
@@ -165,10 +170,13 @@ namespace Aws.Crt.IO
         [SecuritySafeCritical]
         internal static class API
         {
+            [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl)]
             public delegate Handle aws_dotnet_tls_connection_options_new(
                                     IntPtr tlsContext,
                                     [MarshalAs(UnmanagedType.LPStr)] string serverName,
                                     [MarshalAs(UnmanagedType.LPStr)] string alpnList);
+
+            [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl)]
             public delegate void aws_dotnet_tls_connection_options_destroy(IntPtr options);
 
             public static aws_dotnet_tls_connection_options_new make_new = NativeAPI.Bind<aws_dotnet_tls_connection_options_new>();

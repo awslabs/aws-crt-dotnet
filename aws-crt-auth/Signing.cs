@@ -165,6 +165,7 @@ namespace Aws.Crt.Auth
                 [In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex=6)] HttpHeader[] signedHeaders, 
                 UInt32 signedHeaderCount);
 
+            [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl)]
             internal delegate void AwsDotnetAuthSignHttpRequest(
                                     [MarshalAs(UnmanagedType.LPStr)] string method,
                                     [MarshalAs(UnmanagedType.LPStr)] string uri,
@@ -174,33 +175,39 @@ namespace Aws.Crt.Auth
                                     [In] AwsSigningConfigNative signing_config,
                                     UInt64 future_id,
                                     OnSigningCompleteCallback completion_callback_delegate);
+
+            [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl)]
             internal delegate void AwsDotnetAuthSignCanonicalRequest(
                                     [MarshalAs(UnmanagedType.LPStr)] string canonical_request,
                                     [In] AwsSigningConfigNative signing_config,
                                     UInt64 future_id,
-                                    OnSigningCompleteCallback completion_callback_delegate);    
+                                    OnSigningCompleteCallback completion_callback_delegate);
 
+            [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl)]
             internal delegate void AwsDotnetAuthSignChunk(
                                     [In] CrtStreamWrapper.DelegateTable stream_delegate_table,
                                     [In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex=2, ArraySubType=UnmanagedType.U1)] byte[] signature_buffer,
                                     UInt32 signature_buffer_length,
                                     [In] AwsSigningConfigNative signing_config,
                                     UInt64 future_id,
-                                    OnSigningCompleteCallback completion_callback_delegate);                                                                       
+                                    OnSigningCompleteCallback completion_callback_delegate);
 
+            [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl)]
             internal delegate bool AwsDotnetAuthVerifyV4aCanonicalSigning(
                                     [MarshalAs(UnmanagedType.LPStr)] string canonical_request,
                                     [In] AwsSigningConfigNative signing_config,
                                     [MarshalAs(UnmanagedType.LPStr)] string signature,
                                     [MarshalAs(UnmanagedType.LPStr)] string ecc_pub_x,
-                                    [MarshalAs(UnmanagedType.LPStr)] string ecc_pub_y);     
+                                    [MarshalAs(UnmanagedType.LPStr)] string ecc_pub_y);
 
+            [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl)]
             internal delegate bool AwsDotnetAuthVerifyV4aSignature(
                                     [MarshalAs(UnmanagedType.LPStr)] string string_to_sign,
                                     [In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex=2, ArraySubType=UnmanagedType.U1)] byte[] signature_buffer,
                                     UInt32 signature_buffer_length,
                                     [MarshalAs(UnmanagedType.LPStr)] string ecc_pub_x,
-                                    [MarshalAs(UnmanagedType.LPStr)] string ecc_pub_y);                                       
+                                    [MarshalAs(UnmanagedType.LPStr)] string ecc_pub_y);          
+            
             public static AwsDotnetAuthSignHttpRequest SignRequestNative = NativeAPI.Bind<AwsDotnetAuthSignHttpRequest>("aws_dotnet_auth_sign_http_request");
 
             public static AwsDotnetAuthSignCanonicalRequest SignCanonicalRequestNative = NativeAPI.Bind<AwsDotnetAuthSignCanonicalRequest>("aws_dotnet_auth_sign_canonical_request");

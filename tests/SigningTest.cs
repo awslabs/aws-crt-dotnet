@@ -223,7 +223,7 @@ namespace tests
             config.Algorithm = AwsSigningAlgorithm.SIGV4A;
 
 
-            var canonicalRequest = String.Join('\n',
+            var canonicalRequest = String.Join("\n",
                 "POST",
                 "/",
                 "",

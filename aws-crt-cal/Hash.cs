@@ -12,16 +12,28 @@ namespace Aws.Crt.Cal
     {
         internal static class API
         {
+            [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl)]
             public delegate Handle aws_dotnet_sha1_new();
+
+            [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl)]
             public delegate Handle aws_dotnet_sha256_new();
+
+            [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl)]
             public delegate Handle aws_dotnet_md5_new();
+
+            [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl)]
             public delegate int aws_dotnet_hash_update(IntPtr hash,
                                                       [In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 2, ArraySubType = UnmanagedType.U1)] byte[] buffer,
                                                        UInt32 buffer_length);
+
+            [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl)]
             public delegate void aws_dotnet_hash_digest(IntPtr hash, UInt32 truncate, 
                         [Out, MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 3, ArraySubType = UnmanagedType.U1)] byte[] buffer,
                                                        UInt32 buffer_length);
+
+            [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl)]
             public delegate void aws_dotnet_hash_destroy(IntPtr hash);
+
             public static aws_dotnet_sha1_new sha1_new = NativeAPI.Bind<aws_dotnet_sha1_new>();
             public static aws_dotnet_sha256_new sha256_new = NativeAPI.Bind<aws_dotnet_sha256_new>();
             public static aws_dotnet_md5_new md5_new = NativeAPI.Bind<aws_dotnet_md5_new>();

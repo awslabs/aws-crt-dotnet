@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0.
  */
 using System;
+using System.Runtime.InteropServices;
 using System.Security;
 
 using Aws.Crt;
@@ -25,6 +26,7 @@ namespace Aws.Crt.IO
         [SecuritySafeCritical]
         internal static class API
         {
+            [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl)]
             public delegate void aws_dotnet_logger_enable(int level, string filename);
 
             public static aws_dotnet_logger_enable enable = NativeAPI.Bind<aws_dotnet_logger_enable>();
