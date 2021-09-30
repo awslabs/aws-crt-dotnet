@@ -24,6 +24,7 @@ namespace Aws.Crt.IO
         [SecuritySafeCritical]
         internal static class API
         {
+            [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl)]
             public delegate Handle aws_dotnet_socket_options_new(
                                     Int32 type, 
                                     Int32 domain, 
@@ -32,6 +33,8 @@ namespace Aws.Crt.IO
                                     UInt16 keep_alive_timeout_sec, 
                                     UInt16 keep_alive_max_failed_probes, 
                                     byte keepalive);
+
+            [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl)]
             public delegate void aws_dotnet_socket_options_destroy(IntPtr options);
 
             public static aws_dotnet_socket_options_new make_new = NativeAPI.Bind<aws_dotnet_socket_options_new>();

@@ -11,10 +11,14 @@ namespace Aws.Crt.Checksums
     {
         internal static class API
         {
+            [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl)]
             public delegate UInt32 aws_dotnet_crc32([In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 2, ArraySubType = UnmanagedType.U1)] byte[] buffer,
                                                    Int32 length, UInt32 previous);
+
+            [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl)]
             public delegate UInt32 aws_dotnet_crc32c([In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 2, ArraySubType = UnmanagedType.U1)] byte[] buffer,
                                                    Int32 length, UInt32 previous);
+
             public static aws_dotnet_crc32 crc32 = NativeAPI.Bind<aws_dotnet_crc32>();
             public static aws_dotnet_crc32c crc32c = NativeAPI.Bind<aws_dotnet_crc32c>();
         }

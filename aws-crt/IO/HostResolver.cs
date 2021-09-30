@@ -14,7 +14,10 @@ namespace Aws.Crt.IO
         [SecuritySafeCritical]
         internal static class API
         {
+            [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl)]
             public delegate Handle aws_dotnet_host_resolver_new_default(IntPtr eventLoopGroup, int maxHosts);
+
+            [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl)]
             public delegate void aws_dotnet_host_resolver_destroy(IntPtr hostResolver);
 
             public static aws_dotnet_host_resolver_new_default make_new_default = NativeAPI.Bind<aws_dotnet_host_resolver_new_default>();

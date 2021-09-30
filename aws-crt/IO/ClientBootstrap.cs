@@ -13,7 +13,10 @@ namespace Aws.Crt.IO
         [SecuritySafeCritical]
         internal static class API
         {
+            [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl)]
             public delegate Handle aws_dotnet_client_bootstrap_new(IntPtr eventLoopGroup, IntPtr hostResolver);
+
+            [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl)]
             public delegate void aws_dotnet_client_bootstrap_destroy(IntPtr clientBootstrap);
 
             public static aws_dotnet_client_bootstrap_new make_new = NativeAPI.Bind<aws_dotnet_client_bootstrap_new>();

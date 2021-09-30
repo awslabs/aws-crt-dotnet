@@ -21,8 +21,12 @@ namespace Aws.Crt
         [SecuritySafeCritical]
         internal static class API
         {
+            [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl)]
             public delegate IntPtr aws_dotnet_error_string(int errorCode);
+
+            [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl)]
             public delegate IntPtr aws_dotnet_error_name(int errorCode);
+
             public static aws_dotnet_error_string error_string = NativeAPI.Bind<aws_dotnet_error_string>();
             public static aws_dotnet_error_name error_name = NativeAPI.Bind<aws_dotnet_error_name>();
         }
@@ -197,7 +201,10 @@ namespace Aws.Crt
                 }
             }
 
+            [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl)]
             private delegate void aws_dotnet_static_init();
+
+            [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl)]
             private delegate void aws_dotnet_static_shutdown();
 
             // This must remain referenced through execution, or the delegate will be garbage collected

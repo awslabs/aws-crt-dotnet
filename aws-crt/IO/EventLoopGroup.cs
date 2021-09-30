@@ -12,7 +12,10 @@ namespace Aws.Crt.IO {
         [SecuritySafeCritical]
         internal static class API
         {
+            [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl)]
             public delegate Handle aws_dotnet_event_loop_group_new_default(int numThreads);
+
+            [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl)]
             public delegate void aws_dotnet_event_loop_group_destroy(IntPtr elg);
 
             public static aws_dotnet_event_loop_group_new_default make_new_default = NativeAPI.Bind<aws_dotnet_event_loop_group_new_default>();
