@@ -23,4 +23,8 @@ struct aws_http_message *aws_build_http_request(
     uint32_t header_count,
     struct aws_dotnet_stream_function_table *body_stream_delegates);
 
+struct aws_http_headers *aws_build_http_headers(
+    struct aws_dotnet_http_header headers[],
+    uint32_t header_count);
+
 #endif /* AWS_DOTNET_HTTP_CLIENT_H */

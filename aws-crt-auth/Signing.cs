@@ -20,10 +20,10 @@ namespace Aws.Crt.Auth
         HTTP_REQUEST_VIA_HEADERS = 0,
         HTTP_REQUEST_VIA_QUERY_PARAMS = 1,
         HTTP_REQUEST_CHUNK = 2,
-        HTTP_REQUEST_TRAILING_HEADERS = 3,
-        HTTP_REQUEST_EVENT = 4,
-        CANONICAL_REQUEST_VIA_HEADERS = 5,
-        CANONICAL_REQUEST_VIA_QUERY_PARAMS = 6,
+        HTTP_REQUEST_EVENT = 3,
+        CANONICAL_REQUEST_VIA_HEADERS = 4,
+        CANONICAL_REQUEST_VIA_QUERY_PARAMS = 5,
+        HTTP_REQUEST_TRAILING_HEADERS = 6,
     }
 
     public class AwsSignedBodyValue {
@@ -453,7 +453,7 @@ namespace Aws.Crt.Auth
             }
         }
 
-        public static CrtResult<CrtSigningResult> SignTrailingHeaders(HttpHeader[] headers, byte[] previousSignature, AwsSigningConfig signingConfig) 
+        public static CrtResult<CrtSigningResult> SignTrailingHeaders(HttpHeader[] headers, byte[] previousSignature, AwsSigningConfig signingConfig)
         {
             if (previousSignature == null || signingConfig == null) {
                 throw new CrtException("Null argument passed to SignChunk");

@@ -509,8 +509,7 @@ AWS_DOTNET_API void aws_dotnet_auth_sign_trailing_headers(
     previous_signature_cursor.ptr = previous_signature;
     previous_signature_cursor.len = previous_signature_size;
 
-    struct aws_http_headers *trailing_headers = aws_http_headers_new(aws_default_allocator());
-    aws_http_headers_add_array(trailing_headers, headers, header_count);
+    struct aws_http_headers *trailing_headers = aws_build_http_headers(headers, header_count);
 
     continuation->original_request_signable =
         aws_signable_new_trailing_headers(allocator, trailing_headers, previous_signature_cursor);
