@@ -23,6 +23,7 @@ namespace Aws.Crt.Auth
         HTTP_REQUEST_EVENT = 3,
         CANONICAL_REQUEST_VIA_HEADERS = 4,
         CANONICAL_REQUEST_VIA_QUERY_PARAMS = 5,
+        HTTP_REQUEST_TRAILING_HEADERS = 6,
     }
 
     public class AwsSignedBodyValue {
@@ -192,6 +193,15 @@ namespace Aws.Crt.Auth
                                     UInt64 future_id,
                                     OnSigningCompleteCallback completion_callback_delegate);
 
+            internal delegate void AwsDotnetAuthSignTrailingHeaders(
+                                    [In] HttpHeader[] headers,
+                                    UInt32 header_count,
+                                    [In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex=2, ArraySubType=UnmanagedType.U1)] byte[] signature_buffer,
+                                    UInt32 signature_buffer_length,
+                                    [In] AwsSigningConfigNative signing_config,
+                                    UInt64 future_id,
+                                    OnSigningCompleteCallback completion_callback_delegate);
+
             [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl)]
             internal delegate bool AwsDotnetAuthVerifyV4aCanonicalSigning(
                                     [MarshalAs(UnmanagedType.LPStr)] string canonical_request,
@@ -214,6 +224,8 @@ namespace Aws.Crt.Auth
 
             public static AwsDotnetAuthSignChunk SignChunkNative = NativeAPI.Bind<AwsDotnetAuthSignChunk>("aws_dotnet_auth_sign_chunk");
 
+            public static AwsDotnetAuthSignTrailingHeaders SignTrailingHeadersNative = NativeAPI.Bind<AwsDotnetAuthSignTrailingHeaders>("aws_dotnet_auth_sign_trailing_headers");
+
             public static AwsDotnetAuthVerifyV4aCanonicalSigning VerifyV4aCanonicalSigningNative = NativeAPI.Bind<AwsDotnetAuthVerifyV4aCanonicalSigning>("aws_dotnet_auth_verify_v4a_canonical_signing");
 
             public static AwsDotnetAuthVerifyV4aSignature VerifyV4aSignatureNative = NativeAPI.Bind<AwsDotnetAuthVerifyV4aSignature>("aws_dotnet_auth_verify_v4a_signature");
@@ -223,6 +235,8 @@ namespace Aws.Crt.Auth
             public static OnSigningCompleteCallback OnCanonicalRequestSigningComplete = AwsSigner.OnCanonicalRequestSigningComplete;
 
             public static OnSigningCompleteCallback OnChunkSigningComplete = AwsSigner.OnChunkSigningComplete;
+
+            public static OnSigningCompleteCallback OnTrailingHeadersSigningComplete = AwsSigner.OnTrailingHeadersSigningComplete;
 
             private static LibraryHandle library = new LibraryHandle();
         }
@@ -250,9 +264,20 @@ namespace Aws.Crt.Auth
             public CrtResult<CrtSigningResult> Result = new CrtResult<CrtSigningResult>();
         }
 
+        private class TrailingHeadersSigningCallbackData
+        {
+
+            public byte[] PreviousSignature;
+
+            public HttpHeader[] TrailingHeaders;
+
+            public CrtResult<CrtSigningResult> Result = new CrtResult<CrtSigningResult>();
+        }
+
         private static StrongReferenceVendor<HttpRequestSigningCallbackData> PendingHttpRequestSignings = new StrongReferenceVendor<HttpRequestSigningCallbackData>();
         private static StrongReferenceVendor<CanonicalRequestSigningCallbackData> PendingCanonicalRequestSignings = new StrongReferenceVendor<CanonicalRequestSigningCallbackData>();
         private static StrongReferenceVendor<ChunkSigningCallbackData> PendingChunkSignings = new StrongReferenceVendor<ChunkSigningCallbackData>();
+        private static StrongReferenceVendor<TrailingHeadersSigningCallbackData> PendingTrailingHeadersSignings = new StrongReferenceVendor<TrailingHeadersSigningCallbackData>();
 
         private static void OnHttpRequestSigningComplete(ulong id, int errorCode, byte[] signatureBuffer, ulong signatureBufferSize, string uri, HttpHeader[] headers, uint headerCount)
         {
@@ -406,6 +431,54 @@ namespace Aws.Crt.Auth
             API.SignChunkNative(callback.OriginalChunkBodyStream.Delegates, callback.PreviousSignature, (uint) callback.PreviousSignature.Length, nativeConfig, id, API.OnChunkSigningComplete);
 
             return callback.Result;
-        }   
+        }
+
+        private static void OnTrailingHeadersSigningComplete(ulong id, int errorCode, byte[] signatureBuffer, ulong signatureBufferSize, string uri, HttpHeader[] headers, uint headerCount)
+        {
+            TrailingHeadersSigningCallbackData callback = PendingTrailingHeadersSignings.ReleaseStrongReference(id);
+            if (callback == null) {
+                return;
+            }
+
+            if (errorCode != 0)
+            {
+                callback.Result.CompleteExceptionally(new CrtException(errorCode));
+            }
+            else
+            {
+                CrtSigningResult result = new CrtSigningResult();
+                result.Signature = signatureBuffer;
+
+                callback.Result.Complete(result);
+            }
+        }
+
+        public static CrtResult<CrtSigningResult> SignTrailingHeaders(HttpHeader[] headers, byte[] previousSignature, AwsSigningConfig signingConfig)
+        {
+            if (previousSignature == null || signingConfig == null) {
+                throw new CrtException("Null argument passed to SignChunk");
+            }
+
+            if (signingConfig.SignatureType != AwsSignatureType.HTTP_REQUEST_TRAILING_HEADERS) {
+                throw new CrtException("Illegal signature type for trailing headers signing");
+            }
+
+            uint trailingHeaderCount = 0;
+            if (headers != null) {
+                trailingHeaderCount = (uint) headers.Length;
+            }
+
+            var nativeConfig = new AwsSigningConfigNative(signingConfig);
+
+            TrailingHeadersSigningCallbackData callback = new TrailingHeadersSigningCallbackData();
+            callback.TrailingHeaders = headers;
+            callback.PreviousSignature = previousSignature;
+
+            ulong id = PendingTrailingHeadersSignings.AcquireStrongReference(callback);
+
+            API.SignTrailingHeadersNative(callback.TrailingHeaders, trailingHeaderCount, callback.PreviousSignature, (uint) callback.PreviousSignature.Length, nativeConfig, id, API.OnTrailingHeadersSigningComplete);
+
+            return callback.Result;
+        }
     }
 }

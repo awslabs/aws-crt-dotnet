@@ -287,9 +287,9 @@ namespace tests
             } catch (CrtException e) {
                 crtErrorCode = e.ErrorCode;
             }
-
+            String crtErrorName = Aws.Crt.CRT.ErrorName(crtErrorCode);
             /* AWS_AUTH_SIGNING_ILLEGAL_REQUEST_HEADER */
-            Assert.Equal(1024 * 6 + 6, crtErrorCode);
+            Assert.Equal("AWS_AUTH_SIGNING_ILLEGAL_REQUEST_HEADER", crtErrorName);
         }   
 
         [Fact]
@@ -310,9 +310,9 @@ namespace tests
             } catch (CrtException e) {
                 crtErrorCode = e.ErrorCode;
             }
-
+            String crtErrorName = Aws.Crt.CRT.ErrorName(crtErrorCode);
             /* AWS_AUTH_SIGNING_INVALID_CONFIGURATION */
-            Assert.Equal(1024 * 6 + 7, crtErrorCode);
+            Assert.Equal("AWS_AUTH_SIGNING_INVALID_CONFIGURATION", crtErrorName);
         }   
 
         [Fact]
@@ -333,9 +333,9 @@ namespace tests
             } catch (CrtException e) {
                 crtErrorCode = e.ErrorCode;
             }
-
+            String crtErrorName = Aws.Crt.CRT.ErrorName(crtErrorCode);
             /* AWS_AUTH_SIGNING_INVALID_CONFIGURATION */
-            Assert.Equal(1024 * 6 + 7, crtErrorCode);
+            Assert.Equal("AWS_AUTH_SIGNING_INVALID_CONFIGURATION", crtErrorName);
         }
 
         [Fact]
@@ -356,9 +356,9 @@ namespace tests
             } catch (CrtException e) {
                 crtErrorCode = e.ErrorCode;
             }
-
+            String crtErrorName = Aws.Crt.CRT.ErrorName(crtErrorCode);
             /* AWS_AUTH_SIGNING_INVALID_CONFIGURATION */
-            Assert.Equal(1024 * 6 + 7, crtErrorCode);
+            Assert.Equal("AWS_AUTH_SIGNING_INVALID_CONFIGURATION", crtErrorName);
         }
 
         /*
@@ -396,6 +396,21 @@ namespace tests
             AwsSigningConfig config = new AwsSigningConfig();
             config.Algorithm = AwsSigningAlgorithm.SIGV4;
             config.SignatureType = AwsSignatureType.HTTP_REQUEST_CHUNK;
+            config.Region = CHUNKED_TEST_REGION;
+            config.Service = CHUNKED_TEST_SERVICE;
+            config.Timestamp = new DateTimeOffset(CHUNKED_SIGNING_DATE);
+            config.UseDoubleUriEncode = false;
+            config.ShouldNormalizeUriPath = true;
+            config.SignedBodyHeader = AwsSignedBodyHeaderType.NONE;
+            config.Credentials = createChunkedTestCredentials();
+
+            return config;
+        }
+
+        private AwsSigningConfig createTrailingHeadersSigningConfig() {
+            AwsSigningConfig config = new AwsSigningConfig();
+            config.Algorithm = AwsSigningAlgorithm.SIGV4;
+            config.SignatureType = AwsSignatureType.HTTP_REQUEST_TRAILING_HEADERS;
             config.Region = CHUNKED_TEST_REGION;
             config.Service = CHUNKED_TEST_SERVICE;
             config.Timestamp = new DateTimeOffset(CHUNKED_SIGNING_DATE);
@@ -456,6 +471,7 @@ namespace tests
         private static byte[] EXPECTED_FIRST_CHUNK_SIGNATURE = ASCIIEncoding.ASCII.GetBytes("ad80c730a21e5b8d04586a2213dd63b9a0e99e0e2307b0ade35a65485a288648");
         private static byte[] EXPECTED_SECOND_CHUNK_SIGNATURE = ASCIIEncoding.ASCII.GetBytes("0055627c9e194cb4542bae2aa5492e3c1575bbb81b612b7d234b86a503ef5497");
         private static byte[] EXPECTED_FINAL_CHUNK_SIGNATURE = ASCIIEncoding.ASCII.GetBytes("b6c6ea8a5354eaf15b3cb7646744f4275b71ea724fed81ceb9323e279d449df9");
+        private static byte[] EXPECTED_TRAILING_HEADERS_SIGNATURE = ASCIIEncoding.ASCII.GetBytes("17b7a1e28961dba05b733dbdbe8ea230d8bed5ea507bc8af6f76349207c05315");
        
         [Fact]
         public void SignChunkedRequest()
@@ -486,7 +502,143 @@ namespace tests
             CrtResult<AwsSigner.CrtSigningResult> finalChunkResult = AwsSigner.SignChunk(null, chunkSignature, createChunkSigningConfig());
             chunkSignature = finalChunkResult.Get().Signature;
             Assert.True(chunkSignature.SequenceEqual(EXPECTED_FINAL_CHUNK_SIGNATURE));
-        }     
+        }
+        private HttpHeader[] createTrailingHeaders() {
+
+            var headers = new List<HttpHeader>();
+            headers.Add(new HttpHeader("first", "1st"));
+            headers.Add(new HttpHeader("second", "2nd"));
+            headers.Add(new HttpHeader("third", "3rd"));
+
+            return headers.ToArray();
+        }
+
+        private static String CHUNK_STS_PRE_SIGNATURE = "AWS4-ECDSA-P256-SHA256-PAYLOAD\n" + "20130524T000000Z\n"
+            + "20130524/s3/aws4_request\n";
+
+        private static String CHUNK1_STS_POST_SIGNATURE = "\ne3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\n"
+            + "bf718b6f653bebc184e1479f1935b8da974d701b893afcf49e701f3e2f9f9c5a";
+
+        private static String CHUNK2_STS_POST_SIGNATURE = "\ne3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\n"
+            + "2edc986847e209b4016e141a6dc8716d3207350f416969382d431539bf292e4a";
+
+        private static String CHUNK3_STS_POST_SIGNATURE = "\ne3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\n"
+            + "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
+
+        private static String TRAILING_HEADERS_STS_PRE_SIGNATURE = "AWS4-ECDSA-P256-SHA256-TRAILER\n" + "20130524T000000Z\n"
+            + "20130524/s3/aws4_request\n";
+
+        private static String TRAILING_HEADERS_STS_POST_SIGNATURE = "\n1daafddca5ec34b1c188a833ab90906c0f3130db0b08b2d199e4add63864e775";
+
+        private String buildTrailingHeadersStringToSign(byte[] previousSignature, String stsPostSignature) {
+            StringBuilder stsBuilder = new StringBuilder();
+    
+            stsBuilder.Append(TRAILING_HEADERS_STS_PRE_SIGNATURE);
+            String signature = System.Text.Encoding.UTF8.GetString(previousSignature);
+            int paddingIndex = signature.IndexOf('*');
+            if (paddingIndex != -1) {
+                signature = signature.Substring(0, paddingIndex);
+            }
+            stsBuilder.Append(signature);
+            stsBuilder.Append(stsPostSignature);
+    
+            return stsBuilder.ToString();
+        }
+        private String buildChunkStringToSign(byte[] previousSignature, String stsPostSignature) {
+            StringBuilder stsBuilder = new StringBuilder();
+            stsBuilder.Append(CHUNK_STS_PRE_SIGNATURE);
+            String signature = System.Text.Encoding.UTF8.GetString(previousSignature);
+            int paddingIndex = signature.IndexOf('*');
+            if (paddingIndex != -1) {
+                signature = signature.Substring(0, paddingIndex);
+            }
+            stsBuilder.Append(signature);
+            stsBuilder.Append(stsPostSignature);
+
+            return stsBuilder.ToString();
+        }
+
+        [Fact]
+        public void SignTrailingHeadersSigv4()
+        {
+            HttpRequest request = createChunkedTestRequest();
+
+            CrtResult<AwsSigner.CrtSigningResult> result = AwsSigner.SignHttpRequest(request, createChunkedRequestSigningConfig());
+            AwsSigner.CrtSigningResult signingResult = result.Get();
+            HttpRequest signedRequest = signingResult.SignedRequest;
+            Assert.NotNull(signedRequest);
+            Assert.Equal(GetHeaderValue(signedRequest, "Authorization"), EXPECTED_CHUNK_REQUEST_AUTHORIZATION_HEADER);
+
+            byte[] requestSignature = signingResult.Signature;
+            Assert.True(requestSignature.SequenceEqual(EXPECTED_REQUEST_SIGNATURE));
+
+            Stream chunk1 = createChunk1Stream();
+            CrtResult<AwsSigner.CrtSigningResult> chunk1Result = AwsSigner.SignChunk(chunk1, requestSignature, createChunkSigningConfig());
+
+            byte[] chunkSignature = chunk1Result.Get().Signature;
+            Assert.True(chunkSignature.SequenceEqual(EXPECTED_FIRST_CHUNK_SIGNATURE));
+
+            Stream chunk2 = createChunk2Stream();
+            CrtResult<AwsSigner.CrtSigningResult> chunk2Result = AwsSigner.SignChunk(chunk2, chunkSignature, createChunkSigningConfig());
+
+            chunkSignature = chunk2Result.Get().Signature;
+            Assert.True(chunkSignature.SequenceEqual(EXPECTED_SECOND_CHUNK_SIGNATURE));
+
+            CrtResult<AwsSigner.CrtSigningResult> finalChunkResult = AwsSigner.SignChunk(null, chunkSignature, createChunkSigningConfig());
+            chunkSignature = finalChunkResult.Get().Signature;
+            Assert.True(chunkSignature.SequenceEqual(EXPECTED_FINAL_CHUNK_SIGNATURE));
+
+            HttpHeader[] trailingHeaders = createTrailingHeaders();
+            CrtResult<AwsSigner.CrtSigningResult> trailingHeadersResult = AwsSigner.SignTrailingHeaders(trailingHeaders, chunkSignature, createTrailingHeadersSigningConfig());
+            chunkSignature = trailingHeadersResult.Get().Signature;
+            Assert.True(chunkSignature.SequenceEqual(EXPECTED_TRAILING_HEADERS_SIGNATURE));
+        }
+
+        [Fact]
+        public void SignTrailingHeadersSigv4a()
+        {
+            HttpRequest request = createChunkedTestRequest();
+            AwsSigningConfig chunkedRequestSigningConfig = createChunkedRequestSigningConfig();
+            AwsSigningConfig chunkSigningConfig = createChunkSigningConfig();
+            AwsSigningConfig trailingHeadersSigningConfig = createTrailingHeadersSigningConfig();
+            chunkedRequestSigningConfig.Algorithm = AwsSigningAlgorithm.SIGV4A;
+            chunkSigningConfig.Algorithm = AwsSigningAlgorithm.SIGV4A;
+            trailingHeadersSigningConfig.Algorithm = AwsSigningAlgorithm.SIGV4A;
+
+            CrtResult<AwsSigner.CrtSigningResult> result = AwsSigner.SignHttpRequest(request, chunkedRequestSigningConfig);
+            AwsSigner.CrtSigningResult signingResult = result.Get();
+            HttpRequest signedRequest = signingResult.SignedRequest;
+            Assert.NotNull(signedRequest);
+
+            byte[] requestSignature = signingResult.Signature;
+
+            Stream chunk1 = createChunk1Stream();
+            CrtResult<AwsSigner.CrtSigningResult> chunk1Result = AwsSigner.SignChunk(chunk1, requestSignature, chunkSigningConfig);
+            String chunk1StringToSign = buildChunkStringToSign(requestSignature, CHUNK1_STS_POST_SIGNATURE);
+            byte[] chunkSignature = chunk1Result.Get().Signature;
+            Assert.True(AwsSigner.VerifyV4aSignature(chunk1StringToSign, chunkSignature,
+                VERIFIER_TEST_ECC_PUB_X, VERIFIER_TEST_ECC_PUB_Y));
+
+            Stream chunk2 = createChunk2Stream();
+            CrtResult<AwsSigner.CrtSigningResult> chunk2Result = AwsSigner.SignChunk(chunk2, chunkSignature, chunkSigningConfig);
+            String chunk2StringToSign = buildChunkStringToSign(chunkSignature, CHUNK2_STS_POST_SIGNATURE);
+            chunkSignature = chunk2Result.Get().Signature;
+            Assert.True(AwsSigner.VerifyV4aSignature(chunk2StringToSign, chunkSignature,
+                VERIFIER_TEST_ECC_PUB_X, VERIFIER_TEST_ECC_PUB_Y));
+
+            CrtResult<AwsSigner.CrtSigningResult> finalChunkResult = AwsSigner.SignChunk(null, chunkSignature, chunkSigningConfig);
+            String finalChunkStringToSign = buildChunkStringToSign(chunkSignature, CHUNK3_STS_POST_SIGNATURE);
+            chunkSignature = finalChunkResult.Get().Signature;
+            Assert.True(AwsSigner.VerifyV4aSignature(finalChunkStringToSign, chunkSignature,
+                VERIFIER_TEST_ECC_PUB_X, VERIFIER_TEST_ECC_PUB_Y));
+
+            HttpHeader[] trailingHeaders = createTrailingHeaders();
+            CrtResult<AwsSigner.CrtSigningResult> trailingHeadersResult = AwsSigner.SignTrailingHeaders(trailingHeaders, chunkSignature, trailingHeadersSigningConfig);
+            String trailingHeadersStringToSign = buildTrailingHeadersStringToSign(chunkSignature, TRAILING_HEADERS_STS_POST_SIGNATURE);
+            chunkSignature = trailingHeadersResult.Get().Signature;
+            Assert.True(AwsSigner.VerifyV4aSignature(trailingHeadersStringToSign, chunkSignature,
+                VERIFIER_TEST_ECC_PUB_X, VERIFIER_TEST_ECC_PUB_Y));
+        }
 
         private static string VERIFIER_TEST_ECC_PUB_X = "18b7d04643359f6ec270dcbab8dce6d169d66ddc9778c75cfb08dfdb701637ab";
         private static string VERIFIER_TEST_ECC_PUB_Y = "fa36b35e4fe67e3112261d2e17a956ef85b06e44712d2850bcd3c2161e9993f2";

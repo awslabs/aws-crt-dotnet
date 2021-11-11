@@ -226,6 +226,34 @@ on_error:
     return NULL;
 }
 
+struct aws_http_headers *aws_build_http_headers(struct aws_dotnet_http_header headers[], uint32_t header_count) {
+
+    struct aws_allocator *allocator = aws_dotnet_get_allocator();
+    struct aws_http_headers *c_headers = aws_http_headers_new(allocator);
+    if (c_headers == NULL) {
+        return NULL;
+    }
+
+    for (size_t i = 0; i < header_count; ++i) {
+        struct aws_http_header header;
+        AWS_ZERO_STRUCT(header);
+
+        header.name = aws_byte_cursor_from_c_str(headers[i].name);
+        header.value = aws_byte_cursor_from_c_str(headers[i].value);
+        if (aws_http_headers_add_header(c_headers, &header)) {
+            goto on_error;
+        }
+    }
+
+    return c_headers;
+
+on_error:
+
+    aws_http_headers_release(c_headers);
+
+    return NULL;
+}
+
 static void s_destroy_stream_wrapper(struct aws_dotnet_http_stream *stream_wrapper) {
     if (stream_wrapper == NULL) {
         return;
