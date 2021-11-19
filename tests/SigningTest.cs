@@ -581,7 +581,7 @@ namespace tests
             "x-amz-decoded-content-length:66560",
             "x-amz-region-set:us-east-1",
             "x-amz-storage-class:REDUCED_REDUNDANCY",
-            // "x-amz-trailer:first,second,third",
+            "x-amz-trailer:first,second,third",
             "",
             "content-encoding;content-length;host;x-amz-content-sha256;x-amz-date;x-amz-decoded-content-length;x-amz-region-set;x-amz-storage-class",//;x-amz-trailer
             "STREAMING-AWS4-ECDSA-P256-SHA256-PAYLOAD-TRAILER");
