@@ -494,7 +494,7 @@ namespace tests
         private static byte[] EXPECTED_FIRST_CHUNK_SIGNATURE = ASCIIEncoding.ASCII.GetBytes("ad80c730a21e5b8d04586a2213dd63b9a0e99e0e2307b0ade35a65485a288648");
         private static byte[] EXPECTED_SECOND_CHUNK_SIGNATURE = ASCIIEncoding.ASCII.GetBytes("0055627c9e194cb4542bae2aa5492e3c1575bbb81b612b7d234b86a503ef5497");
         private static byte[] EXPECTED_FINAL_CHUNK_SIGNATURE = ASCIIEncoding.ASCII.GetBytes("b6c6ea8a5354eaf15b3cb7646744f4275b71ea724fed81ceb9323e279d449df9");
-        private static byte[] EXPECTED_TRAILING_HEADERS_SIGNATURE = ASCIIEncoding.ASCII.GetBytes("0248ea7d40ea8edfeb417c5aab802f40ccf25c1f301f4f24d9032dea49bea897");
+        private static byte[] EXPECTED_TRAILING_HEADERS_SIGNATURE = ASCIIEncoding.ASCII.GetBytes("df5735bd9f3295cd9386572292562fefc93ba94e80a0a1ddcbd652c4e0a75e6c");
        
         [Fact]
         public void SignChunkedRequest()
@@ -551,7 +551,7 @@ namespace tests
         private static String TRAILING_HEADERS_STS_PRE_SIGNATURE = "AWS4-ECDSA-P256-SHA256-TRAILER\n" + "20130524T000000Z\n"
             + "20130524/s3/aws4_request\n";
 
-        private static String TRAILING_HEADERS_STS_POST_SIGNATURE = "\n5b4a086380541fa6563b4c1ac31944b8a16d9f9b23ffb3eaf8fb05dab863a691";
+        private static String TRAILING_HEADERS_STS_POST_SIGNATURE = "\n83d8f190334fb741bc8daf73c891689d320bd8017756bc730c540021ed48001f";
 
         private static String CHUNKED_SIGV4A_CANONICAL_REQUEST = String.Join("\n",
             "PUT",
@@ -666,7 +666,6 @@ namespace tests
             ASCIIEncoding ascii = new ASCIIEncoding();
 
             byte[] requestSignature = signingResult.Signature;
-            // Assert.True(AwsSigner.VerifyV4aCanonicalSigning(CHUNKED_SIGV4A_CANONICAL_REQUEST, chunkedRequestSigningConfig, ascii.GetString(requestSignature), VERIFIER_TEST_ECC_PUB_X, VERIFIER_TEST_ECC_PUB_Y));
 
             Stream chunk1 = createChunk1Stream();
             AwsSigningConfig chunkSigningConfig = createChunkSigningConfig();
@@ -711,8 +710,6 @@ namespace tests
 
             ASCIIEncoding ascii = new ASCIIEncoding();
             byte[] requestSignature = signingResult.Signature;
-            // Assert.True(AwsSigner.VerifyV4aCanonicalSigning(CHUNKED_TRAILER_SIGV4A_CANONICAL_REQUEST, chunkedRequestSigningConfig, ascii.GetString(requestSignature),
-            //     VERIFIER_TEST_ECC_PUB_X, VERIFIER_TEST_ECC_PUB_Y));
 
             Stream chunk1 = createChunk1Stream();
             CrtResult<AwsSigner.CrtSigningResult> chunk1Result = AwsSigner.SignChunk(chunk1, requestSignature, chunkSigningConfig);
