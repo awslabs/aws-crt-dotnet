@@ -455,7 +455,7 @@ namespace tests
                             new HttpHeader("Content-Encoding", "aws-chunked"),
                             new HttpHeader("x-amz-decoded-content-length", "66560"),
                             new HttpHeader("Content-Length", "66824"),
-                            // new HttpHeader("x-amz-trailer", "first,second,third")
+                            new HttpHeader("x-amz-trailer", "first,second,third")
                     };
 
             HttpRequest request = new HttpRequest();
@@ -583,7 +583,7 @@ namespace tests
             "x-amz-storage-class:REDUCED_REDUNDANCY",
             "x-amz-trailer:first,second,third",
             "",
-            "content-encoding;content-length;host;x-amz-content-sha256;x-amz-date;x-amz-decoded-content-length;x-amz-region-set;x-amz-storage-class",//;x-amz-trailer
+            "content-encoding;content-length;host;x-amz-content-sha256;x-amz-date;x-amz-decoded-content-length;x-amz-region-set;x-amz-storage-class;x-amz-trailer",
             "STREAMING-AWS4-ECDSA-P256-SHA256-PAYLOAD-TRAILER");
 
         private String buildTrailingHeadersStringToSign(byte[] previousSignature, String stsPostSignature) {
