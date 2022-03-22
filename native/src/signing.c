@@ -84,7 +84,7 @@ static void s_destroy_signing_callback_state(struct aws_dotnet_signing_callback_
     aws_string_destroy(callback_state->region);
     aws_string_destroy(callback_state->service);
     aws_string_destroy(callback_state->signed_body_value);
-    aws_input_stream_destroy(callback_state->body_stream);
+    aws_input_stream_release(callback_state->body_stream);
     aws_http_message_release(callback_state->request);
 
     aws_mem_release(aws_dotnet_get_allocator(), callback_state);
