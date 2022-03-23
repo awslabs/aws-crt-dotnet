@@ -262,7 +262,7 @@ static void s_destroy_stream_wrapper(struct aws_dotnet_http_stream *stream_wrapp
     if (stream_wrapper->request != NULL) {
         struct aws_input_stream *body_stream = aws_http_message_get_body_stream(stream_wrapper->request);
         if (body_stream != NULL) {
-            aws_input_stream_release(body_stream);
+            aws_input_stream_destroy(body_stream);
         }
 
         aws_http_message_release(stream_wrapper->request);
