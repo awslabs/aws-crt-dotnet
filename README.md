@@ -22,7 +22,8 @@ This library is licensed under the Apache 2.0 License.
 
 ### Test steps
 
-- `dotnet test tests`. For test a single test: `dotnet test tests --filter DisplayName~<ClassName/MethodName>`. Check [doc](https://docs.microsoft.com/en-us/dotnet/core/testing/selective-unit-tests?pivots=xunit) for details.
+- Run all tests together: `dotnet test tests`.
+- Run a single test: `dotnet test tests --filter DisplayName~<ClassName/MethodName>`. Check [doc](https://docs.microsoft.com/en-us/dotnet/core/testing/selective-unit-tests?pivots=xunit) for details.
 
 ## Mac-Only TLS Behavior
 
