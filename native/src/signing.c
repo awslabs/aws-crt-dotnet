@@ -316,7 +316,6 @@ AWS_DOTNET_API void aws_dotnet_auth_sign_http_request(
         goto on_error;
     }
 
-    continuation->body_stream = aws_input_stream_acquire(aws_http_message_get_body_stream(continuation->request));
     continuation->original_request_signable = aws_signable_new_http_request(allocator, continuation->request);
     if (continuation->original_request_signable == NULL) {
         goto on_error;
