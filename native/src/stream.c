@@ -10,6 +10,9 @@
 #include <aws/io/stream.h>
 
 struct aws_input_stream_dotnet_impl {
+    struct aws_input_stream base;
+    struct aws_allocator *allocator;
+
     struct aws_dotnet_stream_function_table delegates;
     enum aws_stream_state state;
 };
@@ -19,14 +22,14 @@ static int s_aws_input_stream_dotnet_seek(
     aws_off_t offset,
     enum aws_stream_seek_basis basis) {
 
-    struct aws_input_stream_dotnet_impl *impl = stream->impl;
+    struct aws_input_stream_dotnet_impl *impl = AWS_CONTAINER_OF(stream, struct aws_input_stream_dotnet_impl, base);
     bool success = impl->delegates.seek((int64_t)offset, (int32_t)basis);
 
     return success ? AWS_OP_SUCCESS : AWS_OP_ERR;
 }
 
 static int s_aws_input_stream_dotnet_read(struct aws_input_stream *stream, struct aws_byte_buf *dest) {
-    struct aws_input_stream_dotnet_impl *impl = stream->impl;
+    struct aws_input_stream_dotnet_impl *impl = AWS_CONTAINER_OF(stream, struct aws_input_stream_dotnet_impl, base);
 
     uint64_t buf_size = dest->capacity - dest->len;
     uint8_t *buf_ptr = dest->buffer + dest->len;
@@ -39,7 +42,7 @@ static int s_aws_input_stream_dotnet_read(struct aws_input_stream *stream, struc
 }
 
 static int s_aws_input_stream_dotnet_get_status(struct aws_input_stream *stream, struct aws_stream_status *status) {
-    struct aws_input_stream_dotnet_impl *impl = stream->impl;
+    struct aws_input_stream_dotnet_impl *impl = AWS_CONTAINER_OF(stream, struct aws_input_stream_dotnet_impl, base);
 
     status->is_end_of_stream = impl->state == STREAM_STATE_DONE;
     status->is_valid = true;
@@ -54,8 +57,8 @@ static int s_aws_input_stream_dotnet_get_length(struct aws_input_stream *stream,
     return AWS_OP_ERR;
 }
 
-static void s_aws_input_stream_dotnet_destroy(struct aws_input_stream *stream) {
-    aws_mem_release(stream->allocator, stream);
+static void s_aws_input_stream_dotnet_destroy(struct aws_input_stream_dotnet_impl *impl) {
+    aws_mem_release(impl->allocator, impl);
 }
 
 static struct aws_input_stream_vtable s_aws_input_stream_dotnet_vtable = {
@@ -63,7 +66,7 @@ static struct aws_input_stream_vtable s_aws_input_stream_dotnet_vtable = {
     .read = s_aws_input_stream_dotnet_read,
     .get_status = s_aws_input_stream_dotnet_get_status,
     .get_length = s_aws_input_stream_dotnet_get_length,
-    .destroy = s_aws_input_stream_dotnet_destroy};
+};
 
 struct aws_input_stream *aws_input_stream_new_dotnet(
     struct aws_allocator *allocator,
@@ -71,32 +74,19 @@ struct aws_input_stream *aws_input_stream_new_dotnet(
 
     AWS_FATAL_ASSERT(aws_stream_function_table_is_valid(function_table));
 
-    struct aws_input_stream *input_stream = NULL;
-    struct aws_input_stream_dotnet_impl *impl = NULL;
+    struct aws_input_stream_dotnet_impl *impl =
+        aws_mem_calloc(allocator, 1, sizeof(struct aws_input_stream_dotnet_impl));
 
-    aws_mem_acquire_many(
-        allocator,
-        2,
-        &input_stream,
-        sizeof(struct aws_input_stream),
-        &impl,
-        sizeof(struct aws_input_stream_dotnet_impl));
-
-    if (!input_stream) {
-        return NULL;
-    }
-
-    AWS_ZERO_STRUCT(*input_stream);
-    AWS_ZERO_STRUCT(*impl);
-
-    input_stream->allocator = allocator;
-    input_stream->vtable = &s_aws_input_stream_dotnet_vtable;
-    input_stream->impl = impl;
+    impl->allocator = allocator;
+    impl->base.vtable = &s_aws_input_stream_dotnet_vtable;
 
     impl->delegates = *function_table;
     impl->state = STREAM_STATE_IN_PROGRESS;
 
-    return input_stream;
+    aws_ref_count_init(
+        &impl->base.ref_count, impl, (aws_simple_completion_callback *)s_aws_input_stream_dotnet_destroy);
+
+    return &impl->base;
 }
 
 bool aws_stream_function_table_is_valid(struct aws_dotnet_stream_function_table *function_table) {
