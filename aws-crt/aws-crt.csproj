@@ -37,6 +37,14 @@
     <AssemblyOriginatorKeyFile Condition=" '$(AWSKeyFile)' == '' ">..\awssdk.dll.snk</AssemblyOriginatorKeyFile>
     <SignAssembly>true</SignAssembly>
 
+    <!--
+      AwsCrtPlatformTarget is a non-msbuild property that tells the crt build system what target to build the native source for.  We need it separate and independent from msbuild's PlatformTarget property because
+      the dotnet cli still has one or more bugs that make it very difficult to work with arm64 builds.  These issues can be worked around by not specifying a platform target until the final test step, but we still
+      need to be able to control what architecture the native code gets built for, hence the need for the new property.
+      -->
+    <AwsCrtPlatformTarget Condition="$(AwsCrtPlatformTarget) == '' AND $(PlatformTarget) == 'AnyCPU'">$([System.Runtime.InteropServices.RuntimeInformation]::ProcessArchitecture)</AwsCrtPlatformTarget>
+    <AwsCrtPlatformTarget Condition="$(AwsCrtPlatformTarget) == '' AND $(PlatformTarget) != 'AnyCPU'">$(PlatformTarget)</AwsCrtPlatformTarget>
+
     <CMakeGenerator64 Condition="$(CMakeGenerator64) == '' AND $(OS) == 'Windows_NT' AND $(VisualStudioVersion) == '14.0'">Visual Studio 14 2015 Win64</CMakeGenerator64>
     <CMakeGenerator64 Condition="$(CMakeGenerator64) == '' AND $(OS) == 'Windows_NT' AND $(VisualStudioVersion) == '15.0'">Visual Studio 15 2017 Win64</CMakeGenerator64>
     <CMakeGenerator64 Condition="$(CMakeGenerator64) == '' AND $(OS) == 'Windows_NT' AND $(VisualStudioVersion) == '16.0'">Visual Studio 16 2019</CMakeGenerator64>
@@ -48,6 +56,10 @@
     <CMakeGenerator86 Condition="$(CMakeGenerator86) == '' AND $(OS) == 'Windows_NT' AND $(VisualStudioVersion) == '16.0'">Visual Studio 16 2019</CMakeGenerator86>
     <CMakeGenerator86 Condition="$(CMakeGenerator86) == '' AND $(OS) == 'Unix'">Unix Makefiles</CMakeGenerator86>
     <CMakeArch86 Condition="$(CMakeGenerator86) == 'Visual Studio 16 2019'">-A Win32</CMakeArch86>
+
+    <IsOSPlatformOSX Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::OSX)))' == 'true'">true</IsOSPlatformOSX>
+    <CMakeOSXArchitectures Condition="$(IsOSPlatformOSX) AND $(AwsCrtPlatformTarget) == 'Arm64'">-DCMAKE_OSX_ARCHITECTURES=arm64</CMakeOSXArchitectures>
+    <CMakeOSXArchitectures Condition="$(IsOSPlatformOSX) AND $(AwsCrtPlatformTarget) == 'x64'">-DCMAKE_OSX_ARCHITECTURES=x86_64</CMakeOSXArchitectures>
 
     <CMakeBinaries>$(ProjectDir)../build</CMakeBinaries>
     <CMakeConfig Condition="$(Configuration) == 'Debug'">Debug</CMakeConfig>
@@ -65,15 +77,10 @@
     <MakeDir Directories="$(SolutionDir)/packages" />
   </Target>
 
-  <!-- 
-    AwsCrtPlatformTarget is a non-msbuild property that tells the crt build system what target to build the native source for.  We need it separate and independent from msbuild's PlatformTarget property because
-    the dotnet cli still has one or more bugs that make it very difficult to work with arm64 builds.  These issues can be worked around by not specifying a platform target until the final test step, but we still
-    need to be able to control what architecture the native code gets built for, hence the need for the new property.
-    -->
-  <Target Name="BuildNativeArm64Library" Condition="$(BuildNativeLibrary) == 'true' AND (($(PlatformTarget) == 'AnyCPU' AND $(AwsCrtPlatformTarget) == 'Arm64') OR $(PlatformTarget) == 'Arm64')" BeforeTargets="BuildNativeX64Library">
+  <Target Name="BuildNativeArm64Library" Condition="$(BuildNativeLibrary) == 'true' AND $(AwsCrtPlatformTarget) == 'Arm64'" BeforeTargets="BuildNativeX64Library">
     <Message Text="Configuring Arm64 CMake project" Importance="high" />
     <MakeDir Directories="$(CMakeBinaries)/Arm64" />
-    <Exec Command="cmake -G&quot;$(CMakeGenerator64)&quot; -DCMAKE_BUILD_TYPE=$(CMakeConfig) -DBUILD_TESTING=OFF -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON $(CMakeArch64) $(ProjectDir)../native" WorkingDirectory="$(CMakeBinaries)/Arm64" ConsoleToMSBuild="true">
+    <Exec Command="cmake -G&quot;$(CMakeGenerator64)&quot; -DCMAKE_BUILD_TYPE=$(CMakeConfig) -DBUILD_TESTING=OFF -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON $(CMakeArch64) $(CMakeOSXArchitectures) $(ProjectDir)../native" WorkingDirectory="$(CMakeBinaries)/Arm64" ConsoleToMSBuild="true">
       <Output TaskParameter="ConsoleOutput" PropertyName="OutputOfExec" />
     </Exec>
     <Message Text="Building Arm64 native library" Importance="high" />
@@ -82,10 +89,10 @@
     </Exec>
   </Target>
 
-  <Target Name="BuildNativeX64Library" Condition="$(BuildNativeLibrary) == 'true' AND (($(PlatformTarget) == 'AnyCPU' AND $(AwsCrtPlatformTarget) == 'x64') OR $(PlatformTarget) == 'x64')" BeforeTargets="BuildNativeX86Library">
+  <Target Name="BuildNativeX64Library" Condition="$(BuildNativeLibrary) == 'true' AND $(AwsCrtPlatformTarget) == 'x64'" BeforeTargets="BuildNativeX86Library">
     <Message Text="Configuring x64 CMake project" Importance="high" />
     <MakeDir Directories="$(CMakeBinaries)/x64" />
-    <Exec Command="cmake -G&quot;$(CMakeGenerator64)&quot; -DCMAKE_BUILD_TYPE=$(CMakeConfig) -DBUILD_TESTING=OFF -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON $(CMakeArch64) $(ProjectDir)../native" WorkingDirectory="$(CMakeBinaries)/x64" ConsoleToMSBuild="true">
+    <Exec Command="cmake -G&quot;$(CMakeGenerator64)&quot; -DCMAKE_BUILD_TYPE=$(CMakeConfig) -DBUILD_TESTING=OFF -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON $(CMakeArch64) $(CMakeOSXArchitectures) $(ProjectDir)../native" WorkingDirectory="$(CMakeBinaries)/x64" ConsoleToMSBuild="true">
       <Output TaskParameter="ConsoleOutput" PropertyName="OutputOfExec" />
     </Exec>
     <Message Text="Building x64 native library" Importance="high" />
@@ -94,7 +101,7 @@
     </Exec>
   </Target>
 
-  <Target Name="BuildNativeX86Library" Condition="$(BuildNativeLibrary) == 'true' AND (($(PlatformTarget) == 'AnyCPU' AND $(AwsCrtPlatformTarget) == 'x86') OR $(PlatformTarget) == 'x86') AND $(OS) == 'Windows_NT'" BeforeTargets="EmbedNativeLibraries">
+  <Target Name="BuildNativeX86Library" Condition="$(BuildNativeLibrary) == 'true' AND $(AwsCrtPlatformTarget) == 'x86' AND $(OS) == 'Windows_NT'" BeforeTargets="EmbedNativeLibraries">
     <Message Text="Configuring x86 CMake project" Importance="high" />
     <MakeDir Directories="$(CMakeBinaries)/x86" />
     <Exec Command="cmake -G&quot;$(CMakeGenerator86)&quot; -DCMAKE_BUILD_TYPE=$(CMakeConfig) -DBUILD_TESTING=OFF -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON $(CMakeArch86) $(ProjectDir)../native" WorkingDirectory="$(CMakeBinaries)/x86" ConsoleToMSBuild="true">
