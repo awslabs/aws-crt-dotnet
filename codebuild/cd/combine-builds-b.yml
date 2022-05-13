@@ -1,0 +1,11 @@
+version: 0.2
+# Get around CodeBuild's 5 artifact limit by combining them together
+phases:
+  build:
+    commands:
+      - cp -a $CODEBUILD_SRC_DIR_osx_x64/dist/. dist/
+      - cp -a $CODEBUILD_SRC_DIR_osx_arm64/dist/. dist/
+
+artifacts:
+  files:
+    - dist/**/*
