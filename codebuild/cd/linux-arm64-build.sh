@@ -23,6 +23,3 @@ dotnet build -f netstandard2.0 --configuration Release -p:AwsCrtPlatformTarget=A
 mkdir -p ../dist/Arm64/lib
 cp -rv build/Arm64/lib/*.so ../dist/Arm64/lib
 
-# Upload the lib to S3
-GIT_TAG=$(git describe --tags)
-aws s3 cp --recursive ../dist s3://aws-crt-dotnet-pipeline/${GIT_TAG}/lib

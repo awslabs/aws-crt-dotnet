@@ -31,30 +31,27 @@
                         "AWS_DOTNET_RUNTIME": "linux-x64"
                     },
                     "variables": {
-                        "platform_target": "x64",
                         "build_tests_args" : "",
                         "run_tests_args" : "",
                         "aws_crt_platform_target" : "x64"
-                    }                    
+                    }
                 },
                 "arm64": {
                     "build_env": {
                         "AWS_DOTNET_RUNTIME": "linux-arm64"
                     },
                     "variables": {
-                        "platform_target": "Arm64",
                         "run_tests_args" : "--runtime linux-arm64 -p:PlatformTarget=Arm -p:Platform=Arm",
                         "build_tests_args": "-p:AwsCrtPlatformTarget=Arm64 -p:Platform=Arm64 -p:PlatformTarget=Arm64 --runtime linux-arm64 && mv tests/bin/Arm64 tests/bin/Arm",
                         "aws_crt_platform_target" : "arm64"
-                    }                    
-                }                
+                    }
+                }
             }
         },
         "windows": {
             "architectures": {
                 "x86": {
                     "variables": {
-                        "platform_target": "x86",
                         "build_tests_args" : "",
                         "run_tests_args" : "",
                         "aws_crt_platform_target" : "x86"
@@ -62,10 +59,9 @@
                 },
                 "x64": {
                     "variables": {
-                        "platform_target": "x64",
                         "build_tests_args" : "",
                         "run_tests_args" : "",
-                        "aws_crt_platform_target" : "x64"                        
+                        "aws_crt_platform_target" : "x64"
                     }
                 }
             }
@@ -74,10 +70,16 @@
             "architectures": {
                 "x64": {
                     "variables": {
-                        "platform_target": "x64",
                         "build_tests_args" : "",
                         "run_tests_args" : "",
-                        "aws_crt_platform_target" : "x64"                        
+                        "aws_crt_platform_target" : "x64"
+                    }
+                },
+                "arm64": {
+                    "variables": {
+                        "build_tests_args" : "",
+                        "run_tests_args" : "",
+                        "aws_crt_platform_target" : "Arm64"
                     }
                 }
             }

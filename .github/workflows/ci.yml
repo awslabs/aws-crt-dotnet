@@ -7,15 +7,15 @@ on:
       - '!main'
 
 env:
-  BUILDER_VERSION: v0.8.30
+  BUILDER_VERSION: v0.9.17
   BUILDER_SOURCE: releases
   BUILDER_HOST: https://d19elf31gohf1l.cloudfront.net
   PACKAGE_NAME: aws-crt-dotnet
-  LINUX_BASE_IMAGE: ubuntu-16-x64
+  LINUX_BASE_IMAGE: ubuntu-18-x64
   RUN: ${{ github.run_id }}-${{ github.run_number }}
   AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-  AWS_REGION: us-east-1  
+  AWS_REGION: us-east-1
 
 jobs:
   linux-compat:
@@ -37,12 +37,12 @@ jobs:
         arch: [arm64]
     steps:
     - name: Install qemu/docker
-      run: docker run --rm --privileged multiarch/qemu-user-static --reset -p yes      
+      run: docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
         # We can't use the `uses: docker://image` version yet, GitHub lacks authentication for actions -> packages
     - name: Build ${{ env.PACKAGE_NAME }} + consumers
       run: |
         aws s3 cp s3://aws-crt-test-stuff/ci/${{ env.BUILDER_VERSION }}/linux-container-ci.sh ./linux-container-ci.sh && chmod a+x ./linux-container-ci.sh
-        ./linux-container-ci.sh ${{ env.BUILDER_VERSION }} aws-crt-ubuntu-20-aarch64 build -p ${{ env.PACKAGE_NAME }} --target=linux-${{ matrix.arch }} 
+        ./linux-container-ci.sh ${{ env.BUILDER_VERSION }} aws-crt-ubuntu-20-aarch64 build -p ${{ env.PACKAGE_NAME }} --target=linux-${{ matrix.arch }}
 
   linux-compiler-compat:
     runs-on: ubuntu-latest
@@ -120,6 +120,19 @@ jobs:
         python3 -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder')"
         chmod a+x builder
         ./builder build -p ${{ env.PACKAGE_NAME }} --spec=downstream
+
+  # cross-compile for Apple silicon
+  # it would be better to run tests natively on one of these machines,
+  # but we don't have access to one in the cloud, so for now just cross-compile
+  osx-arm64-cross-compile:
+    runs-on: macos-11
+    steps:
+    - name: Build ${{ env.PACKAGE_NAME }} + consumers
+      run: |
+        python3 -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder')"
+        chmod a+x builder
+        ./builder build -p ${{ env.PACKAGE_NAME }} --target macos-arm64 run_tests=false
+        test `lipo aws-crt-dotnet/build/Arm64/lib/libaws-crt-dotnet-ARM64.dylib -archs` = "arm64"
 
   check-submodules:
     runs-on: ubuntu-20.04
