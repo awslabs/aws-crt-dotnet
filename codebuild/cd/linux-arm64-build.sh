@@ -12,7 +12,6 @@ if ! type -P dotnet &> /dev/null; then
     export PATH=$PATH:~/.dotnet
 fi
 
-dotnet --info
 mkdir packages
 git submodule update --init
 
