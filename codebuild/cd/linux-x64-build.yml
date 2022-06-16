@@ -8,12 +8,14 @@ phases:
       - sudo apt-add-repository "deb http://apt.llvm.org/xenial/ llvm-toolchain-xenial-11 main"
       - sudo apt-get update -y
       - sudo apt-get install clang-11 cmake -y -f
-      - curl -LO https://dot.net/v1/dotnet-install.sh
-      - chmod u+x dotnet-install.sh
-      - ./dotnet-install.sh --version latest
+      # .NET Core install instructions taken from: https://docs.microsoft.com/en-us/dotnet/core/install/linux-ubuntu
+      - curl -L https://packages.microsoft.com/config/ubuntu/18.04/packages-microsoft-prod.deb --output /tmp/packages-microsoft-prod.deb
+      - sudo dpkg -i /tmp/packages-microsoft-prod.deb
+      - sudo apt-get install apt-transport-https
+      - sudo apt-get update -y
+      - sudo apt-get install dotnet-sdk-6.0 -y
   pre_build:
     commands:
-      - export PATH=$PATH:~/.dotnet
       - export CC=clang-11
       - export CXX=clang++-11
   build:
