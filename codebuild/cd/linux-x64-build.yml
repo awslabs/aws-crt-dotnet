@@ -20,6 +20,7 @@ phases:
       - export CXX=clang++-11
   build:
     commands:
+      - dotnet --info
       - cd aws-crt-dotnet
       - git submodule update --init
       - mkdir packages

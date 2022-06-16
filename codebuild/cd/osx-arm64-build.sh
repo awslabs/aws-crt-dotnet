@@ -12,6 +12,7 @@ if ! type -P dotnet &> /dev/null; then
     export PATH=$PATH:~/.dotnet
 fi
 
+dotnet --info
 mkdir packages
 git submodule update --init
 dotnet build -f netstandard2.0 --configuration Release -p:AwsCrtPlatformTarget=Arm64
