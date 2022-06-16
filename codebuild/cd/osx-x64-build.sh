@@ -5,7 +5,7 @@ set -ex
 cd /tmp
 curl -LO https://dot.net/v1/dotnet-install.sh
 chmod u+x dotnet-install.sh
-./dotnet-install.sh --version latest
+./dotnet-install.sh --channel 6.0
 cd -
 
 if ! type -P dotnet &> /dev/null; then

@@ -5,13 +5,14 @@ set -ex
 cd /tmp
 curl -LO https://dot.net/v1/dotnet-install.sh
 chmod u+x dotnet-install.sh
-./dotnet-install.sh --version latest --architecture arm64
+./dotnet-install.sh --channel 6.0 --architecture arm64
 cd -
 
 if ! type -P dotnet &> /dev/null; then
     export PATH=$PATH:~/.dotnet
 fi
 
+dotnet --info
 mkdir packages
 git submodule update --init
 
