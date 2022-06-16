@@ -2,16 +2,17 @@
 
 set -ex
 
+cd /tmp
+curl -LO https://dot.net/v1/dotnet-install.sh
+chmod u+x dotnet-install.sh
+./dotnet-install.sh --channel 6.0
+cd -
+
 if ! type -P dotnet &> /dev/null; then
-    if [ ! -e ~/.dotnet ]; then
-        cd /tmp
-        curl -LO https://dot.net/v1/dotnet-install.sh
-        chmod u+x dotnet-install.sh
-        ./dotnet-install.sh --channel 2.2
-    fi
     export PATH=$PATH:~/.dotnet
 fi
 
+dotnet --info
 mkdir packages
 git submodule update --init
 dotnet build -f netstandard2.0 --configuration Release -p:AwsCrtPlatformTarget=Arm64
