@@ -133,8 +133,10 @@ static int s_stream_on_incoming_headers(
             aws_string_new_from_array(allocator, headers[header_idx].name.ptr, headers[header_idx].name.len);
         header_strings[header_idx + 1] =
             aws_string_new_from_array(allocator, headers[header_idx].value.ptr, headers[header_idx].value.len);
-        dotnet_headers[header_idx].name = (const char *)header_strings[header_idx]->bytes;
-        dotnet_headers[header_idx].value = (const char *)header_strings[header_idx + 1]->bytes;
+        dotnet_headers[header_idx].name = (uint8_t *)aws_string_bytes(header_strings[header_idx]);
+        dotnet_headers[header_idx].name_len = (int)header_strings[header_idx]->len;
+        dotnet_headers[header_idx].value = (uint8_t *)aws_string_bytes(header_strings[header_idx + 1]);
+        dotnet_headers[header_idx].value_len = (int)header_strings[header_idx + 1]->len;
     }
 
     int status = 0;
@@ -201,8 +203,8 @@ struct aws_http_message *aws_build_http_request(
         struct aws_http_header header;
         AWS_ZERO_STRUCT(header);
 
-        header.name = aws_byte_cursor_from_c_str(headers[i].name);
-        header.value = aws_byte_cursor_from_c_str(headers[i].value);
+        header.name = aws_byte_cursor_from_array(headers[i].name, headers[i].name_len);
+        header.value = aws_byte_cursor_from_array(headers[i].value, headers[i].value_len);
         if (aws_http_message_add_header(request, header)) {
             goto on_error;
         }

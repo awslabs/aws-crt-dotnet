@@ -12,8 +12,10 @@ struct aws_http_message;
 struct aws_dotnet_stream_function_table;
 
 struct aws_dotnet_http_header {
-    const char *name;
-    const char *value;
+    uint8_t *name;
+    int name_len;
+    uint8_t *value;
+    int value_len;
 };
 
 struct aws_http_message *aws_build_http_request(
