@@ -131,8 +131,6 @@ namespace Aws.Crt.Http
         public Stream BodyStream { get; set; }
     }
 
-
-
     [StructLayout(LayoutKind.Sequential, CharSet=CharSet.Ansi)]
     public struct HttpHeader
     {
@@ -142,10 +140,38 @@ namespace Aws.Crt.Http
         [MarshalAs(UnmanagedType.LPStr)]
         public string Value;
 
+        private Int32 nameSize;
+
+        private Int32 valueSize;
+
         public HttpHeader(string name, string value)
         {
             Name = name;
             Value = value;
+            nameSize = name.Length;
+            valueSize = value.Length;
+        }
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct HttpHeaderNative
+    {
+        private IntPtr name;
+
+        private IntPtr value;
+
+        private Int32 nameSize;
+
+        private Int32 valueSize;
+
+        public String Name
+        {
+            get { return Marshal.PtrToStringAnsi(name, nameSize); }
+        }
+
+        public String Value
+        {
+            get { return Marshal.PtrToStringAnsi(value, valueSize); }
         }
     }
 
@@ -157,7 +183,7 @@ namespace Aws.Crt.Http
             internal delegate void OnIncomingHeadersNative(
                                     Int32 responseCode,
                                     [MarshalAs(UnmanagedType.I4)] HeaderBlock headerBlock,
-                                    [In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex=3)] HttpHeader[] headers, 
+                                    [In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex=3)] HttpHeaderNative[] headers, 
                                     UInt32 count);
             internal delegate void OnIncomingHeaderBlockDoneNative(
                                     [MarshalAs(UnmanagedType.I4)] HeaderBlock headerBlock);
@@ -255,7 +281,8 @@ namespace Aws.Crt.Http
                 if (ResponseStatusCode == 0) {
                     ResponseStatusCode = responseCode;
                 }
-                responseHandler.OnIncomingHeaders(this, block, headers);
+                responseHandler.OnIncomingHeaders(this, block,
+                    Array.ConvertAll(headers, header => new HttpHeader(header.Name, header.Value)));
             };
 
             onIncomingHeaderBlockDone = (block) =>
