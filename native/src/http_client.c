@@ -191,7 +191,6 @@ struct aws_http_message *aws_build_http_request(
         goto on_error;
     }
 
-
     for (size_t i = 0; i < header_count; ++i) {
         struct aws_http_header header;
         AWS_ZERO_STRUCT(header);
