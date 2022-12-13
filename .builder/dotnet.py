@@ -38,7 +38,8 @@ class DotNet(Builder.Import):
         if dotnet_path:
             self.path = dotnet_path
             self.installed = True
-            print('already_installed={}'.format(dotnet_path))
+            print
+            print('already_installed path={} sdks={}'.format(dotnet_path, sh.exec('dotnet --list-sdks')))
             return
 
         script_url = URLs.get(env.spec.target, None)
