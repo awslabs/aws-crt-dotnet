@@ -1,15 +1,18 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  
-  <PropertyGroup Condition="$(PlatformTarget) == '' AND $(OS) == 'Windows_NT' AND ($(CMakeGenerator) == 'Visual Studio 14 2015' OR $(CMakeGenerator) == 'Visual Studio 15 2017')">
-        <TargetFrameworks>>netcoreapp3.1</TargetFrameworks>
-        <PlatformTarget>x86</PlatformTarget>
-        <IsPackable>false</IsPackable>
+  <PropertyGroup>
+    <TargetFrameworks>netcoreapp3.1;net5.0</TargetFrameworks>
+    <PlatformTarget Condition="$(PlatformTarget) == '' AND $(OS) == 'Windows_NT' AND ($(CMakeGenerator) == 'Visual Studio 14 2015' OR $(CMakeGenerator) == 'Visual Studio 15 2017')">x86</PlatformTarget>
+    <PlatformTarget Condition="$(PlatformTarget) == ''">x64</PlatformTarget>
+    <IsPackable>false</IsPackable>
   </PropertyGroup>
-  <PropertyGroup Condition="$(PlatformTarget) == ''"> 
-      <TargetFrameworks>netcoreapp3.1;net5.0</TargetFrameworks>
-      <PlatformTarget>x64</PlatformTarget>
-      <IsPackable>false</IsPackable>
+
+  <PropertyGroup Condition="$(PlatformTarget) == 'x64'">
+    <TargetFrameworks>netcoreapp3.1;net5.0</TargetFrameworks>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="$(PlatformTarget) == 'x86'">
+    <TargetFrameworks>netcoreapp3.1</TargetFrameworks>
   </PropertyGroup>
 
   <ItemGroup>
