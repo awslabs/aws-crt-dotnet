@@ -28,7 +28,7 @@ class DotNet(Builder.Import):
 
     def install(self, env):
 
-        print('running install')
+        print('running install {}'.format(self.channels))
         if self.installed:
             return
 
