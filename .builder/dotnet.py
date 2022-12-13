@@ -28,6 +28,7 @@ class DotNet(Builder.Import):
 
     def install(self, env):
 
+        print('running install')
         if self.installed:
             return
 
@@ -37,6 +38,7 @@ class DotNet(Builder.Import):
         if dotnet_path:
             self.path = dotnet_path
             self.installed = True
+            print('already_installed={}'.format(dotnet_path))
             return
 
         script_url = URLs.get(env.spec.target, None)
@@ -69,7 +71,7 @@ class DotNet(Builder.Import):
                     script, version, arch, install_dir).split(' ')
 
             print('running={}'.format(command))
-            
+
             # Run installer
             sh.exec(command, check=True)
 
