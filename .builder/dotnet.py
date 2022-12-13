@@ -68,6 +68,8 @@ class DotNet(Builder.Import):
                 command = '{} --channel {} --architecture {} --install-dir {}'.format(
                     script, version, arch, install_dir).split(' ')
 
+            print('running={}'.format(command))
+            
             # Run installer
             sh.exec(command, check=True)
 
