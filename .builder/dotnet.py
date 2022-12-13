@@ -28,18 +28,16 @@ class DotNet(Builder.Import):
 
     def install(self, env):
 
-        print('running install {}'.format(self.channels))
         if self.installed:
             return
 
         sh = env.shell
 
         dotnet_path = sh.where('dotnet')
-        #if dotnet_path:
-        #    self.path = dotnet_path
-        #    self.installed = True
-        #    print('already_installed path={} sdks={}'.format(dotnet_path, sh.exec('dotnet --list-sdks')))
-        #    return
+        if dotnet_path:
+            self.path = dotnet_path
+            self.installed = True
+            return
 
         script_url = URLs.get(env.spec.target, None)
         if not script_url:
@@ -69,8 +67,6 @@ class DotNet(Builder.Import):
             else:
                 command = '{} --channel {} --architecture {} --install-dir {}'.format(
                     script, version, arch, install_dir).split(' ')
-
-            print('running={}'.format(command))
 
             # Run installer
             sh.exec(command, check=True)
