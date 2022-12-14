@@ -153,6 +153,17 @@ namespace Aws.Crt.Http
         }
     }
 
+    /*
+    * Note: Mono does not support marshalling of arrays with non-blittable
+    * members from native (but it can marshall them to native). 
+    * HttpHeaderNative is a blittable version of HttpHeader
+    * (both can marshall aws_dotnet_http_header from native).
+    * Use HttpHeaderNative in callbacks from native that need to pass array of
+    * headers. And HttpHeader otherwise.
+    * Note: HttpHeaderNative holds on to native string pointer, so its only valid
+    * while native pointer is valid, i.e. within the callback, and needs to be
+    * transformed to HttpHeader if data is used outside of callback scope.
+    */
     [StructLayout(LayoutKind.Sequential)]
     public struct HttpHeaderNative
     {
