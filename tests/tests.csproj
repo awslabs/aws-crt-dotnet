@@ -1,16 +1,21 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netcoreapp3.1;net5.0</TargetFrameworks>
     <PlatformTarget Condition="$(PlatformTarget) == '' AND $(OS) == 'Windows_NT' AND ($(CMakeGenerator) == 'Visual Studio 14 2015' OR $(CMakeGenerator) == 'Visual Studio 15 2017')">x86</PlatformTarget>
     <PlatformTarget Condition="$(PlatformTarget) == ''">x64</PlatformTarget>
     <IsPackable>false</IsPackable>
+    <XunitConsole>mono $(NuGetPackageRoot)xunit.runner.console/2.4.2/tools/net472/xunit.console.exe</XunitConsole>
   </PropertyGroup>
 
   <PropertyGroup Condition="$(PlatformTarget) == 'x64'">
     <TargetFrameworks>netcoreapp3.1;net5.0</TargetFrameworks>
   </PropertyGroup>
 
+  <!-- TODO: github actions windows-2019 image no longer inlcudes x86 version of
+    net5.0 (only 3.1 and 6.0 are available) and our script for installing deps.
+    is broken on windows.
+    Disable net5.0 for x86 for now and migrate to 6.0 (5.0 is eol)/fix dep
+    script. -->
   <PropertyGroup Condition="$(PlatformTarget) == 'x86'">
     <TargetFrameworks>netcoreapp3.1</TargetFrameworks>
   </PropertyGroup>
@@ -18,7 +23,6 @@
   <ItemGroup>
     <PackageReference Include="xunit" Version="2.4.2" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.4.0" />
-    <PackageReference Include="xunit.runner.visualstudio" Version="2.4.5" />
     <PackageReference Include="xunit.runner.console" Version="2.4.2">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
@@ -31,5 +35,10 @@
     <PackageReference Include="AWSCRT-CAL" Version="1.0.0-dev" />
     <PackageReference Include="AWSCRT-CHECKSUMS" Version="1.0.0-dev" />
   </ItemGroup>
+
+  <Target Name="MonoTest" DependsOnTargets="Build">
+    <Exec Command="$(XunitConsole) $(MSBuildProjectDirectory)/$(OutputPath)netcoreapp3.1/tests.dll" />
+  </Target>
+
 
 </Project>
