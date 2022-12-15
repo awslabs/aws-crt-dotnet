@@ -135,21 +135,39 @@ namespace Aws.Crt.Http
     public struct HttpHeader
     {
         [MarshalAs(UnmanagedType.LPStr)]
-        public readonly string Name;
+        private string name;
 
         [MarshalAs(UnmanagedType.LPStr)]
-        public readonly string Value;
+        private string value;
 
         private Int32 nameSize;
 
         private Int32 valueSize;
 
+        public String Name
+        {
+            get { return this.name; }
+            set {
+                this.name = value;
+                this.nameSize = this.name.Length;
+            }
+        }
+
+        public String Value
+        {
+            get { return this.value; }
+            set {
+                this.value = value;
+                this.valueSize = this.value.Length;
+            }
+        }
+
         public HttpHeader(string name, string value)
         {
-            Name = name;
-            Value = value;
-            nameSize = name.Length;
-            valueSize = value.Length;
+            this.name = name;
+            this.value = value;
+            this.nameSize = name.Length;
+            this.valueSize = value.Length;
         }
     }
 
