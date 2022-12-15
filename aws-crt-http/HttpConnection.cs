@@ -135,10 +135,10 @@ namespace Aws.Crt.Http
     public struct HttpHeader
     {
         [MarshalAs(UnmanagedType.LPStr)]
-        public string Name;
+        public readonly string Name;
 
         [MarshalAs(UnmanagedType.LPStr)]
-        public string Value;
+        public readonly string Value;
 
         private Int32 nameSize;
 
