@@ -165,7 +165,7 @@ namespace Aws.Crt.Auth
                 [In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex=3)] byte[] signatureBuffer,
                 UInt64 signatureBufferSize,
                 [MarshalAs(UnmanagedType.LPStr)] string signedUri, 
-                [In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex=6)] HttpHeader[] signedHeaders, 
+                [In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex=6)] HttpHeaderNative[] signedHeaders, 
                 UInt32 signedHeaderCount);
 
             [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl)]
@@ -281,7 +281,7 @@ namespace Aws.Crt.Auth
         private static StrongReferenceVendor<ChunkSigningCallbackData> PendingChunkSignings = new StrongReferenceVendor<ChunkSigningCallbackData>();
         private static StrongReferenceVendor<TrailingHeadersSigningCallbackData> PendingTrailingHeadersSignings = new StrongReferenceVendor<TrailingHeadersSigningCallbackData>();
 
-        private static void OnHttpRequestSigningComplete(ulong id, int errorCode, byte[] signatureBuffer, ulong signatureBufferSize, string uri, HttpHeader[] headers, uint headerCount)
+        private static void OnHttpRequestSigningComplete(ulong id, int errorCode, byte[] signatureBuffer, ulong signatureBufferSize, string uri, HttpHeaderNative[] headers, uint headerCount)
         {
             HttpRequestSigningCallbackData callback = PendingHttpRequestSignings.ReleaseStrongReference(id);
             if (callback == null) {
@@ -298,7 +298,7 @@ namespace Aws.Crt.Auth
                 HttpRequest signedRequest = new HttpRequest();
                 signedRequest.Method = sourceRequest.Method;
                 signedRequest.Uri = uri;
-                signedRequest.Headers = headers;
+                signedRequest.Headers = Array.ConvertAll(headers, header => new HttpHeader(header.Name, header.Value));
                 signedRequest.BodyStream = sourceRequest.BodyStream;
 
                 CrtSigningResult result = new CrtSigningResult();
@@ -340,7 +340,7 @@ namespace Aws.Crt.Auth
             return callback.Result;
         }
 
-        private static void OnCanonicalRequestSigningComplete(ulong id, int errorCode, byte[] signatureBuffer, ulong signatureBufferSize, string uri, HttpHeader[] headers, uint headerCount)
+        private static void OnCanonicalRequestSigningComplete(ulong id, int errorCode, byte[] signatureBuffer, ulong signatureBufferSize, string uri, HttpHeaderNative[] headers, uint headerCount)
         {
             CanonicalRequestSigningCallbackData callback = PendingCanonicalRequestSignings.ReleaseStrongReference(id);
             if (callback == null) {
@@ -392,7 +392,7 @@ namespace Aws.Crt.Auth
             return callback.Result;
         }     
 
-        private static void OnChunkSigningComplete(ulong id, int errorCode, byte[] signatureBuffer, ulong signatureBufferSize, string uri, HttpHeader[] headers, uint headerCount)
+        private static void OnChunkSigningComplete(ulong id, int errorCode, byte[] signatureBuffer, ulong signatureBufferSize, string uri, HttpHeaderNative[] headers, uint headerCount)
         {
             ChunkSigningCallbackData callback = PendingChunkSignings.ReleaseStrongReference(id);
             if (callback == null) {
@@ -435,7 +435,7 @@ namespace Aws.Crt.Auth
             return callback.Result;
         }
 
-        private static void OnTrailingHeadersSigningComplete(ulong id, int errorCode, byte[] signatureBuffer, ulong signatureBufferSize, string uri, HttpHeader[] headers, uint headerCount)
+        private static void OnTrailingHeadersSigningComplete(ulong id, int errorCode, byte[] signatureBuffer, ulong signatureBufferSize, string uri, HttpHeaderNative[] headers, uint headerCount)
         {
             TrailingHeadersSigningCallbackData callback = PendingTrailingHeadersSignings.ReleaseStrongReference(id);
             if (callback == null) {

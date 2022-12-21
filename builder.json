@@ -84,5 +84,13 @@
                 }
             }
         }
+    },
+
+    "variants": {
+        "mono_test" : {
+            "!test_steps": [
+                "dotnet build tests/tests.csproj -t:MonoTest {build_tests_args}"
+            ]
+        }
     }
 }

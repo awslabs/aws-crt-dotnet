@@ -186,13 +186,8 @@ static void s_complete_http_request_signing_normally(
 
     size_t header_count = aws_http_message_get_header_count(callback_state->request);
     AWS_VARIABLE_LENGTH_ARRAY(struct aws_dotnet_http_header, dotnet_headers, header_count);
-    AWS_VARIABLE_LENGTH_ARRAY(struct aws_string *, header_strings, header_count * 2);
 
     for (size_t header_idx = 0; header_idx < header_count; ++header_idx) {
-        size_t string_index = header_idx * 2;
-        header_strings[string_index] = NULL;
-        header_strings[string_index + 1] = NULL;
-
         AWS_ZERO_STRUCT(dotnet_headers[header_idx]);
 
         struct aws_http_header header;
@@ -202,11 +197,10 @@ static void s_complete_http_request_signing_normally(
             continue;
         }
 
-        header_strings[string_index] = aws_string_new_from_array(allocator, header.name.ptr, header.name.len);
-        header_strings[string_index + 1] = aws_string_new_from_array(allocator, header.value.ptr, header.value.len);
-
-        dotnet_headers[header_idx].name = (const char *)header_strings[string_index]->bytes;
-        dotnet_headers[header_idx].value = (const char *)header_strings[string_index + 1]->bytes;
+        dotnet_headers[header_idx].name = (const char *)header.name.ptr;
+        dotnet_headers[header_idx].name_size = header.name.len;
+        dotnet_headers[header_idx].value = (const char *)header.value.ptr;
+        dotnet_headers[header_idx].value_size = header.value.len;
     }
 
     callback_state->on_signing_complete(
@@ -219,10 +213,6 @@ static void s_complete_http_request_signing_normally(
         (uint32_t)header_count);
 
     aws_string_destroy(uri);
-
-    for (size_t idx = 0; idx < header_count * 2; ++idx) {
-        aws_string_destroy(header_strings[idx]);
-    }
 }
 
 static void s_complete_http_request_signing(

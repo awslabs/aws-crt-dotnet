@@ -14,6 +14,8 @@ struct aws_dotnet_stream_function_table;
 struct aws_dotnet_http_header {
     const char *name;
     const char *value;
+    int32_t name_size;
+    int32_t value_size;
 };
 
 struct aws_http_message *aws_build_http_request(

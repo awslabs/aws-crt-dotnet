@@ -131,21 +131,76 @@ namespace Aws.Crt.Http
         public Stream BodyStream { get; set; }
     }
 
-
-
     [StructLayout(LayoutKind.Sequential, CharSet=CharSet.Ansi)]
     public struct HttpHeader
     {
         [MarshalAs(UnmanagedType.LPStr)]
-        public string Name;
+        private string name;
 
         [MarshalAs(UnmanagedType.LPStr)]
-        public string Value;
+        private string value;
+
+        private Int32 nameSize;
+
+        private Int32 valueSize;
+
+        public String Name
+        {
+            get { return this.name; }
+            set {
+                this.name = value;
+                this.nameSize = this.name.Length;
+            }
+        }
+
+        public String Value
+        {
+            get { return this.value; }
+            set {
+                this.value = value;
+                this.valueSize = this.value.Length;
+            }
+        }
 
         public HttpHeader(string name, string value)
         {
-            Name = name;
-            Value = value;
+            this.name = name;
+            this.value = value;
+            this.nameSize = name.Length;
+            this.valueSize = value.Length;
+        }
+    }
+
+    /*
+    * Note: Mono does not support marshalling of arrays with non-blittable
+    * members from native (but it can marshall them to native). 
+    * HttpHeaderNative is a blittable version of HttpHeader
+    * (both can marshall aws_dotnet_http_header from native).
+    * Use HttpHeaderNative in callbacks from native that need to pass array of
+    * headers. And HttpHeader otherwise.
+    * Note: HttpHeaderNative holds on to native string pointer, so its only valid
+    * while native pointer is valid, i.e. within the callback, and needs to be
+    * transformed to HttpHeader if data is used outside of callback scope.
+    */
+    [StructLayout(LayoutKind.Sequential)]
+    public struct HttpHeaderNative
+    {
+        private IntPtr name;
+
+        private IntPtr value;
+
+        private Int32 nameSize;
+
+        private Int32 valueSize;
+
+        public String Name
+        {
+            get { return Marshal.PtrToStringAnsi(name, nameSize); }
+        }
+
+        public String Value
+        {
+            get { return Marshal.PtrToStringAnsi(value, valueSize); }
         }
     }
 
@@ -157,7 +212,7 @@ namespace Aws.Crt.Http
             internal delegate void OnIncomingHeadersNative(
                                     Int32 responseCode,
                                     [MarshalAs(UnmanagedType.I4)] HeaderBlock headerBlock,
-                                    [In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex=3)] HttpHeader[] headers, 
+                                    [In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex=3)] HttpHeaderNative[] headers, 
                                     UInt32 count);
             internal delegate void OnIncomingHeaderBlockDoneNative(
                                     [MarshalAs(UnmanagedType.I4)] HeaderBlock headerBlock);
@@ -255,7 +310,8 @@ namespace Aws.Crt.Http
                 if (ResponseStatusCode == 0) {
                     ResponseStatusCode = responseCode;
                 }
-                responseHandler.OnIncomingHeaders(this, block, headers);
+                responseHandler.OnIncomingHeaders(this, block,
+                    Array.ConvertAll(headers, header => new HttpHeader(header.Name, header.Value)));
             };
 
             onIncomingHeaderBlockDone = (block) =>

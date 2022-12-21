@@ -67,6 +67,15 @@ jobs:
         aws s3 cp s3://aws-crt-test-stuff/ci/${{ env.BUILDER_VERSION }}/linux-container-ci.sh ./linux-container-ci.sh && chmod a+x ./linux-container-ci.sh
         ./linux-container-ci.sh ${{ env.BUILDER_VERSION }} aws-crt-${{ env.LINUX_BASE_IMAGE }} build -p ${{ env.PACKAGE_NAME }} --compiler=${{ matrix.compiler }} --spec downstream
 
+  linux_mono:
+    runs-on: ubuntu-20.04 
+    steps:
+      - name: Build ${{ env.PACKAGE_NAME }}
+        run: |
+          python3 -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder')"
+          chmod a+x builder
+          ./builder build -p ${{ env.PACKAGE_NAME }} --variant=mono_test
+
   clang-sanitizers:
     runs-on: ubuntu-20.04
     strategy:
@@ -110,7 +119,7 @@ jobs:
     - name: Build ${{ env.PACKAGE_NAME }} + consumers
       run: |
         python -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder.pyz')"
-        python builder.pyz build -p ${{ env.PACKAGE_NAME }} downstream
+        python builder.pyz build -p ${{ env.PACKAGE_NAME }} --target windows-${{ matrix.arch }} --compiler msvc-14 downstream
 
   osx:
     runs-on: macos-11
@@ -138,7 +147,7 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
     - name: Checkout Source
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         submodules: true
         fetch-depth: 0

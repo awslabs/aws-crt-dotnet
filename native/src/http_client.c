@@ -125,24 +125,18 @@ static int s_stream_on_incoming_headers(
     (void)s;
 
     struct aws_dotnet_http_stream *stream = user_data;
-    struct aws_allocator *allocator = aws_dotnet_get_allocator();
     AWS_VARIABLE_LENGTH_ARRAY(struct aws_dotnet_http_header, dotnet_headers, header_count);
-    AWS_VARIABLE_LENGTH_ARRAY(struct aws_string *, header_strings, header_count * 2);
+
     for (size_t header_idx = 0; header_idx < header_count; ++header_idx) {
-        header_strings[header_idx] =
-            aws_string_new_from_array(allocator, headers[header_idx].name.ptr, headers[header_idx].name.len);
-        header_strings[header_idx + 1] =
-            aws_string_new_from_array(allocator, headers[header_idx].value.ptr, headers[header_idx].value.len);
-        dotnet_headers[header_idx].name = (const char *)header_strings[header_idx]->bytes;
-        dotnet_headers[header_idx].value = (const char *)header_strings[header_idx + 1]->bytes;
+        dotnet_headers[header_idx].name = (const char *)headers[header_idx].name.ptr;
+        dotnet_headers[header_idx].name_size = headers[header_idx].name.len;
+        dotnet_headers[header_idx].value = (const char *)headers[header_idx].value.ptr;
+        dotnet_headers[header_idx].value_size = headers[header_idx].value.len;
     }
 
     int status = 0;
     aws_http_stream_get_incoming_response_status(stream->stream, &status);
     stream->on_incoming_headers(status, header_block, dotnet_headers, (uint32_t)header_count);
-    for (size_t idx = 0; idx < header_count * 2; ++idx) {
-        aws_string_destroy(header_strings[idx]);
-    }
 
     return AWS_OP_SUCCESS;
 }
@@ -201,8 +195,11 @@ struct aws_http_message *aws_build_http_request(
         struct aws_http_header header;
         AWS_ZERO_STRUCT(header);
 
-        header.name = aws_byte_cursor_from_c_str(headers[i].name);
-        header.value = aws_byte_cursor_from_c_str(headers[i].value);
+        struct aws_string *name_string = aws_string_new_from_c_str(allocator, headers[i].name);
+        struct aws_string *value_string = aws_string_new_from_c_str(allocator, headers[i].value);
+
+        header.name = aws_byte_cursor_from_string(name_string);
+        header.value = aws_byte_cursor_from_string(value_string);
         if (aws_http_message_add_header(request, header)) {
             goto on_error;
         }
