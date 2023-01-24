@@ -110,11 +110,12 @@ jobs:
       matrix:
         arch: [x86, x64]
     steps:
-    - uses: ilammy/msvc-dev-cmd@v1
     - uses: actions/checkout@v3
     - uses: actions/setup-dotnet@v3
       with:
         dotnet-version: 5.0
+    - uses: ilammy/msvc-dev-cmd@v1
+      with:
         toolset: 14.0
         arch: ${{ matrix.arch }}
         uwp: false
