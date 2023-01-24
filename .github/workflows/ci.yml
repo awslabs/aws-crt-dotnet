@@ -110,11 +110,7 @@ jobs:
       matrix:
         arch: [x64]
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-dotnet@v3
-      with:
-        dotnet-version: 5.0
-    - uses: ilammy/msvc-dev-cmd@v1
+    - uses: TheMrMilchmann/setup-msvc-dev@v2
       with:
         toolset: 14.0
         arch: ${{ matrix.arch }}
@@ -131,11 +127,7 @@ jobs:
       matrix:
         arch: [x86]
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-dotnet@v3
-      with:
-        dotnet-version: 5.0
-    - uses: ilammy/msvc-dev-cmd@v1
+    - uses: TheMrMilchmann/setup-msvc-dev@v2
       with:
         toolset: 14.0
         arch: ${{ matrix.arch }}
