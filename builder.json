@@ -31,9 +31,9 @@
                         "AWS_DOTNET_RUNTIME": "linux-x64"
                     },
                     "variables": {
-                        "build_tests_args": "",
-                        "run_tests_args": "",
-                        "aws_crt_platform_target": "x64"
+                        "build_tests_args" : "",
+                        "run_tests_args" : "",
+                        "aws_crt_platform_target" : "x64"
                     }
                 },
                 "arm64": {
@@ -41,9 +41,9 @@
                         "AWS_DOTNET_RUNTIME": "linux-arm64"
                     },
                     "variables": {
-                        "run_tests_args": "--runtime linux-arm64 -p:PlatformTarget=Arm -p:Platform=Arm",
+                        "run_tests_args" : "--runtime linux-arm64 -p:PlatformTarget=Arm -p:Platform=Arm",
                         "build_tests_args": "-p:AwsCrtPlatformTarget=Arm64 -p:Platform=Arm64 -p:PlatformTarget=Arm64 --runtime linux-arm64 && mv tests/bin/Arm64 tests/bin/Arm",
-                        "aws_crt_platform_target": "arm64"
+                        "aws_crt_platform_target" : "arm64"
                     }
                 }
             }
@@ -52,42 +52,43 @@
             "architectures": {
                 "x86": {
                     "variables": {
-                        "build_tests_args": "",
-                        "run_tests_args": "",
-                        "aws_crt_platform_target": "x86"
+                        "build_tests_args" : "",
+                        "run_tests_args" : "",
+                        "aws_crt_platform_target" : "x86"
                     },
-                    "!test_steps": []
+		    "!test_steps": []
                 },
                 "x64": {
                     "variables": {
-                        "build_tests_args": "",
-                        "run_tests_args": "",
-                        "aws_crt_platform_target": "x64"
+                        "build_tests_args" : "",
+                        "run_tests_args" : "",
+                        "aws_crt_platform_target" : "x64"
                     }
                 }
             }
         },
-        "macos": {
+        "macos" :{
             "architectures": {
                 "x64": {
                     "variables": {
-                        "build_tests_args": "",
-                        "run_tests_args": "",
-                        "aws_crt_platform_target": "x64"
+                        "build_tests_args" : "",
+                        "run_tests_args" : "",
+                        "aws_crt_platform_target" : "x64"
                     }
                 },
                 "arm64": {
                     "variables": {
-                        "build_tests_args": "",
-                        "run_tests_args": "",
-                        "aws_crt_platform_target": "Arm64"
+                        "build_tests_args" : "",
+                        "run_tests_args" : "",
+                        "aws_crt_platform_target" : "Arm64"
                     }
                 }
             }
         }
     },
+
     "variants": {
-        "mono_test": {
+        "mono_test" : {
             "!test_steps": [
                 "dotnet build tests/tests.csproj -t:MonoTest {build_tests_args}"
             ]

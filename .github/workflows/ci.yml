@@ -94,6 +94,15 @@ jobs:
       matrix:
         arch: [x64]
     steps:
+    - name: Checkout Source
+      uses: actions/checkout@v3
+      with:
+        submodules: true
+        fetch-depth: 0
+    - name: Setup dotnet
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: '5.0.x'
     - uses: ilammy/msvc-dev-cmd@v1
       with:
         arch: ${{ matrix.arch }}
@@ -110,6 +119,15 @@ jobs:
       matrix:
         arch: [x86, x64]
     steps:
+    - name: Checkout Source
+      uses: actions/checkout@v3
+      with:
+        submodules: true
+        fetch-depth: 0
+    - name: Setup dotnet
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: '5.0.x'
     - uses: ilammy/msvc-dev-cmd@v1
       with:
         toolset: 14.0
