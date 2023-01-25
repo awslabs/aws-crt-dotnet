@@ -56,7 +56,10 @@
                         "build_tests_args": "",
                         "run_tests_args": "",
                         "aws_crt_platform_target": "x86"
-                    }
+                    },
+                    "!test_steps": [
+                        "dotnet --version"
+                    ]
                 },
                 "x64": {
                     "variables": {
