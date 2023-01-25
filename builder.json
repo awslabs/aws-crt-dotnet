@@ -6,8 +6,8 @@
     ],
     "test_steps": [
         "dotnet --version",
-        "dotnet build tests/tests.csproj",
-        "dotnet test tests --no-build"
+        "dotnet build tests/tests.csproj {build_tests_args}",
+        "dotnet test tests --no-build {run_tests_args}"
     ],
     "imports": [
         "dotnetcore"
@@ -56,10 +56,7 @@
                         "build_tests_args": "",
                         "run_tests_args": "",
                         "aws_crt_platform_target": "x86"
-                    },
-                    "!test_steps": [
-                        "dotnet --version"
-                    ]
+                    }
                 },
                 "x64": {
                     "variables": {
