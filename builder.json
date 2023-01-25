@@ -6,8 +6,8 @@
     ],
     "test_steps": [
         "dotnet --version",
-        "dotnet build tests/tests.csproj {build_tests_args}",
-        "dotnet test tests --no-build {run_tests_args}"
+        "dotnet build tests/tests.csproj",
+        "dotnet test tests --no-build"
     ],
     "imports": [
         "dotnetcore"
