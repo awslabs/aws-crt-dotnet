@@ -127,7 +127,7 @@ jobs:
     - name: Setup dotnet
       uses: actions/setup-dotnet@v3
       with:
-        dotnet-version: '5.0.x'
+        dotnet-version: '5.0.x' #TODO: Specify architecture to install 32 bit .net when that is supported (https://github.com/actions/setup-dotnet/issues/72)
     - uses: ilammy/msvc-dev-cmd@v1
       with:
         toolset: 14.0
