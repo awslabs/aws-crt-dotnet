@@ -7,7 +7,7 @@ on:
       - '!main'
 
 env:
-  BUILDER_VERSION: v0.9.18
+  BUILDER_VERSION: v0.9.17
   BUILDER_SOURCE: releases
   BUILDER_HOST: https://d19elf31gohf1l.cloudfront.net
   PACKAGE_NAME: aws-crt-dotnet
@@ -18,101 +18,98 @@ env:
   AWS_REGION: us-east-1
 
 jobs:
-  # linux-compat:
-  #   runs-on: ubuntu-20.04
-  #   strategy:
-  #     matrix:
-  #       image:
-  #         - al2-x64
-  #   steps:
-  #   - name: Build ${{ env.PACKAGE_NAME }} + consumers
-  #     run: |
-  #       aws s3 cp s3://aws-crt-test-stuff/ci/${{ env.BUILDER_VERSION }}/linux-container-ci.sh ./linux-container-ci.sh && chmod a+x ./linux-container-ci.sh
-  #       ./linux-container-ci.sh ${{ env.BUILDER_VERSION }} aws-crt-${{ matrix.image }} build -p ${{ env.PACKAGE_NAME }} --spec=downstream
+  linux-compat:
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        image:
+          - al2-x64
+    steps:
+    - name: Build ${{ env.PACKAGE_NAME }} + consumers
+      run: |
+        aws s3 cp s3://aws-crt-test-stuff/ci/${{ env.BUILDER_VERSION }}/linux-container-ci.sh ./linux-container-ci.sh && chmod a+x ./linux-container-ci.sh
+        ./linux-container-ci.sh ${{ env.BUILDER_VERSION }} aws-crt-${{ matrix.image }} build -p ${{ env.PACKAGE_NAME }} --spec=downstream
 
-  # linux-arm:
-  #   runs-on: ubuntu-20.04
-  #   strategy:
-  #     matrix:
-  #       arch: [arm64]
-  #   steps:
-  #   - name: Install qemu/docker
-  #     run: docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
-  #       # We can't use the `uses: docker://image` version yet, GitHub lacks authentication for actions -> packages
-  #   - name: Build ${{ env.PACKAGE_NAME }} + consumers
-  #     run: |
-  #       aws s3 cp s3://aws-crt-test-stuff/ci/${{ env.BUILDER_VERSION }}/linux-container-ci.sh ./linux-container-ci.sh && chmod a+x ./linux-container-ci.sh
-  #       ./linux-container-ci.sh ${{ env.BUILDER_VERSION }} aws-crt-ubuntu-20-aarch64 build -p ${{ env.PACKAGE_NAME }} --target=linux-${{ matrix.arch }}
+  linux-arm:
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        arch: [arm64]
+    steps:
+    - name: Install qemu/docker
+      run: docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
+        # We can't use the `uses: docker://image` version yet, GitHub lacks authentication for actions -> packages
+    - name: Build ${{ env.PACKAGE_NAME }} + consumers
+      run: |
+        aws s3 cp s3://aws-crt-test-stuff/ci/${{ env.BUILDER_VERSION }}/linux-container-ci.sh ./linux-container-ci.sh && chmod a+x ./linux-container-ci.sh
+        ./linux-container-ci.sh ${{ env.BUILDER_VERSION }} aws-crt-ubuntu-20-aarch64 build -p ${{ env.PACKAGE_NAME }} --target=linux-${{ matrix.arch }}
 
-  # linux-compiler-compat:
-  #   runs-on: ubuntu-latest
-  #   strategy:
-  #     matrix:
-  #       compiler:
-  #         - clang-3
-  #         - clang-6
-  #         - clang-8
-  #         - clang-9
-  #         - clang-10
-  #         - clang-11
-  #         - gcc-4.8
-  #         - gcc-5
-  #         - gcc-6
-  #         - gcc-7
-  #         - gcc-8
-  #   steps:
-  #       # We can't use the `uses: docker://image` version yet, GitHub lacks authentication for actions -> packages
-  #   - name: Build ${{ env.PACKAGE_NAME }}
-  #     run: |
-  #       aws s3 cp s3://aws-crt-test-stuff/ci/${{ env.BUILDER_VERSION }}/linux-container-ci.sh ./linux-container-ci.sh && chmod a+x ./linux-container-ci.sh
-  #       ./linux-container-ci.sh ${{ env.BUILDER_VERSION }} aws-crt-${{ env.LINUX_BASE_IMAGE }} build -p ${{ env.PACKAGE_NAME }} --compiler=${{ matrix.compiler }} --spec downstream
+  linux-compiler-compat:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        compiler:
+          - clang-3
+          - clang-6
+          - clang-8
+          - clang-9
+          - clang-10
+          - clang-11
+          - gcc-4.8
+          - gcc-5
+          - gcc-6
+          - gcc-7
+          - gcc-8
+    steps:
+        # We can't use the `uses: docker://image` version yet, GitHub lacks authentication for actions -> packages
+    - name: Build ${{ env.PACKAGE_NAME }}
+      run: |
+        aws s3 cp s3://aws-crt-test-stuff/ci/${{ env.BUILDER_VERSION }}/linux-container-ci.sh ./linux-container-ci.sh && chmod a+x ./linux-container-ci.sh
+        ./linux-container-ci.sh ${{ env.BUILDER_VERSION }} aws-crt-${{ env.LINUX_BASE_IMAGE }} build -p ${{ env.PACKAGE_NAME }} --compiler=${{ matrix.compiler }} --spec downstream
 
-  # linux_mono:
-  #   runs-on: ubuntu-20.04
-  #   steps:
-  #     - name: Build ${{ env.PACKAGE_NAME }}
-  #       run: |
-  #         python3 -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder')"
-  #         chmod a+x builder
-  #         ./builder build -p ${{ env.PACKAGE_NAME }} --variant=mono_test
+  linux_mono:
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Build ${{ env.PACKAGE_NAME }}
+        run: |
+          python3 -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder')"
+          chmod a+x builder
+          ./builder build -p ${{ env.PACKAGE_NAME }} --variant=mono_test
 
-  # clang-sanitizers:
-  #   runs-on: ubuntu-20.04
-  #   strategy:
-  #     matrix:
-  #       sanitizers: [",thread", ",address,undefined"]
-  #   steps:
-  #     # We can't use the `uses: docker://image` version yet, GitHub lacks authentication for actions -> packages
-  #     - name: Build ${{ env.PACKAGE_NAME }}
-  #       run: |
-  #         aws s3 cp s3://aws-crt-test-stuff/ci/${{ env.BUILDER_VERSION }}/linux-container-ci.sh ./linux-container-ci.sh && chmod a+x ./linux-container-ci.sh
-  #         ./linux-container-ci.sh ${{ env.BUILDER_VERSION }} aws-crt-${{ env.LINUX_BASE_IMAGE }} build -p ${{ env.PACKAGE_NAME }} --compiler=clang-11 --cmake-extra=-DENABLE_SANITIZERS=ON --cmake-extra=-DSANITIZERS="${{ matrix.sanitizers }}"
+  clang-sanitizers:
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        sanitizers: [",thread", ",address,undefined"]
+    steps:
+      # We can't use the `uses: docker://image` version yet, GitHub lacks authentication for actions -> packages
+      - name: Build ${{ env.PACKAGE_NAME }}
+        run: |
+          aws s3 cp s3://aws-crt-test-stuff/ci/${{ env.BUILDER_VERSION }}/linux-container-ci.sh ./linux-container-ci.sh && chmod a+x ./linux-container-ci.sh
+          ./linux-container-ci.sh ${{ env.BUILDER_VERSION }} aws-crt-${{ env.LINUX_BASE_IMAGE }} build -p ${{ env.PACKAGE_NAME }} --compiler=clang-11 --cmake-extra=-DENABLE_SANITIZERS=ON --cmake-extra=-DSANITIZERS="${{ matrix.sanitizers }}"
 
-  # windows-vc16:
-  #   runs-on: windows-2019
-  #   strategy:
-  #     matrix:
-  #       arch: [x64]
-  #   steps:
-  #   - uses: ilammy/msvc-dev-cmd@v1
-  #     with:
-  #       arch: ${{ matrix.arch }}
-  #       uwp: false
-  #       spectre: true
-  #   - name: Build ${{ env.PACKAGE_NAME }} + consumers
-  #     run: |
-  #       python -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder.pyz')"
-  #       python builder.pyz build -p ${{ env.PACKAGE_NAME }} --spec=downstream
-
-  windows-vc14:
+  windows-vc16:
     runs-on: windows-2019
     strategy:
       matrix:
         arch: [x64]
     steps:
-    - uses: actions/setup-dotnet@v3
+    - uses: ilammy/msvc-dev-cmd@v1
       with:
-        dotnet-version: 5.0
+        arch: ${{ matrix.arch }}
+        uwp: false
+        spectre: true
+    - name: Build ${{ env.PACKAGE_NAME }} + consumers
+      run: |
+        python -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder.pyz')"
+        python builder.pyz build -p ${{ env.PACKAGE_NAME }} --spec=downstream
+
+  windows-vc14:
+    runs-on: windows-2019
+    strategy:
+      matrix:
+        arch: [x86, x64]
+    steps:
     - uses: ilammy/msvc-dev-cmd@v1
       with:
         toolset: 14.0
@@ -124,64 +121,37 @@ jobs:
         python -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder.pyz')"
         python builder.pyz build -p ${{ env.PACKAGE_NAME }} --target windows-${{ matrix.arch }} --compiler msvc-14 downstream
 
-  windows-vc14-x86:
-    runs-on: windows-2019
-    strategy:
-      matrix:
-        arch: [x86]
+  osx:
+    runs-on: macos-11
+    steps:
+    - name: Build ${{ env.PACKAGE_NAME }} + consumers
+      run: |
+        python3 -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder')"
+        chmod a+x builder
+        ./builder build -p ${{ env.PACKAGE_NAME }} --spec=downstream
 
+  # cross-compile for Apple silicon
+  # it would be better to run tests natively on one of these machines,
+  # but we don't have access to one in the cloud, so for now just cross-compile
+  osx-arm64-cross-compile:
+    runs-on: macos-11
+    steps:
+    - name: Build ${{ env.PACKAGE_NAME }} + consumers
+      run: |
+        python3 -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder')"
+        chmod a+x builder
+        ./builder build -p ${{ env.PACKAGE_NAME }} --target macos-arm64 run_tests=false
+        test `lipo aws-crt-dotnet/build/Arm64/lib/libaws-crt-dotnet-ARM64.dylib -archs` = "arm64"
+
+  check-submodules:
+    runs-on: ubuntu-20.04
     steps:
     - name: Checkout Source
       uses: actions/checkout@v3
       with:
         submodules: true
         fetch-depth: 0
-    - uses: actions/setup-dotnet@v3
-      with:
-        dotnet-version: |
-          3.1.x
-          5.0.x
-    - uses: ilammy/msvc-dev-cmd@v1
-      with:
-        toolset: 14.0
-        arch: ${{ matrix.arch }}
-        uwp: false
-        spectre: true
-    - name: Build ${{ env.PACKAGE_NAME }} + consumers
-      run: |
-        python -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder.pyz')"
-        python builder.pyz build -p ${{ env.PACKAGE_NAME }} --target windows-${{ matrix.arch }} --compiler msvc-14 downstream
-  # osx:
-  #   runs-on: macos-11
-  #   steps:
-  #   - name: Build ${{ env.PACKAGE_NAME }} + consumers
-  #     run: |
-  #       python3 -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder')"
-  #       chmod a+x builder
-  #       ./builder build -p ${{ env.PACKAGE_NAME }} --spec=downstream
-
-  # # cross-compile for Apple silicon
-  # # it would be better to run tests natively on one of these machines,
-  # # but we don't have access to one in the cloud, so for now just cross-compile
-  # osx-arm64-cross-compile:
-  #   runs-on: macos-11
-  #   steps:
-  #   - name: Build ${{ env.PACKAGE_NAME }} + consumers
-  #     run: |
-  #       python3 -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder')"
-  #       chmod a+x builder
-  #       ./builder build -p ${{ env.PACKAGE_NAME }} --target macos-arm64 run_tests=false
-  #       test `lipo aws-crt-dotnet/build/Arm64/lib/libaws-crt-dotnet-ARM64.dylib -archs` = "arm64"
-
-  # check-submodules:
-  #   runs-on: ubuntu-20.04
-  #   steps:
-  #   - name: Checkout Source
-  #     uses: actions/checkout@v3
-  #     with:
-  #       submodules: true
-  #       fetch-depth: 0
-  #   - name: Check Submodules
-  #     # note: using "@main" because "@${{env.BUILDER_VERSION}}" doesn't work
-  #     # https://github.com/actions/runner/issues/480
-  #     uses: awslabs/aws-crt-builder/.github/actions/check-submodules@main
+    - name: Check Submodules
+      # note: using "@main" because "@${{env.BUILDER_VERSION}}" doesn't work
+      # https://github.com/actions/runner/issues/480
+      uses: awslabs/aws-crt-builder/.github/actions/check-submodules@main
