@@ -68,7 +68,7 @@ jobs:
         ./linux-container-ci.sh ${{ env.BUILDER_VERSION }} aws-crt-${{ env.LINUX_BASE_IMAGE }} build -p ${{ env.PACKAGE_NAME }} --compiler=${{ matrix.compiler }} --spec downstream
 
   linux_mono:
-    runs-on: ubuntu-20.04 
+    runs-on: ubuntu-20.04
     steps:
       - name: Build ${{ env.PACKAGE_NAME }}
         run: |
@@ -94,6 +94,10 @@ jobs:
       matrix:
         arch: [x64]
     steps:
+    - name: Setup dotnet # Use setup dotnet action as Windows-2019 image no longer contains .net5.0
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: '5.0.x'
     - uses: ilammy/msvc-dev-cmd@v1
       with:
         arch: ${{ matrix.arch }}
@@ -104,12 +108,17 @@ jobs:
         python -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder.pyz')"
         python builder.pyz build -p ${{ env.PACKAGE_NAME }} --spec=downstream
 
+  # TODO: Fix this to run on 14.0 toolset. Currently, it doesn't respect the toolset parameter.
   windows-vc14:
     runs-on: windows-2019
     strategy:
       matrix:
         arch: [x86, x64]
     steps:
+    - name: Setup dotnet
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: '5.0.x' #TODO: Specify architecture to install 32 bit .net when that is supported (https://github.com/actions/setup-dotnet/issues/72)
     - uses: ilammy/msvc-dev-cmd@v1
       with:
         toolset: 14.0
