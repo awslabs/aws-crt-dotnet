@@ -133,6 +133,10 @@ jobs:
   osx:
     runs-on: macos-11
     steps:
+    - name: Setup dotnet # Use setup dotnet action as macos-11 image no longer contains .net5.0
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: '5.0.x'
     - name: Build ${{ env.PACKAGE_NAME }} + consumers
       run: |
         python3 -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder')"
