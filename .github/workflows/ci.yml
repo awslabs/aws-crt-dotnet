@@ -97,7 +97,9 @@ jobs:
     - name: Setup dotnet # Use setup dotnet action as Windows-2019 image no longer contains .net5.0
       uses: actions/setup-dotnet@v3
       with:
-        dotnet-version: '5.0.x'
+        dotnet-version: |
+          3.1.x
+          5.0.x
     - uses: ilammy/msvc-dev-cmd@v1
       with:
         arch: ${{ matrix.arch }}
@@ -118,7 +120,10 @@ jobs:
     - name: Setup dotnet
       uses: actions/setup-dotnet@v3
       with:
-        dotnet-version: '5.0.x' #TODO: Specify architecture to install 32 bit .net when that is supported (https://github.com/actions/setup-dotnet/issues/72)
+        #TODO: Specify architecture to install 32 bit .net when that is supported (https://github.com/actions/setup-dotnet/issues/72)
+        dotnet-version: |
+          3.1.x
+          5.0.x
     - uses: ilammy/msvc-dev-cmd@v1
       with:
         toolset: 14.0
@@ -131,12 +136,14 @@ jobs:
         python builder.pyz build -p ${{ env.PACKAGE_NAME }} --target windows-${{ matrix.arch }} --compiler msvc-14 downstream
 
   osx:
-    runs-on: macos-11
+    runs-on: macos-12
     steps:
-    - name: Setup dotnet # Use setup dotnet action as macos-11 image no longer contains .net5.0
+    - name: Setup dotnet # Use setup dotnet action as macos-12 image no longer contains .net5.0 and .net3.1
       uses: actions/setup-dotnet@v3
       with:
-        dotnet-version: '5.0.x'
+        dotnet-version: |
+          3.1.x
+          5.0.x
     - name: Build ${{ env.PACKAGE_NAME }} + consumers
       run: |
         python3 -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder')"
@@ -147,7 +154,7 @@ jobs:
   # it would be better to run tests natively on one of these machines,
   # but we don't have access to one in the cloud, so for now just cross-compile
   osx-arm64-cross-compile:
-    runs-on: macos-11
+    runs-on: macos-12
     steps:
     - name: Build ${{ env.PACKAGE_NAME }} + consumers
       run: |
