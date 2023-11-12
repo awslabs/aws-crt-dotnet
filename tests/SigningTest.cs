@@ -184,6 +184,41 @@ namespace tests
             byte[] signature = signingResult.Signature;
             Assert.True(signature.SequenceEqual(ASCIIEncoding.ASCII.GetBytes("d3875051da38690788ef43de4db0d8f280229d82040bfac253562e56c3f20e0b")));
         }      
+        
+        private static string HTTP_REQUEST_V4A_PUB_X = "b6618f6a65740a99e650b33b6b4b5bd0d43b176d721a3edfea7e7d2d56d936b1";
+        private static string HTTP_REQUEST_V4A_PUB_Y = "865ed22a7eadc9c5cb9d2cbaca1b3699139fedc5043dc6661864218330c8e518";
+        
+        /* Sourced from the post-x-www-form-urlencoded test case in aws-c-auth */
+        [Fact]
+        public void SignBodyRequestByHeadersV4a()
+        {
+            var config = BuildBaseSigningConfig();
+            config.SignedBodyHeader = AwsSignedBodyHeaderType.X_AMZ_CONTENT_SHA256;
+            config.Algorithm = AwsSigningAlgorithm.SIGV4A;
+            
+            var request = BuildTestSuiteRequestWithBody();
+
+            CrtResult<AwsSigner.CrtSigningResult> result = AwsSigner.SignHttpRequest(request, config);
+            AwsSigner.CrtSigningResult signingResult = result.Get();
+            HttpRequest signedRequest = signingResult.SignedRequest;
+
+            Assert.Equal("POST", signedRequest.Method);
+            Assert.Equal("/", signedRequest.Uri);
+            Assert.Equal(7, signedRequest.Headers.Length);
+            Assert.True(HasHeader(signedRequest, "Host", "example.amazonaws.com"));
+            Assert.True(HasHeader(signedRequest, "X-Amz-Date", "20150830T123600Z"));
+            Assert.True(HasHeader(signedRequest, "Content-Type", "application/x-www-form-urlencoded"));
+            Assert.True(HasHeader(signedRequest, "x-amz-content-sha256", "9095672bbd1f56dfc5b65f3e153adc8731a4a654192329106275f4c7b24d0b6e"));
+            Assert.True(HasHeader(signedRequest, "Content-Length", "13"));
+            Assert.True(HasHeader(signedRequest, "X-Amz-Region-Set", "us-east-1"));
+
+            String hexSignature = System.Text.Encoding.UTF8.GetString(signingResult.Signature);
+
+            String canonicalRequest =
+                "POST\n/\n\ncontent-length:13\ncontent-type:application/x-www-form-urlencoded\nhost:example.amazonaws.com\nx-amz-content-sha256:9095672bbd1f56dfc5b65f3e153adc8731a4a654192329106275f4c7b24d0b6e\nx-amz-date:20150830T123600Z\nx-amz-region-set:us-east-1\n\ncontent-length;content-type;host;x-amz-content-sha256;x-amz-date;x-amz-region-set\n9095672bbd1f56dfc5b65f3e153adc8731a4a654192329106275f4c7b24d0b6e";
+            
+            Assert.True(AwsSigner.VerifyV4aHttpRequestSignature(request, canonicalRequest, config, hexSignature, HTTP_REQUEST_V4A_PUB_X, HTTP_REQUEST_V4A_PUB_Y));
+        }            
 
         /* Sourced from the post-x-www-form-urlencoded test case in aws-c-auth */
         [Fact]
@@ -212,7 +247,7 @@ namespace tests
             byte[] signature = signingResult.Signature;
 
             Assert.True(signature.SequenceEqual(ASCIIEncoding.ASCII.GetBytes("d3875051da38690788ef43de4db0d8f280229d82040bfac253562e56c3f20e0b")));
-        } 
+        }
 
         /* Sourced from the post-x-www-form-urlencoded test case in aws-c-auth */
         [Fact]
@@ -242,7 +277,7 @@ namespace tests
 
             ASCIIEncoding ascii = new ASCIIEncoding();
 
-            Assert.True(AwsSigner.VerifyV4aCanonicalSigning(canonicalRequest, config, ascii.GetString(signatureValue), "b6618f6a65740a99e650b33b6b4b5bd0d43b176d721a3edfea7e7d2d56d936b1", "865ed22a7eadc9c5cb9d2cbaca1b3699139fedc5043dc6661864218330c8e518"));
+            Assert.True(AwsSigner.VerifyV4aCanonicalSigning(canonicalRequest, config, ascii.GetString(signatureValue), HTTP_REQUEST_V4A_PUB_X, HTTP_REQUEST_V4A_PUB_Y));
         } 
 
 
