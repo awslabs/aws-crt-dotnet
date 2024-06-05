@@ -1,12 +1,12 @@
 {
     "name": "aws-crt-dotnet",
     "build_steps": [
-        "dotnet build -f netstandard2.0 -p:AwsCrtPlatformTarget={aws_crt_platform_target}",
-        "dotnet pack -p:TargetFrameworks=netstandard2.0 -p:AwsCrtPlatformTarget={aws_crt_platform_target}"
+        "dotnet build -f netstandard2.0 -p:AwsCrtPlatformTarget={aws_crt_platform_target} --configuration Debug",
+        "dotnet pack -p:TargetFrameworks=netstandard2.0 -p:AwsCrtPlatformTarget={aws_crt_platform_target} --configuration Debug"
     ],
     "test_steps": [
-        "dotnet build tests/tests.csproj {build_tests_args}",
-        "dotnet test tests --no-build {run_tests_args}"
+        "dotnet build tests/tests.csproj {build_tests_args} --configuration Debug",
+        "dotnet test tests --no-build {run_tests_args} --configuration Debug"
     ],
     "imports": [
         "dotnetcore"
@@ -90,7 +90,7 @@
     "variants": {
         "mono_test" : {
             "!test_steps": [
-                "dotnet build tests/tests.csproj -t:MonoTest {build_tests_args}"
+                "dotnet build tests/tests.csproj -t:MonoTest {build_tests_args} --configuration Debug"
             ]
         }
     }
