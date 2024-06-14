@@ -38,9 +38,11 @@ static void s_http_connection_on_shutdown(struct aws_http_connection *connection
     dotnet_connection->connection = NULL;
 }
 
-static struct aws_socket_options s_default_socket_options = {.type = AWS_SOCKET_STREAM,
-                                                             .domain = AWS_SOCKET_IPV4,
-                                                             .connect_timeout_ms = 3000};
+static struct aws_socket_options s_default_socket_options = {
+    .type = AWS_SOCKET_STREAM,
+    .domain = AWS_SOCKET_IPV4,
+    .connect_timeout_ms = 3000,
+};
 
 AWS_DOTNET_API
 struct aws_dotnet_http_connection *aws_dotnet_http_connection_new(
