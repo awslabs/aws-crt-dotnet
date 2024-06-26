@@ -218,7 +218,20 @@ namespace Aws.Crt.Auth
                                     [In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex=2, ArraySubType=UnmanagedType.U1)] byte[] signature_buffer,
                                     UInt32 signature_buffer_length,
                                     [MarshalAs(UnmanagedType.LPStr)] string ecc_pub_x,
-                                    [MarshalAs(UnmanagedType.LPStr)] string ecc_pub_y);          
+                                    [MarshalAs(UnmanagedType.LPStr)] string ecc_pub_y);     
+            
+            [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl)]
+            internal delegate bool AwsDotnetAuthVerifyV4aHttpRequestSigning(
+                [MarshalAs(UnmanagedType.LPStr)] string method,
+                [MarshalAs(UnmanagedType.LPStr)] string uri,
+                [In] HttpHeader[] headers,
+                UInt32 header_count,
+                [In] CrtStreamWrapper.DelegateTable stream_delegate_table,
+                [MarshalAs(UnmanagedType.LPStr)] string canonical_request,
+                [In] AwsSigningConfigNative signing_config,
+                [MarshalAs(UnmanagedType.LPStr)] string hex_signature,
+                [MarshalAs(UnmanagedType.LPStr)] string ecc_pub_x,
+                [MarshalAs(UnmanagedType.LPStr)] string ecc_pub_y);
             
             public static AwsDotnetAuthSignHttpRequest SignRequestNative = NativeAPI.Bind<AwsDotnetAuthSignHttpRequest>("aws_dotnet_auth_sign_http_request");
 
@@ -231,6 +244,8 @@ namespace Aws.Crt.Auth
             public static AwsDotnetAuthVerifyV4aCanonicalSigning VerifyV4aCanonicalSigningNative = NativeAPI.Bind<AwsDotnetAuthVerifyV4aCanonicalSigning>("aws_dotnet_auth_verify_v4a_canonical_signing");
 
             public static AwsDotnetAuthVerifyV4aSignature VerifyV4aSignatureNative = NativeAPI.Bind<AwsDotnetAuthVerifyV4aSignature>("aws_dotnet_auth_verify_v4a_signature");
+            
+            public static AwsDotnetAuthVerifyV4aHttpRequestSigning VerifyV4aHttpRequestSignatureNative = NativeAPI.Bind<AwsDotnetAuthVerifyV4aHttpRequestSigning>("aws_dotnet_auth_verify_v4a_http_request_signature");
 
             public static OnSigningCompleteCallback OnHttpRequestSigningComplete = AwsSigner.OnHttpRequestSigningComplete;
 
@@ -369,6 +384,20 @@ namespace Aws.Crt.Auth
             return API.VerifyV4aSignatureNative(stringToSign, signature, (uint) signature.Length, eccPubX, eccPubY);
         }
 
+        public static bool VerifyV4aHttpRequestSignature(HttpRequest request, String canonicalRequest, AwsSigningConfig signingConfig, String hexSignature, String eccPubX, String eccPubY)
+        {
+            var nativeConfig = new AwsSigningConfigNative(signingConfig);
+            
+            uint headerCount = 0;
+            if (request.Headers != null) {
+                headerCount = (uint) request.Headers.Length;
+            }
+            
+            var bodyStream = new CrtStreamWrapper(request.BodyStream);
+            
+            return API.VerifyV4aHttpRequestSignatureNative(request.Method, request.Uri, request.Headers, headerCount, bodyStream.Delegates, canonicalRequest, nativeConfig, hexSignature, eccPubX, eccPubY);    
+        }
+        
         public static CrtResult<CrtSigningResult> SignCanonicalRequest(String canonicalRequest, AwsSigningConfig signingConfig) 
         {
             if (canonicalRequest == null || signingConfig == null) {
