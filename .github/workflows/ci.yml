@@ -94,7 +94,7 @@ jobs:
         arch: [x64]
     steps:
     - name: Setup dotnet # Use setup dotnet action as Windows-2019 image no longer contains .net5.0
-      uses: actions/setup-dotnet@v4
+      uses: actions/setup-dotnet@v3
       with:
         dotnet-version: |
           3.1.x
@@ -117,7 +117,7 @@ jobs:
         arch: [x86, x64]
     steps:
     - name: Setup dotnet
-      uses: actions/setup-dotnet@v4
+      uses: actions/setup-dotnet@v3
       with:
         #TODO: Specify architecture to install 32 bit .net when that is supported (https://github.com/actions/setup-dotnet/issues/72)
         dotnet-version: |
@@ -138,7 +138,7 @@ jobs:
     runs-on: macos-12
     steps:
     - name: Setup dotnet # Use setup dotnet action as macos-12 image no longer contains .net5.0 and .net3.1
-      uses: actions/setup-dotnet@v4
+      uses: actions/setup-dotnet@v3
       with:
         dotnet-version: |
           3.1.x

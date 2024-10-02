@@ -14,7 +14,9 @@
     "hosts": {
         "al2": {
             "packages": [
-                "libicu"
+                "libicu",
+                "zlib",
+                "libcurl"
             ]
         }
     },
