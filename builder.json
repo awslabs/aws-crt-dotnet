@@ -11,15 +11,6 @@
     "imports": [
         "dotnetcore"
     ],
-    "hosts": {
-        "al2": {
-            "packages": [
-                "libicu",
-                "zlib",
-                "libcurl"
-            ]
-        }
-    },
     "targets": {
         "linux": {
             "imports": [
