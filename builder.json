@@ -15,7 +15,7 @@
         "al2": {
             "packages": [
                 "libicu",
-                "openssl-devel"
+                "libssl3"
             ]
         }
     },
