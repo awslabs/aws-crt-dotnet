@@ -18,9 +18,14 @@ namespace Aws.Crt.Checksums
             [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl)]
             public delegate UInt32 aws_dotnet_crc32c([In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 2, ArraySubType = UnmanagedType.U1)] byte[] buffer,
                                                    Int32 length, UInt32 previous);
+            
+            [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl)]
+            public delegate UInt64 aws_dotnet_crc64nvme([In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 2, ArraySubType = UnmanagedType.U1)] byte[] buffer,
+                                                   Int32 length, UInt64 previous);
 
             public static aws_dotnet_crc32 crc32 = NativeAPI.Bind<aws_dotnet_crc32>();
             public static aws_dotnet_crc32c crc32c = NativeAPI.Bind<aws_dotnet_crc32c>();
+            public static aws_dotnet_crc64nvme crc64nvme = NativeAPI.Bind<aws_dotnet_crc64nvme>();
         }
         public static uint crc32(byte[] buffer, uint previous = 0)
         {
@@ -29,6 +34,10 @@ namespace Aws.Crt.Checksums
         public static uint crc32c(byte[] buffer, uint previous = 0)
         {
             return API.crc32c(buffer, buffer.Length, previous);
+        }
+        public static ulong crc64nvme(byte[] buffer, ulong previous = 0)
+        {
+            return API.crc64nvme(buffer, buffer.Length, previous);
         }
     }
 }
