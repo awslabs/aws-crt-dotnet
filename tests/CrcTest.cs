@@ -107,5 +107,23 @@ namespace tests
             uint expected = 0xfb5b991d;
             Assert.Equal(expected, res);
         }
+        [Fact]
+        public void TestCrc64NVMEZeroes()
+        {
+            byte[] zeroes = new byte[32];
+            ulong res = Crc.crc64nvme(zeroes);
+            ulong expected = 0xCF3473434D4ECF3B;
+            Assert.Equal(expected, res);
+        }
+        [Fact]
+        public void TestCrc64NVMEZeroesIterated()
+        {
+            ulong res = 0;
+            for (int i = 0; i < 32; i++) {
+                res = Crc.crc64nvme(new byte[1], res);
+            }
+            ulong expected = 0xCF3473434D4ECF3B;
+            Assert.Equal(expected, res);
+        }
     }
 }
