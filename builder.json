@@ -15,8 +15,7 @@
         "al2": {
             "packages": [
                 "libicu",
-                "zlib",
-                "libcurl"
+                "libssl"
             ]
         }
     },
