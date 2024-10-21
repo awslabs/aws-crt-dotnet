@@ -51,12 +51,35 @@ if (BUILD_DEPS)
     set(BUILD_TESTING OFF)
     add_subdirectory(../crt/aws-c-common ${CMAKE_BINARY_DIR}/deps/aws-c-common)
     if (UNIX AND NOT APPLE)
-        set(DISABLE_PERL ON CACHE BOOL "Disable Perl for AWS-LC.")
-        set(DISABLE_GO ON CACHE BOOL "Disable Go for AWS-LC.")
+        include(AwsPrebuildDependency)
         set(SEARCH_LIBCRYPTO OFF CACHE BOOL "libcrypto will come from aws-lc, don't look for it")
-        set(BUILD_LIBSSL OFF)
-        add_subdirectory(../crt/aws-lc ${CMAKE_BINARY_DIR}/deps/aws-lc)
-        add_subdirectory(../crt/s2n ${CMAKE_BINARY_DIR}/deps/s2n)
+        set(AWSLC_CMAKE_ARGUMENTS
+                -DDISABLE_GO=ON  # Build without using Go, we don't want the extra dependency
+                -DDISABLE_PERL=ON  # Build without using Perl, we don't want the extra dependency
+                -DBUILD_LIBSSL=OFF  # Don't need libssl, only need libcrypto
+                -DBUILD_TESTING=OFF
+            )
+        if(CMAKE_C_COMPILER_ID MATCHES "GNU" AND CMAKE_C_COMPILER_VERSION VERSION_LESS "5.0")
+            # Disable AVX512 on old GCC that not supports it.
+            list(APPEND AWSLC_CMAKE_ARGUMENTS -DMY_ASSEMBLER_IS_TOO_OLD_FOR_512AVX=ON)
+        endif()
+
+        # s2n-tls uses libcrypto during its configuration, so we need to prebuild aws-lc.
+        aws_prebuild_dependency(
+                DEPENDENCY_NAME AWSLC
+                SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../crt/aws-lc
+                CMAKE_ARGUMENTS ${AWSLC_CMAKE_ARGUMENTS}
+            )
+
+        # prebuild s2n-tls.
+        aws_prebuild_dependency(
+            DEPENDENCY_NAME S2N
+            SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../crt/s2n
+            CMAKE_ARGUMENTS
+                -DUNSAFE_TREAT_WARNINGS_AS_ERRORS=OFF
+                -DBUILD_TESTING=OFF
+        )
+
     endif()
     add_subdirectory(../crt/aws-c-io ${CMAKE_BINARY_DIR}/deps/aws-c-io)
     add_subdirectory(../crt/aws-c-sdkutils ${CMAKE_BINARY_DIR}/deps/sdkutils)
