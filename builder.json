@@ -11,6 +11,13 @@
     "imports": [
         "dotnetcore"
     ],
+    "hosts": {
+        "al2": {
+            "packages": [
+                "libicu"
+            ]
+        }
+    },
     "targets": {
         "linux": {
             "imports": [
