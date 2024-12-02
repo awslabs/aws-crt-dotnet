@@ -174,7 +174,7 @@ jobs:
         python builder.pyz build -p ${{ env.PACKAGE_NAME }} --target windows-${{ matrix.arch }} --compiler msvc-14 downstream
 
   osx:
-    runs-on: macos-14
+    runs-on: macos-14-large
     steps:
     - uses: aws-actions/configure-aws-credentials@v4
       with:
