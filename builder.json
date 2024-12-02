@@ -16,7 +16,7 @@
             "packages": [
                 "libicu",
                 "zlib",
-                "libssl"
+                "openssl"
             ]
         }
     },
