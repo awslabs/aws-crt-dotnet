@@ -89,6 +89,13 @@
 
     "variants": {
         "mono_test" : {
+            "hosts": {
+                "ubuntu": {
+                    "+packages": [
+                        "mono-runtime"
+                    ]
+                }
+            },
             "!test_steps": [
                 "dotnet build tests/tests.csproj -t:MonoTest {build_tests_args} --configuration Debug"
             ]

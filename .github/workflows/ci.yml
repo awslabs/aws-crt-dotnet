@@ -54,7 +54,7 @@ jobs:
         ./linux-container-ci.sh ${{ env.BUILDER_VERSION }} aws-crt-ubuntu-20-aarch64 build -p ${{ env.PACKAGE_NAME }} --target=linux-${{ matrix.arch }}
 
   linux-compiler-compat:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     strategy:
       matrix:
         compiler:
