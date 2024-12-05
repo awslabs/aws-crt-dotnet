@@ -92,7 +92,7 @@
             "hosts": {
                 "ubuntu": {
                     "+packages": [
-                        "mono-runtime"
+                        "mono-complete"
                     ]
                 }
             },
