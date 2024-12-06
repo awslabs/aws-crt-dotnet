@@ -6,35 +6,45 @@ on:
       - 'main'
 
 env:
-  BUILDER_VERSION: v0.9.17
+  BUILDER_VERSION: v0.9.73
   BUILDER_SOURCE: releases
   BUILDER_HOST: https://d19elf31gohf1l.cloudfront.net
   PACKAGE_NAME: aws-crt-dotnet
   LINUX_BASE_IMAGE: ubuntu-18-x64
   RUN: ${{ github.run_id }}-${{ github.run_number }}
-  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-  AWS_REGION: us-east-1
+  CRT_CI_ROLE: ${{ secrets.CRT_CI_ROLE_ARN }}
+  AWS_DEFAULT_REGION: us-east-1
+
+permissions:
+  id-token: write # This is required for requesting the JWT
 
 jobs:
   linux-compat:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     strategy:
       matrix:
         image:
           - al2-x64
     steps:
+    - uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: ${{ env.CRT_CI_ROLE }}
+        aws-region: ${{ env.AWS_DEFAULT_REGION }}
     - name: Build ${{ env.PACKAGE_NAME }} + consumers
       run: |
         aws s3 cp s3://aws-crt-test-stuff/ci/${{ env.BUILDER_VERSION }}/linux-container-ci.sh ./linux-container-ci.sh && chmod a+x ./linux-container-ci.sh
         ./linux-container-ci.sh ${{ env.BUILDER_VERSION }} aws-crt-${{ matrix.image }} build -p ${{ env.PACKAGE_NAME }} --spec=downstream
 
   linux-arm:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     strategy:
       matrix:
         arch: [arm64]
     steps:
+    - uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: ${{ env.CRT_CI_ROLE }}
+        aws-region: ${{ env.AWS_DEFAULT_REGION }}
     - name: Install qemu/docker
       run: docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
         # We can't use the `uses: docker://image` version yet, GitHub lacks authentication for actions -> packages
@@ -44,7 +54,7 @@ jobs:
         ./linux-container-ci.sh ${{ env.BUILDER_VERSION }} aws-crt-ubuntu-20-aarch64 build -p ${{ env.PACKAGE_NAME }} --target=linux-${{ matrix.arch }}
 
   linux-compiler-compat:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     strategy:
       matrix:
         compiler:
@@ -54,38 +64,59 @@ jobs:
           - clang-9
           - clang-10
           - clang-11
+          - clang-13
+          - clang-15
+          - clang-17
           - gcc-4.8
           - gcc-5
           - gcc-6
           - gcc-7
           - gcc-8
+          - gcc-11
+          - gcc-13
     steps:
-        # We can't use the `uses: docker://image` version yet, GitHub lacks authentication for actions -> packages
+    - uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: ${{ env.CRT_CI_ROLE }}
+        aws-region: ${{ env.AWS_DEFAULT_REGION }}
+    # We can't use the `uses: docker://image` version yet, GitHub lacks authentication for actions -> packages
     - name: Build ${{ env.PACKAGE_NAME }}
       run: |
         aws s3 cp s3://aws-crt-test-stuff/ci/${{ env.BUILDER_VERSION }}/linux-container-ci.sh ./linux-container-ci.sh && chmod a+x ./linux-container-ci.sh
         ./linux-container-ci.sh ${{ env.BUILDER_VERSION }} aws-crt-${{ env.LINUX_BASE_IMAGE }} build -p ${{ env.PACKAGE_NAME }} --compiler=${{ matrix.compiler }} --spec downstream
 
   linux_mono:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     steps:
-      - name: Build ${{ env.PACKAGE_NAME }}
-        run: |
-          python3 -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder')"
-          chmod a+x builder
-          ./builder build -p ${{ env.PACKAGE_NAME }} --variant=mono_test
+    - uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: ${{ env.CRT_CI_ROLE }}
+        aws-region: ${{ env.AWS_DEFAULT_REGION }}
+    - name: Build ${{ env.PACKAGE_NAME }}
+      run: |
+        python3 -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder')"
+        chmod a+x builder
+        ./builder build -p ${{ env.PACKAGE_NAME }} --variant=mono_test
 
   clang-sanitizers:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     strategy:
       matrix:
         sanitizers: [",thread", ",address,undefined"]
     steps:
-      # We can't use the `uses: docker://image` version yet, GitHub lacks authentication for actions -> packages
-      - name: Build ${{ env.PACKAGE_NAME }}
-        run: |
-          aws s3 cp s3://aws-crt-test-stuff/ci/${{ env.BUILDER_VERSION }}/linux-container-ci.sh ./linux-container-ci.sh && chmod a+x ./linux-container-ci.sh
-          ./linux-container-ci.sh ${{ env.BUILDER_VERSION }} aws-crt-${{ env.LINUX_BASE_IMAGE }} build -p ${{ env.PACKAGE_NAME }} --compiler=clang-11 --cmake-extra=-DENABLE_SANITIZERS=ON --cmake-extra=-DSANITIZERS="${{ matrix.sanitizers }}"
+    - uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: ${{ env.CRT_CI_ROLE }}
+        aws-region: ${{ env.AWS_DEFAULT_REGION }}
+    - uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: ${{ env.CRT_CI_ROLE }}
+        aws-region: ${{ env.AWS_DEFAULT_REGION }}
+    # We can't use the `uses: docker://image` version yet, GitHub lacks authentication for actions -> packages
+    - name: Build ${{ env.PACKAGE_NAME }}
+      run: |
+        aws s3 cp s3://aws-crt-test-stuff/ci/${{ env.BUILDER_VERSION }}/linux-container-ci.sh ./linux-container-ci.sh && chmod a+x ./linux-container-ci.sh
+        ./linux-container-ci.sh ${{ env.BUILDER_VERSION }} aws-crt-${{ env.LINUX_BASE_IMAGE }} build -p ${{ env.PACKAGE_NAME }} --compiler=clang-11 --cmake-extra=-DENABLE_SANITIZERS=ON --cmake-extra=-DSANITIZERS="${{ matrix.sanitizers }}"
 
   windows-vc16:
     runs-on: windows-2019
@@ -93,6 +124,10 @@ jobs:
       matrix:
         arch: [x64]
     steps:
+    - uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: ${{ env.CRT_CI_ROLE }}
+        aws-region: ${{ env.AWS_DEFAULT_REGION }}
     - name: Setup dotnet # Use setup dotnet action as Windows-2019 image no longer contains .net5.0
       uses: actions/setup-dotnet@v3
       with:
@@ -116,6 +151,10 @@ jobs:
       matrix:
         arch: [x86, x64]
     steps:
+    - uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: ${{ env.CRT_CI_ROLE }}
+        aws-region: ${{ env.AWS_DEFAULT_REGION }}
     - name: Setup dotnet
       uses: actions/setup-dotnet@v3
       with:
@@ -135,8 +174,12 @@ jobs:
         python builder.pyz build -p ${{ env.PACKAGE_NAME }} --target windows-${{ matrix.arch }} --compiler msvc-14 downstream
 
   osx:
-    runs-on: macos-12
+    runs-on: macos-14-large
     steps:
+    - uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: ${{ env.CRT_CI_ROLE }}
+        aws-region: ${{ env.AWS_DEFAULT_REGION }}
     - name: Setup dotnet # Use setup dotnet action as macos-12 image no longer contains .net5.0 and .net3.1
       uses: actions/setup-dotnet@v3
       with:
@@ -153,7 +196,7 @@ jobs:
   # it would be better to run tests natively on one of these machines,
   # but we don't have access to one in the cloud, so for now just cross-compile
   osx-arm64-cross-compile:
-    runs-on: macos-12
+    runs-on: macos-14
     steps:
     - name: Build ${{ env.PACKAGE_NAME }} + consumers
       run: |
@@ -163,8 +206,12 @@ jobs:
         test `lipo aws-crt-dotnet/build/Arm64/lib/libaws-crt-dotnet-ARM64.dylib -archs` = "arm64"
 
   check-submodules:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     steps:
+    - uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: ${{ env.CRT_CI_ROLE }}
+        aws-region: ${{ env.AWS_DEFAULT_REGION }}
     - name: Checkout Source
       uses: actions/checkout@v4
       with:
