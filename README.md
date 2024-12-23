@@ -18,7 +18,7 @@ This library is licensed under the Apache 2.0 License.
 
 - `dotnet build -f netstandard2.0 -p:PlatformTarget=x64 -p:CMakeConfig=Debug` for 64 bit mac machine. Check ./builder.json for `PlatformTarget` on your machine.
 - `dotnet pack -p:TargetFrameworks=netstandard2.0`
-- OR run `chmod a+x ./clean_rebuild.sh && ./clean_rebuild.sh`, which will clean up the previous build and rebuild the project from source.
+- OR run `./clean_rebuild.sh`, which will clean up the previous build and rebuild the project from source.
 
 ### Test steps
 
