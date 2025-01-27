@@ -36,7 +36,7 @@ jobs:
         ./linux-container-ci.sh ${{ env.BUILDER_VERSION }} aws-crt-${{ matrix.image }} build -p ${{ env.PACKAGE_NAME }} --spec=downstream
 
   linux-arm:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-22.04 # temporarily downgrade to old ubuntu as 24.04 likes to segfault in the middle of the build for arm build
     strategy:
       matrix:
         arch: [arm64]
