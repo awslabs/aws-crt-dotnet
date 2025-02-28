@@ -36,7 +36,7 @@ jobs:
         ./linux-container-ci.sh ${{ env.BUILDER_VERSION }} aws-crt-${{ matrix.image }} build -p ${{ env.PACKAGE_NAME }} --spec=downstream
 
   linux-arm:
-    runs-on: ubuntu-22.04 # temporarily downgrade to old ubuntu as 24.04 likes to segfault in the middle of the build for arm build
+    runs-on: ubuntu-24.04
     strategy:
       matrix:
         arch: [arm64]
@@ -46,7 +46,7 @@ jobs:
         role-to-assume: ${{ env.CRT_CI_ROLE }}
         aws-region: ${{ env.AWS_DEFAULT_REGION }}
     - name: Install qemu/docker
-      run: docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
+      run: docker run --privileged --rm tonistiigi/binfmt --install aarch64
         # We can't use the `uses: docker://image` version yet, GitHub lacks authentication for actions -> packages
     - name: Build ${{ env.PACKAGE_NAME }} + consumers
       run: |
