@@ -128,8 +128,8 @@ jobs:
       with:
         role-to-assume: ${{ env.CRT_CI_ROLE }}
         aws-region: ${{ env.AWS_DEFAULT_REGION }}
-    - name: Setup dotnet # Use setup dotnet action as Windows-2019 image no longer contains .net5.0
-      uses: actions/setup-dotnet@v3
+    - name: Setup dotnet
+      uses: actions/setup-dotnet@v4
       with:
         dotnet-version: |
           3.1.x
@@ -155,7 +155,7 @@ jobs:
         role-to-assume: ${{ env.CRT_CI_ROLE }}
         aws-region: ${{ env.AWS_DEFAULT_REGION }}
     - name: Setup dotnet
-      uses: actions/setup-dotnet@v3
+      uses: actions/setup-dotnet@v4
       with:
         #TODO: Specify architecture to install 32 bit .net when that is supported (https://github.com/actions/setup-dotnet/issues/72)
         dotnet-version: |
@@ -174,7 +174,7 @@ jobs:
         role-to-assume: ${{ env.CRT_CI_ROLE }}
         aws-region: ${{ env.AWS_DEFAULT_REGION }}
     - name: Setup dotnet # Use setup dotnet action as macos-12 image no longer contains .net5.0 and .net3.1
-      uses: actions/setup-dotnet@v3
+      uses: actions/setup-dotnet@v4
       with:
         dotnet-version: |
           3.1.x
