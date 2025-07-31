@@ -119,7 +119,7 @@ jobs:
         ./linux-container-ci.sh ${{ env.BUILDER_VERSION }} aws-crt-${{ env.LINUX_BASE_IMAGE }} build -p ${{ env.PACKAGE_NAME }} --compiler=clang-11 --cmake-extra=-DENABLE_SANITIZERS=ON --cmake-extra=-DSANITIZERS="${{ matrix.sanitizers }}"
 
   windows-vc16:
-    runs-on: windows-2019
+    runs-on: windows-2025
     strategy:
       matrix:
         arch: [x64]
@@ -128,8 +128,8 @@ jobs:
       with:
         role-to-assume: ${{ env.CRT_CI_ROLE }}
         aws-region: ${{ env.AWS_DEFAULT_REGION }}
-    - name: Setup dotnet # Use setup dotnet action as Windows-2019 image no longer contains .net5.0
-      uses: actions/setup-dotnet@v3
+    - name: Setup dotnet
+      uses: actions/setup-dotnet@v4
       with:
         dotnet-version: |
           3.1.x
@@ -142,11 +142,10 @@ jobs:
     - name: Build ${{ env.PACKAGE_NAME }} + consumers
       run: |
         python -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder.pyz')"
-        python builder.pyz build -p ${{ env.PACKAGE_NAME }} --spec=downstream
+        python builder.pyz build -p ${{ env.PACKAGE_NAME }} --compiler msvc-16 --spec=downstream
 
-  # TODO: Fix this to run on 14.0 toolset. Currently, it doesn't respect the toolset parameter.
-  windows-vc14:
-    runs-on: windows-2019
+  windows-vc17:
+    runs-on: windows-2025
     strategy:
       matrix:
         arch: [x86, x64]
@@ -156,22 +155,16 @@ jobs:
         role-to-assume: ${{ env.CRT_CI_ROLE }}
         aws-region: ${{ env.AWS_DEFAULT_REGION }}
     - name: Setup dotnet
-      uses: actions/setup-dotnet@v3
+      uses: actions/setup-dotnet@v4
       with:
         #TODO: Specify architecture to install 32 bit .net when that is supported (https://github.com/actions/setup-dotnet/issues/72)
         dotnet-version: |
           3.1.x
           5.0.x
-    - uses: ilammy/msvc-dev-cmd@v1
-      with:
-        toolset: 14.0
-        arch: ${{ matrix.arch }}
-        uwp: false
-        spectre: true
     - name: Build ${{ env.PACKAGE_NAME }} + consumers
       run: |
         python -c "from urllib.request import urlretrieve; urlretrieve('${{ env.BUILDER_HOST }}/${{ env.BUILDER_SOURCE }}/${{ env.BUILDER_VERSION }}/builder.pyz?run=${{ env.RUN }}', 'builder.pyz')"
-        python builder.pyz build -p ${{ env.PACKAGE_NAME }} --target windows-${{ matrix.arch }} --compiler msvc-14 downstream
+        python builder.pyz build -p ${{ env.PACKAGE_NAME }} --target windows-${{ matrix.arch }} --compiler msvc-17 downstream
 
   osx:
     runs-on: macos-14-large
@@ -181,7 +174,7 @@ jobs:
         role-to-assume: ${{ env.CRT_CI_ROLE }}
         aws-region: ${{ env.AWS_DEFAULT_REGION }}
     - name: Setup dotnet # Use setup dotnet action as macos-12 image no longer contains .net5.0 and .net3.1
-      uses: actions/setup-dotnet@v3
+      uses: actions/setup-dotnet@v4
       with:
         dotnet-version: |
           3.1.x

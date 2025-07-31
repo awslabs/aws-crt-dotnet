@@ -40,12 +40,14 @@
     <CMakeGenerator64 Condition="$(CMakeGenerator64) == '' AND $(OS) == 'Windows_NT' AND $(VisualStudioVersion) == '14.0'">Visual Studio 14 2015 Win64</CMakeGenerator64>
     <CMakeGenerator64 Condition="$(CMakeGenerator64) == '' AND $(OS) == 'Windows_NT' AND $(VisualStudioVersion) == '15.0'">Visual Studio 15 2017 Win64</CMakeGenerator64>
     <CMakeGenerator64 Condition="$(CMakeGenerator64) == '' AND $(OS) == 'Windows_NT' AND $(VisualStudioVersion) == '16.0'">Visual Studio 16 2019</CMakeGenerator64>
+    <CMakeGenerator64 Condition="$(CMakeGenerator64) == '' AND $(OS) == 'Windows_NT' AND $(VisualStudioVersion) == '17.0'">Visual Studio 17 2022</CMakeGenerator64>
     <CMakeGenerator64 Condition="$(CMakeGenerator64) == '' AND $(OS) == 'Unix'">Unix Makefiles</CMakeGenerator64>
     <CMakeArch64 Condition="$(CMakeGenerator64) == 'Visual Studio 16 2019'">-A x64</CMakeArch64>
 
     <CMakeGenerator86 Condition="$(CMakeGenerator86) == '' AND $(OS) == 'Windows_NT' AND $(VisualStudioVersion) == '14.0'">Visual Studio 14 2015</CMakeGenerator86>
     <CMakeGenerator86 Condition="$(CMakeGenerator86) == '' AND $(OS) == 'Windows_NT' AND $(VisualStudioVersion) == '15.0'">Visual Studio 15 2017</CMakeGenerator86>
     <CMakeGenerator86 Condition="$(CMakeGenerator86) == '' AND $(OS) == 'Windows_NT' AND $(VisualStudioVersion) == '16.0'">Visual Studio 16 2019</CMakeGenerator86>
+    <CMakeGenerator86 Condition="$(CMakeGenerator86) == '' AND $(OS) == 'Windows_NT' AND $(VisualStudioVersion) == '17.0'">Visual Studio 17 2022</CMakeGenerator86>
     <CMakeGenerator86 Condition="$(CMakeGenerator86) == '' AND $(OS) == 'Unix'">Unix Makefiles</CMakeGenerator86>
     <CMakeArch86 Condition="$(CMakeGenerator86) == 'Visual Studio 16 2019'">-A Win32</CMakeArch86>
 
