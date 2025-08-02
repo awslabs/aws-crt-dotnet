@@ -609,3 +609,60 @@ AWS_DOTNET_API bool aws_dotnet_auth_verify_v4a_signature(
 
     return result == AWS_OP_SUCCESS;
 }
+
+AWS_DOTNET_API bool aws_dotnet_auth_verify_v4a_http_request_signature(
+    const char *method,
+    const char *uri,
+    struct aws_dotnet_http_header headers[],
+    uint32_t header_count,
+    struct aws_dotnet_stream_function_table body_stream_delegates,
+    const char *canonical_request,
+    struct aws_signing_config_native native_signing_config,
+    const char *hex_signature,
+    const char *ecc_pub_x,
+    const char *ecc_pub_y) {
+
+    struct aws_allocator *allocator = aws_dotnet_get_allocator();
+
+    int result = AWS_OP_ERR;
+    struct aws_dotnet_signing_callback_state *continuation =
+        aws_mem_calloc(allocator, 1, sizeof(struct aws_dotnet_signing_callback_state));
+    if (continuation == NULL) {
+        return false;
+    }
+
+    struct aws_signing_config_aws config;
+    AWS_ZERO_STRUCT(config);
+
+    if (s_initialize_signing_config(&config, &native_signing_config, continuation)) {
+        goto done;
+    }
+
+    continuation->signature_type = native_signing_config.signature_type;
+    continuation->should_sign_header = native_signing_config.should_sign_header;
+    continuation->request = aws_build_http_request(method, uri, headers, header_count, &body_stream_delegates);
+    if (continuation->request == NULL) {
+        goto done;
+    }
+
+    continuation->body_stream = aws_http_message_get_body_stream(continuation->request);
+    continuation->original_request_signable = aws_signable_new_http_request(allocator, continuation->request);
+    if (continuation->original_request_signable == NULL) {
+        goto done;
+    }
+
+    result = aws_verify_sigv4a_signing(
+        allocator,
+        continuation->original_request_signable,
+        (struct aws_signing_config_base *)&config,
+        aws_byte_cursor_from_c_str(canonical_request),
+        aws_byte_cursor_from_c_str(hex_signature),
+        aws_byte_cursor_from_c_str(ecc_pub_x),
+        aws_byte_cursor_from_c_str(ecc_pub_y));
+
+done:
+
+    s_destroy_signing_callback_state(continuation);
+
+    return result == AWS_OP_SUCCESS;
+}
