@@ -49,7 +49,6 @@ namespace Aws.Crt {
 
     public static class NativeAPI {
 
-        private static MethodInfo GetFunction = CRT.Binding.GetType().GetMethod("GetFunction");
         // mapping of number of generic params -> method
         private static Dictionary<int, MethodInfo> MakeCallImpls = GetMakeCallImpls("MakeCall");
         private static Dictionary<int, MethodInfo> MakeVoidCallImpls = GetMakeCallImpls("MakeVoidCall");
@@ -73,23 +72,19 @@ namespace Aws.Crt {
         }
 
         public static D Bind<D>() {
-            return (D)BindImpl<D>(typeof(D).Name);
+            return BindImpl<D>(typeof(D).Name);
         }
 
         public static D Bind<D>(string nativeFunctionName) {
-            return (D)BindImpl<D>(nativeFunctionName);
+            return BindImpl<D>(nativeFunctionName);
         }
 
-        // this returns dynamic because without delegate where clauses on generic functions (C# 7.3)
-        // it is not possible to cast a Delegate to a generic parameter.  The Resolve functions are
-        // perfectly capable of casting a dynamic -> generic parameter though
-        private static Object BindImpl<D>(string nativeFunctionName)
+        private static D BindImpl<D>(string nativeFunctionName)
         {
             var delegateType = typeof(D);
 
             // resolve the native function from the CRT Binding
-            var resolve = GetFunction.MakeGenericMethod(new Type[] { delegateType });
-            var function = (D)resolve.Invoke(CRT.Binding, new object[] { nativeFunctionName });
+            var function = CRT.Binding.GetFunction<D>(nativeFunctionName);
 
             // generate a call to MakeCall<> with the right generic parameters
             var makeCallImpl = GetMakeCallImpl(GetFuncParameterTypes(delegateType));
@@ -98,7 +93,7 @@ namespace Aws.Crt {
             var callImpl = (Delegate)makeCallImpl.Invoke(null, new object[] { function });
 
             // convert the result to the delegate type of the native function
-            return Delegate.CreateDelegate(delegateType, callImpl.Target, callImpl.Method);
+            return (D)(object)Delegate.CreateDelegate(delegateType, callImpl.Target, callImpl.Method);
         }
 
         public delegate void CrtAction();
