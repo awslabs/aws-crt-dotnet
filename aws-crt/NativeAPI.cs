@@ -5,9 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
-using System.Reflection.Emit;
 using System.Runtime.InteropServices;
-using System.Threading;
 
 namespace Aws.Crt {
     // Unique exception only thrown by native code when something unrecoverable happens
@@ -26,7 +24,7 @@ namespace Aws.Crt {
 
         [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl)]
         internal delegate void SetExceptionCallback(NativeExceptionRecorder callback);
-        
+
         // Called from native code as a callback, store the exception in TLS and
         // throw it when we return to CLR code
         internal static void RecordNativeException(int errorCode, string errorName, string message)
@@ -50,8 +48,8 @@ namespace Aws.Crt {
     public static class NativeAPI {
 
         // mapping of number of generic params -> method
-        private static Dictionary<int, MethodInfo> MakeCallImpls = GetMakeCallImpls("MakeCall");
-        private static Dictionary<int, MethodInfo> MakeVoidCallImpls = GetMakeCallImpls("MakeVoidCall");
+        private static readonly Dictionary<int, MethodInfo> MakeCallImpls = GetMakeCallImpls("MakeCall");
+        private static readonly Dictionary<int, MethodInfo> MakeVoidCallImpls = GetMakeCallImpls("MakeVoidCall");
 
         private static Dictionary<int, MethodInfo> GetMakeCallImpls(string name) {
             var methodInfos = Array.FindAll(typeof(NativeAPI).GetMethods(), (m) => m.Name == name);
@@ -61,7 +59,7 @@ namespace Aws.Crt {
         }
 
         private static MethodInfo GetMakeCallImpl(Type[] argTypes) {
-            MethodInfo makeCallImpl = null;
+            MethodInfo makeCallImpl;
             if (argTypes[argTypes.Length - 1] == typeof(void)) {
                 Array.Resize(ref argTypes, argTypes.Length - 1);
                 makeCallImpl = MakeVoidCallImpls[argTypes.Length];

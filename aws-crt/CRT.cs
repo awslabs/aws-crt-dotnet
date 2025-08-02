@@ -16,7 +16,7 @@ namespace Aws.Crt
     [SecuritySafeCritical]
     public static class CRT
     {
-        static bool Is64Bit = (IntPtr.Size == 8);
+        static bool Is64Bit => IntPtr.Size == 8;
 
         [SecuritySafeCritical]
         internal static class API
@@ -240,7 +240,7 @@ namespace Aws.Crt
             }
 
             public IntPtr GetFunctionAddress(string name) {
-                return CRT.Loader.GetFunction(crt.DangerousGetHandle(), name);
+                return Loader.GetFunction(crt.DangerousGetHandle(), name);
             }
         }
 
@@ -391,17 +391,14 @@ namespace Aws.Crt
                     return s_loader;
                 }
 
-                if (Platform.GetRuntimePlatformOS() == PlatformOS.WINDOWS)
+                switch (Platform.GetRuntimePlatformOS())
                 {
-                    return s_loader = new WindowsLoader();
-                }
-                else if (Platform.GetRuntimePlatformOS() == PlatformOS.MAC)
-                {
-                    return s_loader = new DarwinLoader();
-                }
-                else if (Platform.GetRuntimePlatformOS() == PlatformOS.UNIX)
-                {
-                    return s_loader = new GlibcLoader();
+                    case PlatformOS.WINDOWS:
+                        return s_loader = new WindowsLoader();
+                    case PlatformOS.MAC:
+                        return s_loader = new DarwinLoader();
+                    case PlatformOS.UNIX:
+                        return s_loader = new GlibcLoader();
                 }
 
                 return null;
