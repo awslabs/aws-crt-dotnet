@@ -5,9 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
-using System.Reflection.Emit;
 using System.Runtime.InteropServices;
-using System.Threading;
 
 namespace Aws.Crt {
     // Unique exception only thrown by native code when something unrecoverable happens
@@ -26,7 +24,7 @@ namespace Aws.Crt {
 
         [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl)]
         internal delegate void SetExceptionCallback(NativeExceptionRecorder callback);
-        
+
         // Called from native code as a callback, store the exception in TLS and
         // throw it when we return to CLR code
         internal static void RecordNativeException(int errorCode, string errorName, string message)
@@ -49,10 +47,9 @@ namespace Aws.Crt {
 
     public static class NativeAPI {
 
-        private static MethodInfo GetFunction = CRT.Binding.GetType().GetMethod("GetFunction");
         // mapping of number of generic params -> method
-        private static Dictionary<int, MethodInfo> MakeCallImpls = GetMakeCallImpls("MakeCall");
-        private static Dictionary<int, MethodInfo> MakeVoidCallImpls = GetMakeCallImpls("MakeVoidCall");
+        private static readonly Dictionary<int, MethodInfo> MakeCallImpls = GetMakeCallImpls("MakeCall");
+        private static readonly Dictionary<int, MethodInfo> MakeVoidCallImpls = GetMakeCallImpls("MakeVoidCall");
 
         private static Dictionary<int, MethodInfo> GetMakeCallImpls(string name) {
             var methodInfos = Array.FindAll(typeof(NativeAPI).GetMethods(), (m) => m.Name == name);
@@ -62,7 +59,7 @@ namespace Aws.Crt {
         }
 
         private static MethodInfo GetMakeCallImpl(Type[] argTypes) {
-            MethodInfo makeCallImpl = null;
+            MethodInfo makeCallImpl;
             if (argTypes[argTypes.Length - 1] == typeof(void)) {
                 Array.Resize(ref argTypes, argTypes.Length - 1);
                 makeCallImpl = MakeVoidCallImpls[argTypes.Length];
@@ -73,23 +70,19 @@ namespace Aws.Crt {
         }
 
         public static D Bind<D>() {
-            return (D)BindImpl<D>(typeof(D).Name);
+            return BindImpl<D>(typeof(D).Name);
         }
 
         public static D Bind<D>(string nativeFunctionName) {
-            return (D)BindImpl<D>(nativeFunctionName);
+            return BindImpl<D>(nativeFunctionName);
         }
 
-        // this returns dynamic because without delegate where clauses on generic functions (C# 7.3)
-        // it is not possible to cast a Delegate to a generic parameter.  The Resolve functions are
-        // perfectly capable of casting a dynamic -> generic parameter though
-        private static Object BindImpl<D>(string nativeFunctionName)
+        private static D BindImpl<D>(string nativeFunctionName)
         {
             var delegateType = typeof(D);
 
             // resolve the native function from the CRT Binding
-            var resolve = GetFunction.MakeGenericMethod(new Type[] { delegateType });
-            var function = (D)resolve.Invoke(CRT.Binding, new object[] { nativeFunctionName });
+            var function = CRT.Binding.GetFunction<D>(nativeFunctionName);
 
             // generate a call to MakeCall<> with the right generic parameters
             var makeCallImpl = GetMakeCallImpl(GetFuncParameterTypes(delegateType));
@@ -98,7 +91,7 @@ namespace Aws.Crt {
             var callImpl = (Delegate)makeCallImpl.Invoke(null, new object[] { function });
 
             // convert the result to the delegate type of the native function
-            return Delegate.CreateDelegate(delegateType, callImpl.Target, callImpl.Method);
+            return (D)(object)Delegate.CreateDelegate(delegateType, callImpl.Target, callImpl.Method);
         }
 
         public delegate void CrtAction();

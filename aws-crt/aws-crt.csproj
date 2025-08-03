@@ -62,8 +62,6 @@
     <PackageReference Include="CMake" Version="3.5.2">
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Condition="'$(TargetFramework)' == 'netstandard2.0'" Include="System.Runtime.Loader" Version="4.3.0" />
-    <PackageReference Condition="'$(TargetFramework)' != 'net35'" Include="Microsoft.CSharp" Version="4.5.0" />
   </ItemGroup>
 
   <Target Name="MakeLocalPackageSource" BeforeTargets="Restore;CollectPackageReferences">

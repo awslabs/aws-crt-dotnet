@@ -3,11 +3,10 @@
  * SPDX-License-Identifier: Apache-2.0.
  */
 
-using System;
-
 #if NETSTANDARD
 using System.Runtime.InteropServices;
 #else
+using System;
 using System.IO;
 #endif
 
@@ -45,8 +44,7 @@ namespace Aws.Crt
             /*
             * Taken from https://stackoverflow.com/questions/38790802/determine-operating-system-in-net-core/38795621#38795621
             */
-            string windir = Environment.GetEnvironmentVariable("windir");
-            if (!string.IsNullOrEmpty(windir) && windir.Contains(@"\") && Directory.Exists(windir))
+            if (Environment.OSVersion.Platform == PlatformID.Win32NT)
             {
                 return PlatformOS.WINDOWS;
             }
