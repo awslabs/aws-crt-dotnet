@@ -80,7 +80,7 @@ static void s_debug_wait(void) {
 
 AWS_DOTNET_API
 void aws_dotnet_static_init(void) {
-    struct aws_allocator *allocator = aws_dotnet_get_allocator();
+    struct aws_allocator *allocator = aws_default_allocator();
 
     s_debug_wait();
 
@@ -107,7 +107,9 @@ void aws_dotnet_native_memory_dump(void) {
 }
 
 AWS_DOTNET_API
-void aws_dotnet_static_shutdown(void) {}
+void aws_dotnet_static_shutdown(void) {
+    aws_http_library_clean_up();
+}
 
 AWS_DOTNET_API
 int aws_test_exception(int a, int b) {
