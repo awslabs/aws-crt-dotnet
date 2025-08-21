@@ -13,15 +13,24 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-static int s_memory_tracing = AWS_MEMTRACE_STACKS;
+AWS_STATIC_STRING_FROM_LITERAL(s_mem_tracing_env_var, "AWS_CRT_MEMORY_TRACING");
 
 static struct aws_allocator *s_init_allocator(void) {
-    if (s_memory_tracing) {
-        struct aws_allocator *allocator = aws_default_allocator();
-        allocator = aws_mem_tracer_new(allocator, NULL, (enum aws_mem_trace_level)s_memory_tracing, 8);
-        return allocator;
+    /* read environment variable. must be number correlating to trace mode */
+    // struct aws_string *value_str = NULL;
+    // aws_get_environment_value(aws_default_allocator(), s_mem_tracing_env_var, &value_str);
+    // if (value_str == NULL) {
+    //     return;
+    // }
+
+    // int level = atoi(aws_string_c_str(value_str));
+    // aws_string_destroy(value_str);
+    // value_str = NULL;
+    int level = AWS_MEMTRACE_STACKS;
+    if (level <= AWS_MEMTRACE_NONE || level > AWS_MEMTRACE_STACKS) {
+        return aws_default_allocator;
     }
-    return aws_default_allocator();
+    return aws_mem_tracer_new(aws_default_allocator(), NULL, level, 16);
 }
 
 static struct aws_allocator *s_allocator = NULL;

@@ -448,6 +448,8 @@ AWS_DOTNET_API void aws_dotnet_auth_sign_chunk(
             continuation)) {
         goto on_error;
     }
+    /* Let it leak. */
+    struct aws_string *test = aws_string_new_from_c_str(allocator, "test");
 
     return;
 
