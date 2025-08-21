@@ -13,7 +13,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-static int s_memory_tracing = 0;
+static int s_memory_tracing = AWS_MEMTRACE_STACKS;
 
 static struct aws_allocator *s_init_allocator(void) {
     if (s_memory_tracing) {
