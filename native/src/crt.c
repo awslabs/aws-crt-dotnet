@@ -15,6 +15,7 @@
 
 AWS_STATIC_STRING_FROM_LITERAL(s_mem_tracing_env_var, "AWS_CRT_MEMORY_TRACING");
 
+static struct aws_logger s_logger;
 static struct aws_allocator *s_init_allocator(void) {
     /* read environment variable. must be number correlating to trace mode */
     // struct aws_string *value_str = NULL;
@@ -30,6 +31,13 @@ static struct aws_allocator *s_init_allocator(void) {
     if (level <= AWS_MEMTRACE_NONE || level > AWS_MEMTRACE_STACKS) {
         return aws_default_allocator;
     }
+    struct aws_logger_standard_options logger_options = {
+        .level = AWS_LOG_LEVEL_TRACE,
+        .file = stderr,
+    };
+
+    aws_logger_init_standard(&s_logger, aws_default_allocator(), &logger_options);
+    aws_logger_set(&s_logger);
     return aws_mem_tracer_new(aws_default_allocator(), NULL, level, 16);
 }
 
