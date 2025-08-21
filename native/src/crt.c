@@ -88,6 +88,25 @@ void aws_dotnet_static_init(void) {
 }
 
 AWS_DOTNET_API
+int aws_dotnet_get_native_memory_usage(void) {
+    size_t bytes = 0;
+    struct aws_allocator *alloc = aws_dotnet_get_allocator();
+    if (alloc != aws_default_allocator()) {
+        bytes = aws_mem_tracer_bytes(alloc);
+    }
+    /* TODO: size_t in dotnet??? */
+    return (int)bytes;
+}
+
+AWS_DOTNET_API
+void aws_dotnet_native_memory_dump(void) {
+    struct aws_allocator *allocator = aws_dotnet_get_allocator();
+    if (allocator != aws_default_allocator()) {
+        aws_mem_tracer_dump(allocator);
+    }
+}
+
+AWS_DOTNET_API
 void aws_dotnet_static_shutdown(void) {}
 
 AWS_DOTNET_API
