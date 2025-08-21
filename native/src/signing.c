@@ -334,7 +334,6 @@ on_error:
 
     on_signing_complete(callback_id, error_code, NULL, 0, NULL, NULL, 0);
 }
-static struct aws_logger s_logger;
 
 AWS_DOTNET_API void aws_dotnet_auth_sign_canonical_request(
     const char *canonical_request,
@@ -349,13 +348,6 @@ AWS_DOTNET_API void aws_dotnet_auth_sign_canonical_request(
     AWS_ZERO_STRUCT(config);
 
     struct aws_allocator *allocator = aws_dotnet_get_allocator();
-    struct aws_logger_standard_options logger_options = {
-        .level = AWS_LOG_LEVEL_TRACE,
-        .file = stderr,
-    };
-
-    aws_logger_init_standard(&s_logger, aws_default_allocator(), &logger_options);
-    aws_logger_set(&s_logger);
 
     continuation = aws_mem_calloc(allocator, 1, sizeof(struct aws_dotnet_signing_callback_state));
     if (continuation == NULL) {
@@ -513,6 +505,7 @@ AWS_DOTNET_API void aws_dotnet_auth_sign_trailing_headers(
 
     continuation->original_request_signable =
         aws_signable_new_trailing_headers(allocator, trailing_headers, previous_signature_cursor);
+    aws_http_headers_release(trailing_headers);
     if (continuation->original_request_signable == NULL) {
         goto on_error;
     }
