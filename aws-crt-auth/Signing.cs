@@ -327,14 +327,16 @@ namespace Aws.Crt.Auth
             }
         }
 
-        public static void CheckForLeak()
+        public static bool CheckForLeak()
         {
             GC.Collect();
             int leak = API.GetMemNative();
 
             if(leak>0) {
                 API.MemDumpNative();
+                return true;
             }
+            return false;
         }
 
         public static CrtResult<CrtSigningResult> SignHttpRequest(HttpRequest request, AwsSigningConfig signingConfig)

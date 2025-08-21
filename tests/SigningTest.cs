@@ -23,11 +23,12 @@ namespace tests
             // This method will be called after each test case runs
             Console.WriteLine("Test case completed, performing cleanup...");
 
-            // Add any cleanup code here
-            // For example: release resources, reset static variables, etc.
+            // Force garbage collection to ensure proper cleanup
+            GC.Collect();
 
-            // You can add specific cleanup logic based on your requirements
-            AwsSigner.CheckForLeak();
+            // Check for memory leaks and fail the test if any are detected
+            bool hasLeak = AwsSigner.CheckForLeak();
+            Assert.False(hasLeak, "Memory leak detected in signing test");
         }
 
         private static string GetHeaderValue(HttpRequest request, String name) {
