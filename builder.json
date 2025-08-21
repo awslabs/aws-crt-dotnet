@@ -6,7 +6,7 @@
     ],
     "test_steps": [
         "dotnet build tests/tests.csproj {build_tests_args} --configuration Debug",
-        "dotnet test tests --no-build {run_tests_args} --configuration Debug"
+        "dotnet test -p:TestTfmsInParallel=false tests --no-build {run_tests_args} --configuration Debug"
     ],
     "imports": [
         "dotnetcore"
