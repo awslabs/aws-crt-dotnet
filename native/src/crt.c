@@ -83,8 +83,6 @@ void aws_dotnet_static_init(void) {
     struct aws_allocator *allocator = aws_dotnet_get_allocator();
 
     s_debug_wait();
-
-    aws_http_library_init(allocator);
 }
 
 AWS_DOTNET_API

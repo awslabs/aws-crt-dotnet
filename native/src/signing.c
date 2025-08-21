@@ -456,8 +456,6 @@ AWS_DOTNET_API void aws_dotnet_auth_sign_chunk(
             continuation)) {
         goto on_error;
     }
-    /* Let it leak. */
-    struct aws_string *test = aws_string_new_from_c_str(allocator, "test");
 
     return;
 
@@ -589,7 +587,7 @@ AWS_DOTNET_API bool aws_dotnet_auth_verify_v4a_canonical_signing(
         aws_byte_cursor_from_c_str(ecc_pub_y));
 
 done:
-
+    aws_signable_destroy(signable);
     s_destroy_signing_callback_state(continuation);
 
     return result == AWS_OP_SUCCESS;

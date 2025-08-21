@@ -10,7 +10,7 @@
 
 AWS_DOTNET_API
 void aws_dotnet_auth_library_init(void) {
-    struct aws_allocator *allocator = aws_dotnet_get_allocator();
+    struct aws_allocator *allocator = aws_default_allocator();
     aws_auth_library_init(allocator);
 }
 
