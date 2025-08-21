@@ -18,6 +18,24 @@ namespace tests
 {
     public class SigningTest : IDisposable
     {
+        // Class member to store the initial memory usage
+        private int initialMemoryUsage;
+
+        public SigningTest()
+        {
+            // This constructor will be called before each test case runs
+            Console.WriteLine("Test case starting, performing setup...");
+
+            // Add any setup code here
+            // For example: initialize resources, set up test environment, etc.
+
+            // Force garbage collection before the test to ensure a clean state
+            GC.Collect();
+
+            // Record the initial memory usage
+            initialMemoryUsage = Aws.Crt.Auth.AwsSigner.GetMem();
+            Console.WriteLine($"Initial memory usage: {initialMemoryUsage}");
+        }
         public void Dispose()
         {
             // This method will be called after each test case runs
@@ -26,9 +44,19 @@ namespace tests
             // Force garbage collection to ensure proper cleanup
             GC.Collect();
 
-            // Check for memory leaks and fail the test if any are detected
-            bool hasLeak = AwsSigner.CheckForLeak();
-            Assert.False(hasLeak, "Memory leak detected in signing test");
+            // Get the current memory usage after the test
+            int currentMemoryUsage = Aws.Crt.Auth.AwsSigner.GetMem();
+            Console.WriteLine($"Final memory usage: {currentMemoryUsage}");
+
+            // Check if memory usage has increased
+            if (currentMemoryUsage > initialMemoryUsage)
+            {
+                Console.WriteLine($"Memory leak detected! Initial: {initialMemoryUsage}, Final: {currentMemoryUsage}, Difference: {currentMemoryUsage - initialMemoryUsage}");
+                // Invoke MemDump to get detailed memory information
+                Aws.Crt.Auth.AwsSigner.MemDump();
+                // Fail the test
+                Assert.True(false, $"Memory leak detected: Initial: {initialMemoryUsage}, Final: {currentMemoryUsage}, Difference: {currentMemoryUsage - initialMemoryUsage}");
+            }
         }
 
         private static string GetHeaderValue(HttpRequest request, String name) {

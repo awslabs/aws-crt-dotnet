@@ -340,6 +340,16 @@ namespace Aws.Crt.Auth
             }
             return false;
         }
+        public static int GetMem()
+        {
+            GC.Collect();
+            return API.GetMemNative();
+        }
+
+        public static void MemDump()
+        {
+            API.MemDumpNative();
+        }
 
         public static CrtResult<CrtSigningResult> SignHttpRequest(HttpRequest request, AwsSigningConfig signingConfig)
         {
