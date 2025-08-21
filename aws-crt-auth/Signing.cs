@@ -333,6 +333,8 @@ namespace Aws.Crt.Auth
             int leak = API.GetMemNative();
 
             if(leak>0) {
+                Console.WriteLine($"Leak detected: {leak} bytes");
+
                 API.MemDumpNative();
                 return true;
             }
