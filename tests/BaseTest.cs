@@ -25,6 +25,7 @@ namespace tests
 
             // Force garbage collection before the test to ensure a clean state
             GC.Collect();
+            GC.GetTotalMemory(true);
 
             // Record the initial memory usage
             initialMemoryUsage = Aws.Crt.Auth.AwsSigner.GetMem();
@@ -36,8 +37,9 @@ namespace tests
             // This method will be called after each test case runs
             Console.WriteLine("Test case completed, performing cleanup...");
 
-            // Force garbage collection to ensure proper cleanup
+            // Collect all generations of memory.
             GC.Collect();
+            GC.GetTotalMemory(true);
 
             // Get the current memory usage after the test
             int currentMemoryUsage = Aws.Crt.Auth.AwsSigner.GetMem();
