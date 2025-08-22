@@ -35,6 +35,7 @@ bool s_tls_args_to_options(
         struct aws_byte_cursor password = aws_byte_cursor_from_c_str(pkcs12_password);
         aws_tls_ctx_options_init_client_mtls_pkcs12_from_path(options, allocator, pkcs12_path, &password);
 #else
+        aws_tls_ctx_options_clean_up(options);
         aws_dotnet_throw_exception(AWS_ERROR_UNSUPPORTED_OPERATION, "PKCS12 is not supported on non-Apple platforms");
         return false;
 #endif
@@ -115,6 +116,7 @@ struct aws_tls_ctx *aws_dotnet_tls_ctx_new_server(
         return NULL;
     }
     struct aws_tls_ctx *tls = aws_tls_server_ctx_new(allocator, &options);
+    aws_tls_ctx_options_clean_up(&options);
     if (!tls) {
         aws_dotnet_throw_exception(aws_last_error(), "Unable to create aws_tls_context");
         return NULL;

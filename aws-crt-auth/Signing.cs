@@ -205,13 +205,6 @@ namespace Aws.Crt.Auth
                                     UInt64 future_id,
                                     OnSigningCompleteCallback completion_callback_delegate);
 
-            [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl)]
-            internal delegate int GetNativeMem();
-            [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl)]
-            internal delegate void MemDump();
-            [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl)]
-            internal delegate int JoinThreads();
-
             internal delegate void AwsDotnetAuthSignTrailingHeaders(
                                     [In] HttpHeader[] headers,
                                     UInt32 header_count,
@@ -242,10 +235,6 @@ namespace Aws.Crt.Auth
             public static AwsDotnetAuthSignCanonicalRequest SignCanonicalRequestNative = NativeAPI.Bind<AwsDotnetAuthSignCanonicalRequest>("aws_dotnet_auth_sign_canonical_request");
 
             public static AwsDotnetAuthSignChunk SignChunkNative = NativeAPI.Bind<AwsDotnetAuthSignChunk>("aws_dotnet_auth_sign_chunk");
-
-            public static GetNativeMem GetMemNative = NativeAPI.Bind<GetNativeMem>("aws_dotnet_get_native_memory_usage");
-            public static MemDump MemDumpNative = NativeAPI.Bind<MemDump>("aws_dotnet_native_memory_dump");
-            public static JoinThreads JoinThreadsNative = NativeAPI.Bind<JoinThreads>("aws_dotnet_thread_join_all_managed");
 
             public static AwsDotnetAuthSignTrailingHeaders SignTrailingHeadersNative = NativeAPI.Bind<AwsDotnetAuthSignTrailingHeaders>("aws_dotnet_auth_sign_trailing_headers");
 
@@ -331,35 +320,6 @@ namespace Aws.Crt.Auth
 
                 callback.Result.Complete(result);
             }
-        }
-
-        public static bool CheckForLeak()
-        {
-            GC.Collect();
-            int leak = API.GetMemNative();
-
-            if(leak>0) {
-                Console.WriteLine($"Leak detected: {leak} bytes");
-
-                API.MemDumpNative();
-                return true;
-            }
-            return false;
-        }
-        public static int GetMem()
-        {
-            GC.Collect();
-            return API.GetMemNative();
-        }
-
-        public static void MemDump()
-        {
-            API.MemDumpNative();
-        }
-
-        public static int JoinThreads()
-        {
-            return API.JoinThreadsNative();
         }
 
         public static CrtResult<CrtSigningResult> SignHttpRequest(HttpRequest request, AwsSigningConfig signingConfig)
