@@ -107,6 +107,11 @@ int aws_dotnet_get_native_memory_usage(void) {
 }
 
 AWS_DOTNET_API
+int aws_dotnet_thread_join_all_managed(void) {
+    return aws_thread_join_all_managed();
+}
+
+AWS_DOTNET_API
 void aws_dotnet_native_memory_dump(void) {
     struct aws_allocator *allocator = aws_dotnet_get_allocator();
     if (allocator != aws_default_allocator()) {

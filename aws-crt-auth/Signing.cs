@@ -164,15 +164,18 @@ namespace Aws.Crt.Auth
         [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl)]
         private delegate void aws_dotnet_native_memory_dump();
 
+        [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl)]
+        private delegate int aws_dotnet_thread_join_all_managed();
+
         internal static class API
         {
             internal delegate void OnSigningCompleteCallback(
                 UInt64 id,
                 Int32 errorCode,
-                [In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex=3)] byte[] signatureBuffer,
+                [In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 3)] byte[] signatureBuffer,
                 UInt64 signatureBufferSize,
                 [MarshalAs(UnmanagedType.LPStr)] string signedUri,
-                [In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex=6)] HttpHeaderNative[] signedHeaders,
+                [In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 6)] HttpHeaderNative[] signedHeaders,
                 UInt32 signedHeaderCount);
 
             [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl)]
@@ -196,7 +199,7 @@ namespace Aws.Crt.Auth
             [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl)]
             internal delegate void AwsDotnetAuthSignChunk(
                                     [In] CrtStreamWrapper.DelegateTable stream_delegate_table,
-                                    [In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex=2, ArraySubType=UnmanagedType.U1)] byte[] signature_buffer,
+                                    [In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 2, ArraySubType = UnmanagedType.U1)] byte[] signature_buffer,
                                     UInt32 signature_buffer_length,
                                     [In] AwsSigningConfigNative signing_config,
                                     UInt64 future_id,
@@ -206,11 +209,13 @@ namespace Aws.Crt.Auth
             internal delegate int GetNativeMem();
             [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl)]
             internal delegate void MemDump();
+            [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl)]
+            internal delegate int JoinThreads();
 
             internal delegate void AwsDotnetAuthSignTrailingHeaders(
                                     [In] HttpHeader[] headers,
                                     UInt32 header_count,
-                                    [In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex=2, ArraySubType=UnmanagedType.U1)] byte[] signature_buffer,
+                                    [In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 2, ArraySubType = UnmanagedType.U1)] byte[] signature_buffer,
                                     UInt32 signature_buffer_length,
                                     [In] AwsSigningConfigNative signing_config,
                                     UInt64 future_id,
@@ -227,7 +232,7 @@ namespace Aws.Crt.Auth
             [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl)]
             internal delegate bool AwsDotnetAuthVerifyV4aSignature(
                                     [MarshalAs(UnmanagedType.LPStr)] string string_to_sign,
-                                    [In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex=2, ArraySubType=UnmanagedType.U1)] byte[] signature_buffer,
+                                    [In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 2, ArraySubType = UnmanagedType.U1)] byte[] signature_buffer,
                                     UInt32 signature_buffer_length,
                                     [MarshalAs(UnmanagedType.LPStr)] string ecc_pub_x,
                                     [MarshalAs(UnmanagedType.LPStr)] string ecc_pub_y);
@@ -240,6 +245,7 @@ namespace Aws.Crt.Auth
 
             public static GetNativeMem GetMemNative = NativeAPI.Bind<GetNativeMem>("aws_dotnet_get_native_memory_usage");
             public static MemDump MemDumpNative = NativeAPI.Bind<MemDump>("aws_dotnet_native_memory_dump");
+            public static JoinThreads JoinThreadsNative = NativeAPI.Bind<JoinThreads>("aws_dotnet_thread_join_all_managed");
 
             public static AwsDotnetAuthSignTrailingHeaders SignTrailingHeadersNative = NativeAPI.Bind<AwsDotnetAuthSignTrailingHeaders>("aws_dotnet_auth_sign_trailing_headers");
 
@@ -351,14 +357,22 @@ namespace Aws.Crt.Auth
             API.MemDumpNative();
         }
 
+        public static int JoinThreads()
+        {
+            return API.JoinThreadsNative();
+        }
+
         public static CrtResult<CrtSigningResult> SignHttpRequest(HttpRequest request, AwsSigningConfig signingConfig)
         {
-            if (request == null || signingConfig == null) {
+            if (request == null || signingConfig == null)
+            {
                 throw new CrtException("Null argument passed to SignHttpRequest");
             }
 
-            if (request.BodyStream != null) {
-                if (!request.BodyStream.CanSeek) {
+            if (request.BodyStream != null)
+            {
+                if (!request.BodyStream.CanSeek)
+                {
                     throw new CrtException("Http request payload stream must be seekable in order to be signed");
                 }
             }
@@ -366,8 +380,9 @@ namespace Aws.Crt.Auth
             var nativeConfig = new AwsSigningConfigNative(signingConfig);
 
             uint headerCount = 0;
-            if (request.Headers != null) {
-                headerCount = (uint) request.Headers.Length;
+            if (request.Headers != null)
+            {
+                headerCount = (uint)request.Headers.Length;
             }
 
             HttpRequestSigningCallbackData callback = new HttpRequestSigningCallbackData();

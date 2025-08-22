@@ -37,8 +37,10 @@ namespace tests
             // This method will be called after each test case runs
             Console.WriteLine("Test case completed, performing cleanup...");
 
+
             // Collect all generations of memory.
             GC.Collect();
+            Aws.Crt.Auth.AwsSigner.JoinThreads();
             GC.GetTotalMemory(true);
 
             // Get the current memory usage after the test
