@@ -19,7 +19,7 @@ namespace tests
             public static aws_test_exception_void test_void = NativeAPI.Bind<aws_test_exception_void>();
         }
     }
-    public class ExceptionTest
+    public class ExceptionTest : BaseTest
     {
         [Fact]
         public void EnsureExceptionThrown()

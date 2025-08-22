@@ -10,7 +10,7 @@ using Aws.Crt.Cal;
 
 namespace tests
 {
-    public class HashTest
+    public class HashTest : BaseTest
     {
         [Fact]
         public void TestSha256Empty()

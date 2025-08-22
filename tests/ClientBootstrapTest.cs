@@ -9,7 +9,7 @@ using Aws.Crt.IO;
 
 namespace tests
 {
-    public class ClientBootstrapTest
+    public class ClientBootstrapTest : BaseTest
     {
         [Fact]
         public void ClientBootstrapLifetime()

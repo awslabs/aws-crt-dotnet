@@ -31,13 +31,6 @@ static struct aws_allocator *s_init_allocator(void) {
     if (level <= AWS_MEMTRACE_NONE || level > AWS_MEMTRACE_STACKS) {
         return aws_default_allocator;
     }
-    struct aws_logger_standard_options logger_options = {
-        .level = AWS_LOG_LEVEL_TRACE,
-        .file = stderr,
-    };
-
-    aws_logger_init_standard(&s_logger, aws_default_allocator(), &logger_options);
-    aws_logger_set(&s_logger);
     return aws_mem_tracer_new(aws_default_allocator(), NULL, level, 16);
 }
 
@@ -98,6 +91,13 @@ void aws_dotnet_static_init(void) {
 AWS_DOTNET_API
 int aws_dotnet_get_native_memory_usage(void) {
     size_t bytes = 0;
+    struct aws_logger_standard_options logger_options = {
+        .level = AWS_LOG_LEVEL_TRACE,
+        .file = stderr,
+    };
+
+    aws_logger_init_standard(&s_logger, aws_default_allocator(), &logger_options);
+    aws_logger_set(&s_logger);
     struct aws_allocator *alloc = aws_dotnet_get_allocator();
     if (alloc != aws_default_allocator()) {
         bytes = aws_mem_tracer_bytes(alloc);
