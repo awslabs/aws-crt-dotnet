@@ -157,16 +157,6 @@ namespace Aws.Crt.Auth
             public HttpRequest SignedRequest;
         }
 
-
-        [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl)]
-        private delegate int aws_dotnet_get_native_memory_usage();
-
-        [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl)]
-        private delegate void aws_dotnet_native_memory_dump();
-
-        [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl)]
-        private delegate int aws_dotnet_thread_join_all_managed();
-
         internal static class API
         {
             internal delegate void OnSigningCompleteCallback(
@@ -251,9 +241,6 @@ namespace Aws.Crt.Auth
             public static OnSigningCompleteCallback OnTrailingHeadersSigningComplete = AwsSigner.OnTrailingHeadersSigningComplete;
 
             private static LibraryHandle library = new LibraryHandle();
-
-
-
         }
 
         private class HttpRequestSigningCallbackData

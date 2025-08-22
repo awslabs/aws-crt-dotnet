@@ -25,28 +25,39 @@ bool s_tls_args_to_options(
     AWS_ZERO_STRUCT(*options);
     aws_tls_ctx_options_init_default_client(options, allocator);
     if (ca_path || ca_file) {
-        aws_tls_ctx_options_override_default_trust_store_from_path(options, ca_path, ca_file);
+        if (aws_tls_ctx_options_override_default_trust_store_from_path(options, ca_path, ca_file)) {
+            goto error;
+        }
     }
     if (cert_path && key_path) {
-        aws_tls_ctx_options_init_client_mtls_from_path(options, allocator, cert_path, key_path);
+        if (aws_tls_ctx_options_init_client_mtls_from_path(options, allocator, cert_path, key_path)) {
+            goto error;
+        }
     }
     if (pkcs12_path && pkcs12_password) {
 #if defined(__APPLE__)
         struct aws_byte_cursor password = aws_byte_cursor_from_c_str(pkcs12_password);
-        aws_tls_ctx_options_init_client_mtls_pkcs12_from_path(options, allocator, pkcs12_path, &password);
+        if (aws_tls_ctx_options_init_client_mtls_pkcs12_from_path(options, allocator, pkcs12_path, &password)) {
+            goto error;
+        }
 #else
-        aws_tls_ctx_options_clean_up(options);
+
         aws_dotnet_throw_exception(AWS_ERROR_UNSUPPORTED_OPERATION, "PKCS12 is not supported on non-Apple platforms");
-        return false;
+        goto error;
 #endif
     }
     if (alpn_list) {
-        aws_tls_ctx_options_set_alpn_list(options, alpn_list);
+        if (aws_tls_ctx_options_set_alpn_list(options, alpn_list)) {
+            goto error;
+        }
     }
     options->minimum_tls_version = min_tls_version;
     options->max_fragment_size = max_fragment_size;
     options->verify_peer = verify_peer != 0;
     return true;
+error:
+    aws_tls_ctx_options_clean_up(options);
+    return false;
 }
 
 AWS_DOTNET_API struct aws_tls_ctx *aws_dotnet_tls_ctx_new_client(
