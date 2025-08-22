@@ -18,6 +18,7 @@ namespace tests
         {
             // Force garbage collection before the test to ensure a clean state
             GC.Collect();
+            GC.WaitForPendingFinalizers();
             GC.GetTotalMemory(true);
 
             // Record the initial memory usage
@@ -28,6 +29,7 @@ namespace tests
         {
             // Collect all generations of memory.
             GC.Collect();
+            GC.WaitForPendingFinalizers();
             GC.GetTotalMemory(true);
             // Wait for native threads to join.
             Aws.Crt.CRT.JoinThreads();
