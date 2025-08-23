@@ -286,13 +286,8 @@ AWS_DOTNET_API void aws_dotnet_auth_sign_http_request(
     AWS_ZERO_STRUCT(config);
 
     struct aws_allocator *allocator = aws_dotnet_get_allocator();
-    struct aws_string *let_it_leak = aws_string_new_from_c_str(allocator, "let it leak");
 
     continuation = aws_mem_calloc(allocator, 1, sizeof(struct aws_dotnet_signing_callback_state));
-    if (continuation == NULL) {
-        goto on_error;
-    }
-
     if (s_initialize_signing_config(&config, &native_signing_config, continuation)) {
         goto on_error;
     }
