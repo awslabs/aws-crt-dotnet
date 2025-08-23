@@ -21,15 +21,13 @@ static struct aws_allocator *s_init_allocator(void) {
     struct aws_string *value_str = NULL;
     aws_get_environment_value(aws_default_allocator(), s_mem_tracing_env_var, &value_str);
     if (value_str == NULL) {
-        return;
+        return aws_default_allocator();
     }
 
     int level = atoi(aws_string_c_str(value_str));
     aws_string_destroy(value_str);
-    value_str = NULL;
-    int level = AWS_MEMTRACE_STACKS;
     if (level <= AWS_MEMTRACE_NONE || level > AWS_MEMTRACE_STACKS) {
-        return aws_default_allocator;
+        return aws_default_allocator();
     }
     return aws_mem_tracer_new(aws_default_allocator(), NULL, level, 16);
 }
