@@ -93,7 +93,6 @@ uint64_t aws_dotnet_get_native_memory_usage(void) {
     if (alloc != aws_default_allocator()) {
         bytes = aws_mem_tracer_bytes(alloc);
     }
-    /* TODO: size_t in dotnet??? */
     return (uint64_t)bytes;
 }
 
