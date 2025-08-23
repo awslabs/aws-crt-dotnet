@@ -31,7 +31,7 @@ namespace Aws.Crt
             public delegate int aws_dotnet_thread_join_all_managed();
 
             [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl)]
-            public delegate int aws_dotnet_get_native_memory_usage();
+            public delegate UInt64 aws_dotnet_get_native_memory_usage();
 
             [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl)]
             public delegate void aws_dotnet_native_memory_dump();
@@ -79,7 +79,7 @@ namespace Aws.Crt
             return API.join_threads();
         }
 
-        public static int GetNativeMem()
+        public static UInt64 GetNativeMem()
         {
             return API.native_memory_usage();
         }

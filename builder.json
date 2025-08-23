@@ -5,8 +5,8 @@
         "dotnet pack -p:TargetFrameworks=netstandard2.0 -p:AwsCrtPlatformTarget={aws_crt_platform_target} --configuration Debug"
     ],
     "test_steps": [
-        "dotnet build tests/tests.csproj {build_tests_args} --configuration Debug",
-        "dotnet test -p:TestTfmsInParallel=false tests --no-build {run_tests_args} --configuration Debug"
+        "AWS_CRT_MEMORY_TRACING=2 dotnet build tests/tests.csproj {build_tests_args} --configuration Debug",
+        "AWS_CRT_MEMORY_TRACING=2 dotnet test tests --no-build {run_tests_args} --configuration Debug"
     ],
     "imports": [
         "dotnetcore"
@@ -97,7 +97,7 @@
                 }
             },
             "!test_steps": [
-                "dotnet build tests/tests.csproj -t:MonoTest {build_tests_args} --configuration Debug"
+                "AWS_CRT_MEMORY_TRACING=2 dotnet build tests/tests.csproj -t:MonoTest {build_tests_args} --configuration Debug"
             ]
         }
     }

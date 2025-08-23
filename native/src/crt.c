@@ -18,15 +18,15 @@ AWS_STATIC_STRING_FROM_LITERAL(s_mem_tracing_env_var, "AWS_CRT_MEMORY_TRACING");
 static struct aws_logger s_logger;
 static struct aws_allocator *s_init_allocator(void) {
     /* read environment variable. must be number correlating to trace mode */
-    // struct aws_string *value_str = NULL;
-    // aws_get_environment_value(aws_default_allocator(), s_mem_tracing_env_var, &value_str);
-    // if (value_str == NULL) {
-    //     return;
-    // }
+    struct aws_string *value_str = NULL;
+    aws_get_environment_value(aws_default_allocator(), s_mem_tracing_env_var, &value_str);
+    if (value_str == NULL) {
+        return;
+    }
 
-    // int level = atoi(aws_string_c_str(value_str));
-    // aws_string_destroy(value_str);
-    // value_str = NULL;
+    int level = atoi(aws_string_c_str(value_str));
+    aws_string_destroy(value_str);
+    value_str = NULL;
     int level = AWS_MEMTRACE_STACKS;
     if (level <= AWS_MEMTRACE_NONE || level > AWS_MEMTRACE_STACKS) {
         return aws_default_allocator;
@@ -89,21 +89,14 @@ void aws_dotnet_static_init(void) {
 }
 
 AWS_DOTNET_API
-int aws_dotnet_get_native_memory_usage(void) {
+uint64_t aws_dotnet_get_native_memory_usage(void) {
     size_t bytes = 0;
-    struct aws_logger_standard_options logger_options = {
-        .level = AWS_LOG_LEVEL_TRACE,
-        .file = stderr,
-    };
-
-    aws_logger_init_standard(&s_logger, aws_default_allocator(), &logger_options);
-    aws_logger_set(&s_logger);
     struct aws_allocator *alloc = aws_dotnet_get_allocator();
     if (alloc != aws_default_allocator()) {
         bytes = aws_mem_tracer_bytes(alloc);
     }
     /* TODO: size_t in dotnet??? */
-    return (int)bytes;
+    return (uint64_t)bytes;
 }
 
 AWS_DOTNET_API
@@ -113,6 +106,14 @@ int aws_dotnet_thread_join_all_managed(void) {
 
 AWS_DOTNET_API
 void aws_dotnet_native_memory_dump(void) {
+    /* Enable log to printout the dump */
+    struct aws_logger_standard_options logger_options = {
+        .level = AWS_LOG_LEVEL_TRACE,
+        .file = stderr,
+    };
+
+    aws_logger_init_standard(&s_logger, aws_default_allocator(), &logger_options);
+    aws_logger_set(&s_logger);
     struct aws_allocator *allocator = aws_dotnet_get_allocator();
     if (allocator != aws_default_allocator()) {
         aws_mem_tracer_dump(allocator);

@@ -12,7 +12,7 @@ namespace tests
     public class BaseTest : IDisposable
     {
         // Class member to store the initial memory usage
-        private int initialMemoryUsage;
+        private UInt64 initialMemoryUsage;
 
         public BaseTest()
         {
@@ -35,7 +35,7 @@ namespace tests
             Aws.Crt.CRT.JoinThreads();
 
             // Get the current memory usage after the test
-            int currentMemoryUsage = Aws.Crt.CRT.GetNativeMem();
+            UInt64 currentMemoryUsage = Aws.Crt.CRT.GetNativeMem();
 
             // Check if memory usage has increased
             if (currentMemoryUsage > initialMemoryUsage)
