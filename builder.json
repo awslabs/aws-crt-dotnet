@@ -11,7 +11,7 @@
     "imports": [
         "dotnetcore"
     ],
-    "env":{
+    "test_env":{
         "AWS_CRT_MEMORY_TRACING": "2"
     },
     "hosts": {
