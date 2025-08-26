@@ -122,7 +122,7 @@ namespace Aws.Crt.Auth
             [MarshalAs(UnmanagedType.U8)]
             public ulong ExpirationInSeconds;
 
-            public AwsSigningConfigNative(AwsSigningConfig config) 
+            public AwsSigningConfigNative(AwsSigningConfig config)
             {
                 Algorithm = config.Algorithm;
                 SignatureType = config.SignatureType;
@@ -160,12 +160,12 @@ namespace Aws.Crt.Auth
         internal static class API
         {
             internal delegate void OnSigningCompleteCallback(
-                UInt64 id, 
+                UInt64 id,
                 Int32 errorCode,
-                [In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex=3)] byte[] signatureBuffer,
+                [In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 3)] byte[] signatureBuffer,
                 UInt64 signatureBufferSize,
-                [MarshalAs(UnmanagedType.LPStr)] string signedUri, 
-                [In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex=6)] HttpHeaderNative[] signedHeaders, 
+                [MarshalAs(UnmanagedType.LPStr)] string signedUri,
+                [In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 6)] HttpHeaderNative[] signedHeaders,
                 UInt32 signedHeaderCount);
 
             [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl)]
@@ -189,7 +189,7 @@ namespace Aws.Crt.Auth
             [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl)]
             internal delegate void AwsDotnetAuthSignChunk(
                                     [In] CrtStreamWrapper.DelegateTable stream_delegate_table,
-                                    [In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex=2, ArraySubType=UnmanagedType.U1)] byte[] signature_buffer,
+                                    [In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 2, ArraySubType = UnmanagedType.U1)] byte[] signature_buffer,
                                     UInt32 signature_buffer_length,
                                     [In] AwsSigningConfigNative signing_config,
                                     UInt64 future_id,
@@ -198,7 +198,7 @@ namespace Aws.Crt.Auth
             internal delegate void AwsDotnetAuthSignTrailingHeaders(
                                     [In] HttpHeader[] headers,
                                     UInt32 header_count,
-                                    [In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex=2, ArraySubType=UnmanagedType.U1)] byte[] signature_buffer,
+                                    [In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 2, ArraySubType = UnmanagedType.U1)] byte[] signature_buffer,
                                     UInt32 signature_buffer_length,
                                     [In] AwsSigningConfigNative signing_config,
                                     UInt64 future_id,
@@ -215,11 +215,11 @@ namespace Aws.Crt.Auth
             [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl)]
             internal delegate bool AwsDotnetAuthVerifyV4aSignature(
                                     [MarshalAs(UnmanagedType.LPStr)] string string_to_sign,
-                                    [In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex=2, ArraySubType=UnmanagedType.U1)] byte[] signature_buffer,
+                                    [In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 2, ArraySubType = UnmanagedType.U1)] byte[] signature_buffer,
                                     UInt32 signature_buffer_length,
                                     [MarshalAs(UnmanagedType.LPStr)] string ecc_pub_x,
-                                    [MarshalAs(UnmanagedType.LPStr)] string ecc_pub_y);          
-            
+                                    [MarshalAs(UnmanagedType.LPStr)] string ecc_pub_y);
+
             public static AwsDotnetAuthSignHttpRequest SignRequestNative = NativeAPI.Bind<AwsDotnetAuthSignHttpRequest>("aws_dotnet_auth_sign_http_request");
 
             public static AwsDotnetAuthSignCanonicalRequest SignCanonicalRequestNative = NativeAPI.Bind<AwsDotnetAuthSignCanonicalRequest>("aws_dotnet_auth_sign_canonical_request");
@@ -309,14 +309,17 @@ namespace Aws.Crt.Auth
             }
         }
 
-        public static CrtResult<CrtSigningResult> SignHttpRequest(HttpRequest request, AwsSigningConfig signingConfig) 
+        public static CrtResult<CrtSigningResult> SignHttpRequest(HttpRequest request, AwsSigningConfig signingConfig)
         {
-            if (request == null || signingConfig == null) {
+            if (request == null || signingConfig == null)
+            {
                 throw new CrtException("Null argument passed to SignHttpRequest");
             }
 
-            if (request.BodyStream != null) {
-                if (!request.BodyStream.CanSeek) {
+            if (request.BodyStream != null)
+            {
+                if (!request.BodyStream.CanSeek)
+                {
                     throw new CrtException("Http request payload stream must be seekable in order to be signed");
                 }
             }
@@ -324,8 +327,9 @@ namespace Aws.Crt.Auth
             var nativeConfig = new AwsSigningConfigNative(signingConfig);
 
             uint headerCount = 0;
-            if (request.Headers != null) {
-                headerCount = (uint) request.Headers.Length;
+            if (request.Headers != null)
+            {
+                headerCount = (uint)request.Headers.Length;
             }
 
             HttpRequestSigningCallbackData callback = new HttpRequestSigningCallbackData();
@@ -369,13 +373,13 @@ namespace Aws.Crt.Auth
             return API.VerifyV4aSignatureNative(stringToSign, signature, (uint) signature.Length, eccPubX, eccPubY);
         }
 
-        public static CrtResult<CrtSigningResult> SignCanonicalRequest(String canonicalRequest, AwsSigningConfig signingConfig) 
+        public static CrtResult<CrtSigningResult> SignCanonicalRequest(String canonicalRequest, AwsSigningConfig signingConfig)
         {
             if (canonicalRequest == null || signingConfig == null) {
                 throw new CrtException("Null argument passed to SignCanonicalRequest");
             }
 
-            if (signingConfig.SignatureType != AwsSignatureType.CANONICAL_REQUEST_VIA_HEADERS && 
+            if (signingConfig.SignatureType != AwsSignatureType.CANONICAL_REQUEST_VIA_HEADERS &&
                 signingConfig.SignatureType != AwsSignatureType.CANONICAL_REQUEST_VIA_QUERY_PARAMS) {
                 throw new CrtException("Illegal signing type for canonical request signing");
             }
@@ -390,7 +394,7 @@ namespace Aws.Crt.Auth
             API.SignCanonicalRequestNative(canonicalRequest, nativeConfig, id, API.OnCanonicalRequestSigningComplete);
 
             return callback.Result;
-        }     
+        }
 
         private static void OnChunkSigningComplete(ulong id, int errorCode, byte[] signatureBuffer, ulong signatureBufferSize, string uri, HttpHeaderNative[] headers, uint headerCount)
         {
@@ -412,7 +416,7 @@ namespace Aws.Crt.Auth
             }
         }
 
-        public static CrtResult<CrtSigningResult> SignChunk(Stream chunkBodyStream, byte[] previousSignature, AwsSigningConfig signingConfig) 
+        public static CrtResult<CrtSigningResult> SignChunk(Stream chunkBodyStream, byte[] previousSignature, AwsSigningConfig signingConfig)
         {
             if (previousSignature == null || signingConfig == null) {
                 throw new CrtException("Null argument passed to SignChunk");

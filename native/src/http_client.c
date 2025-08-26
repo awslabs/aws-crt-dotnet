@@ -197,11 +197,8 @@ struct aws_http_message *aws_build_http_request(
         struct aws_http_header header;
         AWS_ZERO_STRUCT(header);
 
-        struct aws_string *name_string = aws_string_new_from_c_str(allocator, headers[i].name);
-        struct aws_string *value_string = aws_string_new_from_c_str(allocator, headers[i].value);
-
-        header.name = aws_byte_cursor_from_string(name_string);
-        header.value = aws_byte_cursor_from_string(value_string);
+        header.name = aws_byte_cursor_from_c_str(headers[i].name);
+        header.value = aws_byte_cursor_from_c_str(headers[i].value);
         if (aws_http_message_add_header(request, header)) {
             goto on_error;
         }

@@ -9,7 +9,7 @@ using Aws.Crt.IO;
 
 namespace tests
 {
-    public class  SocketOptionsTest
+    public class  SocketOptionsTest : BaseTest
     {
         [Fact]
         public void SocketOptionsFields()

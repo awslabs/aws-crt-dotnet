@@ -10,7 +10,9 @@
 
 AWS_DOTNET_API
 void aws_dotnet_auth_library_init(void) {
-    struct aws_allocator *allocator = aws_dotnet_get_allocator();
+    /* Use default allocator directly to init the lib so that we don't report this memory when dumping possible leaks.
+     */
+    struct aws_allocator *allocator = aws_default_allocator();
     aws_auth_library_init(allocator);
 }
 

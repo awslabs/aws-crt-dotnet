@@ -9,7 +9,7 @@ using Aws.Crt.Checksums;
 
 namespace tests
 {
-    public class CrcTest
+    public class CrcTest : BaseTest
     {
         [Fact]
         public void TestCrc32Zeroes()

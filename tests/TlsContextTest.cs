@@ -9,13 +9,13 @@ using Aws.Crt.IO;
 
 namespace tests
 {
-    public class TlsContextOptionsTest
+    public class TlsContextOptionsTest : BaseTest
     {
         [Fact]
         public void ClientMtlsTest()
         {
             var options = TlsContextOptions.ClientMtlsFromPath(
-                "/Users/boswej/Downloads/d97cec9e7f-certificate.pem.crt", 
+                "/Users/boswej/Downloads/d97cec9e7f-certificate.pem.crt",
                 "/Users/boswej/Downloads/d97cec9e7f-private.pem.key");
             var tls = new ClientTlsContext(options);
         }

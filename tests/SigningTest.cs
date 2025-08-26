@@ -16,9 +16,8 @@ using Aws.Crt.IO;
 
 namespace tests
 {
-    public class SigningTest
+    public class SigningTest : BaseTest
     {
-
         private static string GetHeaderValue(HttpRequest request, String name) {
             foreach (HttpHeader header in request.Headers) {
                 if (name == header.Name) {
@@ -183,7 +182,7 @@ namespace tests
 
             byte[] signature = signingResult.Signature;
             Assert.True(signature.SequenceEqual(ASCIIEncoding.ASCII.GetBytes("d3875051da38690788ef43de4db0d8f280229d82040bfac253562e56c3f20e0b")));
-        }      
+        }
 
         /* Sourced from the post-x-www-form-urlencoded test case in aws-c-auth */
         [Fact]
@@ -212,7 +211,7 @@ namespace tests
             byte[] signature = signingResult.Signature;
 
             Assert.True(signature.SequenceEqual(ASCIIEncoding.ASCII.GetBytes("d3875051da38690788ef43de4db0d8f280229d82040bfac253562e56c3f20e0b")));
-        } 
+        }
 
         /* Sourced from the post-x-www-form-urlencoded test case in aws-c-auth */
         [Fact]
@@ -243,7 +242,7 @@ namespace tests
             ASCIIEncoding ascii = new ASCIIEncoding();
 
             Assert.True(AwsSigner.VerifyV4aCanonicalSigning(canonicalRequest, config, ascii.GetString(signatureValue), "b6618f6a65740a99e650b33b6b4b5bd0d43b176d721a3edfea7e7d2d56d936b1", "865ed22a7eadc9c5cb9d2cbaca1b3699139fedc5043dc6661864218330c8e518"));
-        } 
+        }
 
 
         [Fact]
@@ -268,7 +267,7 @@ namespace tests
             /* Verify Skip is not in the signed headers component of the Authorization header */
             String authValue = GetHeaderValue(signedRequest, "Authorization");
             Assert.DoesNotContain(authValue, "Skip");
-        }    
+        }
 
         [Fact]
         public void SignRequestFailureIllegalHeader()
@@ -290,7 +289,7 @@ namespace tests
             String crtErrorName = Aws.Crt.CRT.ErrorName(crtErrorCode);
             /* AWS_AUTH_SIGNING_ILLEGAL_REQUEST_HEADER */
             Assert.Equal("AWS_AUTH_SIGNING_ILLEGAL_REQUEST_HEADER", crtErrorName);
-        }   
+        }
 
         [Fact]
         public void SignRequestFailureNoService()
@@ -313,7 +312,7 @@ namespace tests
             String crtErrorName = Aws.Crt.CRT.ErrorName(crtErrorCode);
             /* AWS_AUTH_SIGNING_INVALID_CONFIGURATION */
             Assert.Equal("AWS_AUTH_SIGNING_INVALID_CONFIGURATION", crtErrorName);
-        }   
+        }
 
         [Fact]
         public void SignRequestFailureNoRegion()
@@ -495,7 +494,7 @@ namespace tests
         private static byte[] EXPECTED_SECOND_CHUNK_SIGNATURE = ASCIIEncoding.ASCII.GetBytes("0055627c9e194cb4542bae2aa5492e3c1575bbb81b612b7d234b86a503ef5497");
         private static byte[] EXPECTED_FINAL_CHUNK_SIGNATURE = ASCIIEncoding.ASCII.GetBytes("b6c6ea8a5354eaf15b3cb7646744f4275b71ea724fed81ceb9323e279d449df9");
         private static byte[] EXPECTED_TRAILING_HEADERS_SIGNATURE = ASCIIEncoding.ASCII.GetBytes("df5735bd9f3295cd9386572292562fefc93ba94e80a0a1ddcbd652c4e0a75e6c");
-       
+
         [Fact]
         public void SignChunkedRequest()
         {
@@ -588,7 +587,7 @@ namespace tests
 
         private String buildTrailingHeadersStringToSign(byte[] previousSignature, String stsPostSignature) {
             StringBuilder stsBuilder = new StringBuilder();
-    
+
             stsBuilder.Append(TRAILING_HEADERS_STS_PRE_SIGNATURE);
             String signature = System.Text.Encoding.UTF8.GetString(previousSignature);
             int paddingIndex = signature.IndexOf('*');
@@ -597,7 +596,7 @@ namespace tests
             }
             stsBuilder.Append(signature);
             stsBuilder.Append(stsPostSignature);
-    
+
             return stsBuilder.ToString();
         }
         private String buildChunkStringToSign(byte[] previousSignature, String stsPostSignature) {
@@ -748,6 +747,6 @@ namespace tests
         public void CheckSigv4aSignatureValueVerifier()
         {
             Assert.True(AwsSigner.VerifyV4aSignature(VERIFIER_TEST_STRING_TO_SIGN, VERIFIER_SIGNATURE, VERIFIER_TEST_ECC_PUB_X, VERIFIER_TEST_ECC_PUB_Y));
-        }   
+        }
     }
 }

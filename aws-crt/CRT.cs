@@ -27,8 +27,21 @@ namespace Aws.Crt
             [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl)]
             public delegate IntPtr aws_dotnet_error_name(int errorCode);
 
+            [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl)]
+            public delegate int aws_dotnet_thread_join_all_managed();
+
+            [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl)]
+            public delegate UInt64 aws_dotnet_get_native_memory_usage();
+
+            [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl)]
+            public delegate void aws_dotnet_native_memory_dump();
+
+
             public static aws_dotnet_error_string error_string = NativeAPI.Bind<aws_dotnet_error_string>();
             public static aws_dotnet_error_name error_name = NativeAPI.Bind<aws_dotnet_error_name>();
+            public static aws_dotnet_thread_join_all_managed join_threads = NativeAPI.Bind<aws_dotnet_thread_join_all_managed>();
+            public static aws_dotnet_get_native_memory_usage native_memory_usage = NativeAPI.Bind<aws_dotnet_get_native_memory_usage>();
+            public static aws_dotnet_native_memory_dump native_memory_dump = NativeAPI.Bind<aws_dotnet_native_memory_dump>();
         }
 
         public static void CopyStream(Stream source, Stream dest, int destSize)
@@ -59,6 +72,21 @@ namespace Aws.Crt
         public static string ErrorName(int errorCode)
         {
             return Marshal.PtrToStringAnsi(API.error_name(errorCode));
+        }
+
+        public static int JoinThreads()
+        {
+            return API.join_threads();
+        }
+
+        public static UInt64 GetNativeMem()
+        {
+            return API.native_memory_usage();
+        }
+
+        public static void NativeMemDump()
+        {
+            API.native_memory_dump();
         }
 
         internal class LibraryHandle : Handle

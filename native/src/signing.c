@@ -279,7 +279,6 @@ AWS_DOTNET_API void aws_dotnet_auth_sign_http_request(
     struct aws_signing_config_native native_signing_config,
     uint64_t callback_id,
     aws_dotnet_auth_on_signing_complete_fn *on_signing_complete) {
-
     int32_t error_code = AWS_ERROR_SUCCESS;
     struct aws_dotnet_signing_callback_state *continuation = NULL;
 
@@ -289,10 +288,6 @@ AWS_DOTNET_API void aws_dotnet_auth_sign_http_request(
     struct aws_allocator *allocator = aws_dotnet_get_allocator();
 
     continuation = aws_mem_calloc(allocator, 1, sizeof(struct aws_dotnet_signing_callback_state));
-    if (continuation == NULL) {
-        goto on_error;
-    }
-
     if (s_initialize_signing_config(&config, &native_signing_config, continuation)) {
         goto on_error;
     }
@@ -505,6 +500,7 @@ AWS_DOTNET_API void aws_dotnet_auth_sign_trailing_headers(
 
     continuation->original_request_signable =
         aws_signable_new_trailing_headers(allocator, trailing_headers, previous_signature_cursor);
+    aws_http_headers_release(trailing_headers);
     if (continuation->original_request_signable == NULL) {
         goto on_error;
     }
@@ -579,7 +575,7 @@ AWS_DOTNET_API bool aws_dotnet_auth_verify_v4a_canonical_signing(
         aws_byte_cursor_from_c_str(ecc_pub_y));
 
 done:
-
+    aws_signable_destroy(signable);
     s_destroy_signing_callback_state(continuation);
 
     return result == AWS_OP_SUCCESS;

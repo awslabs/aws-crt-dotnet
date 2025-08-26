@@ -9,7 +9,7 @@ using Aws.Crt.IO;
 
 namespace tests
 {
-    public class EventLoopGroupTest
+    public class EventLoopGroupTest : BaseTest
     {
         [Fact]
         public void EventLoopGroupLifetime()

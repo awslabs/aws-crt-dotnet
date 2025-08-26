@@ -9,7 +9,7 @@ using Aws.Crt.IO;
 
 namespace tests
 {
-    public class HostResolverTest
+    public class HostResolverTest : BaseTest
     {
         [Fact]
         public void HostResolverLifetime()
