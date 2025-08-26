@@ -79,6 +79,8 @@ static void s_debug_wait(void) {
 
 AWS_DOTNET_API
 void aws_dotnet_static_init(void) {
+    /* Use default allocator directly to init the lib so that we don't report this memory when dumping possible leaks.
+     */
     struct aws_allocator *allocator = aws_default_allocator();
 
     s_debug_wait();
