@@ -16,7 +16,7 @@ namespace Aws.Crt
     [SecuritySafeCritical]
     public static class CRT
     {
-        static bool Is64Bit = (IntPtr.Size == 8);
+        static bool Is64Bit => IntPtr.Size == 8;
 
         [SecuritySafeCritical]
         internal static class API
@@ -240,31 +240,35 @@ namespace Aws.Crt
             private NativeException.NativeExceptionRecorder recordNativeException = NativeException.RecordNativeException;
             private void Init()
             {
-                aws_dotnet_static_init nativeInit = (aws_dotnet_static_init) GetFunction<aws_dotnet_static_init>("aws_dotnet_static_init");
+                aws_dotnet_static_init nativeInit = GetFunction<aws_dotnet_static_init>("aws_dotnet_static_init");
                 nativeInit();
 
-                NativeException.SetExceptionCallback setExceptionCallback = (NativeException.SetExceptionCallback) GetFunction<NativeException.SetExceptionCallback>("aws_dotnet_set_exception_callback");
+                NativeException.SetExceptionCallback setExceptionCallback = GetFunction<NativeException.SetExceptionCallback>("aws_dotnet_set_exception_callback");
                 setExceptionCallback(recordNativeException);
             }
 
             private void Shutdown()
             {
-                aws_dotnet_static_shutdown nativeShutdown = (aws_dotnet_static_shutdown) GetFunction<aws_dotnet_static_shutdown>("aws_dotnet_static_shutdown");
+                aws_dotnet_static_shutdown nativeShutdown = GetFunction<aws_dotnet_static_shutdown>("aws_dotnet_static_shutdown");
                 nativeShutdown();
             }
 
-            public Object GetFunction<DT>(string name)
+            public DT GetFunction<DT>(string name)
             {
                 IntPtr function = GetFunctionAddress(name);
                 if (function == IntPtr.Zero)
                 {
                     throw new InvalidOperationException($"Unable to resolve function {name}");
                 }
-                return Marshal.GetDelegateForFunctionPointer(function, typeof(DT));
+#if NETSTANDARD
+                return Marshal.GetDelegateForFunctionPointer<DT>(function);
+#else
+                return (DT)(object)Marshal.GetDelegateForFunctionPointer(function, typeof(DT));
+#endif
             }
 
             public IntPtr GetFunctionAddress(string name) {
-                return CRT.Loader.GetFunction(crt.DangerousGetHandle(), name);
+                return Loader.GetFunction(crt.DangerousGetHandle(), name);
             }
         }
 
@@ -415,17 +419,14 @@ namespace Aws.Crt
                     return s_loader;
                 }
 
-                if (Platform.GetRuntimePlatformOS() == PlatformOS.WINDOWS)
+                switch (Platform.GetRuntimePlatformOS())
                 {
-                    return s_loader = new WindowsLoader();
-                }
-                else if (Platform.GetRuntimePlatformOS() == PlatformOS.MAC)
-                {
-                    return s_loader = new DarwinLoader();
-                }
-                else if (Platform.GetRuntimePlatformOS() == PlatformOS.UNIX)
-                {
-                    return s_loader = new GlibcLoader();
+                    case PlatformOS.WINDOWS:
+                        return s_loader = new WindowsLoader();
+                    case PlatformOS.MAC:
+                        return s_loader = new DarwinLoader();
+                    case PlatformOS.UNIX:
+                        return s_loader = new GlibcLoader();
                 }
 
                 return null;
