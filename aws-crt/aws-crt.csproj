@@ -37,26 +37,27 @@
     <AssemblyOriginatorKeyFile Condition=" '$(AWSKeyFile)' == '' ">..\awssdk.dll.snk</AssemblyOriginatorKeyFile>
     <SignAssembly>true</SignAssembly>
 
-    <CMakeGenerator64 Condition="$(CMakeGenerator64) == '' AND $(OS) == 'Windows_NT' AND $(VisualStudioVersion) == '14.0'">Visual Studio 14 2015 Win64</CMakeGenerator64>
-    <CMakeGenerator64 Condition="$(CMakeGenerator64) == '' AND $(OS) == 'Windows_NT' AND $(VisualStudioVersion) == '15.0'">Visual Studio 15 2017 Win64</CMakeGenerator64>
-    <CMakeGenerator64 Condition="$(CMakeGenerator64) == '' AND $(OS) == 'Windows_NT' AND $(VisualStudioVersion) == '16.0'">Visual Studio 16 2019</CMakeGenerator64>
-    <CMakeGenerator64 Condition="$(CMakeGenerator64) == '' AND $(OS) == 'Windows_NT' AND $(VisualStudioVersion) == '17.0'">Visual Studio 17 2022</CMakeGenerator64>
-    <CMakeGenerator64 Condition="$(CMakeGenerator64) == '' AND $(OS) == 'Unix'">Unix Makefiles</CMakeGenerator64>
-    <CMakeArch64 Condition="$(CMakeGenerator64) == 'Visual Studio 16 2019'">-A x64</CMakeArch64>
+    <CMakeDefaultGenerator Condition="'$(OS)' == 'Windows_NT' AND '$(VisualStudioVersion)' == '14.0'">Visual Studio 14 2015</CMakeDefaultGenerator>
+    <CMakeDefaultGenerator Condition="'$(OS)' == 'Windows_NT' AND '$(VisualStudioVersion)' == '15.0'">Visual Studio 15 2017</CMakeDefaultGenerator>
+    <CMakeDefaultGenerator Condition="'$(OS)' == 'Windows_NT' AND '$(VisualStudioVersion)' == '16.0'">Visual Studio 16 2019</CMakeDefaultGenerator>
+    <CMakeDefaultGenerator Condition="'$(OS)' == 'Windows_NT' AND '$(VisualStudioVersion)' == '17.0'">Visual Studio 17 2022</CMakeDefaultGenerator>
+    <CMakeDefaultGenerator Condition="'$(OS)' == 'Unix'">Unix Makefiles</CMakeDefaultGenerator>
 
-    <CMakeGenerator86 Condition="$(CMakeGenerator86) == '' AND $(OS) == 'Windows_NT' AND $(VisualStudioVersion) == '14.0'">Visual Studio 14 2015</CMakeGenerator86>
-    <CMakeGenerator86 Condition="$(CMakeGenerator86) == '' AND $(OS) == 'Windows_NT' AND $(VisualStudioVersion) == '15.0'">Visual Studio 15 2017</CMakeGenerator86>
-    <CMakeGenerator86 Condition="$(CMakeGenerator86) == '' AND $(OS) == 'Windows_NT' AND $(VisualStudioVersion) == '16.0'">Visual Studio 16 2019</CMakeGenerator86>
-    <CMakeGenerator86 Condition="$(CMakeGenerator86) == '' AND $(OS) == 'Windows_NT' AND $(VisualStudioVersion) == '17.0'">Visual Studio 17 2022</CMakeGenerator86>
-    <CMakeGenerator86 Condition="$(CMakeGenerator86) == '' AND $(OS) == 'Unix'">Unix Makefiles</CMakeGenerator86>
-    <CMakeArch86 Condition="$(CMakeGenerator86) == 'Visual Studio 16 2019'">-A Win32</CMakeArch86>
+    <CMakeGenerator64 Condition="'$(CMakeGenerator64)' == ''">$(CMakeDefaultGenerator)</CMakeGenerator64>
+    <CMakeArch64 Condition="$(CMakeGenerator64.StartsWith('Visual Studio'))">-A x64</CMakeArch64>
+
+    <CMakeGeneratorArm64 Condition="'$(CMakeGeneratorArm64)' == ''">$(CMakeDefaultGenerator)</CMakeGeneratorArm64>
+    <CMakeArchArm64 Condition="$(CMakeGeneratorArm64.StartsWith('Visual Studio'))">-A ARM64</CMakeArchArm64>
+
+    <CMakeGenerator86 Condition="'$(CMakeGenerator86)' == ''">$(CMakeDefaultGenerator)</CMakeGenerator86>
+    <CMakeArch86 Condition="$(CMakeGenerator86.StartsWith('Visual Studio'))">-A Win32</CMakeArch86>
 
     <CMakeOSXArchitecturesArm64 Condition="$([MSBuild]::IsOsPlatform('OSX'))">-DCMAKE_OSX_ARCHITECTURES=arm64</CMakeOSXArchitecturesArm64>
     <CMakeOSXArchitecturesX64 Condition="$([MSBuild]::IsOsPlatform('OSX'))">-DCMAKE_OSX_ARCHITECTURES=x86_64</CMakeOSXArchitecturesX64>
 
     <CMakeBinaries>$(ProjectDir)../build</CMakeBinaries>
-    <CMakeConfig Condition="$(Configuration) == 'Debug'">Debug</CMakeConfig>
-    <CMakeConfig Condition="$(CMakeConfig) == ''">Release</CMakeConfig>
+    <CMakeConfig Condition="'$(Configuration)' == 'Debug'">Debug</CMakeConfig>
+    <CMakeConfig Condition="'$(CMakeConfig)' == ''">Release</CMakeConfig>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="CMake" Version="3.5.2">
@@ -64,6 +65,7 @@
     </PackageReference>
     <PackageReference Condition="'$(TargetFramework)' == 'netstandard2.0'" Include="System.Runtime.Loader" Version="4.3.0" />
     <PackageReference Condition="'$(TargetFramework)' != 'net35'" Include="Microsoft.CSharp" Version="4.5.0" />
+    <PackageReference Condition="'$(TargetFramework)' == 'net45'" Include="System.Runtime.InteropServices.RuntimeInformation" Version="4.3.0" />
   </ItemGroup>
 
   <Target Name="MakeLocalPackageSource" BeforeTargets="Restore;CollectPackageReferences">
@@ -78,7 +80,7 @@
   <Target Name="BuildNativeArm64Library" Condition="$(BuildNativeLibrary) == 'true' AND (($(PlatformTarget) == 'AnyCPU' AND $(AwsCrtPlatformTarget) == 'Arm64') OR $(PlatformTarget) == 'Arm64')" BeforeTargets="BuildNativeX64Library">
     <Message Text="Configuring Arm64 CMake project" Importance="high" />
     <MakeDir Directories="$(CMakeBinaries)/Arm64" />
-    <Exec Command="cmake -G&quot;$(CMakeGenerator64)&quot; -DCMAKE_BUILD_TYPE=$(CMakeConfig) -DBUILD_TESTING=OFF -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON $(CMakeArch64) $(CMakeOSXArchitecturesArm64) $(ProjectDir)../native" WorkingDirectory="$(CMakeBinaries)/Arm64" ConsoleToMSBuild="true">
+    <Exec Command="cmake -G&quot;$(CMakeGeneratorArm64)&quot; -DCMAKE_BUILD_TYPE=$(CMakeConfig) -DBUILD_TESTING=OFF -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON $(CMakeArchArm64) $(CMakeOSXArchitecturesArm64) $(ProjectDir)../native" WorkingDirectory="$(CMakeBinaries)/Arm64" ConsoleToMSBuild="true">
       <Output TaskParameter="ConsoleOutput" PropertyName="OutputOfExec" />
     </Exec>
     <Message Text="Building Arm64 native library" Importance="high" />
