@@ -164,7 +164,7 @@ jobs:
         python builder.pyz build -p ${{ env.PACKAGE_NAME }} --target windows-${{ matrix.arch }} --compiler msvc-17 downstream
 
   osx:
-    runs-on: macos-14-large
+    runs-on: macos-15-large
     steps:
     - uses: aws-actions/configure-aws-credentials@v4
       with:
@@ -186,7 +186,7 @@ jobs:
   # it would be better to run tests natively on one of these machines,
   # but we don't have access to one in the cloud, so for now just cross-compile
   osx-arm64-cross-compile:
-    runs-on: macos-14
+    runs-on: macos-15
     steps:
     - name: Build ${{ env.PACKAGE_NAME }} + consumers
       run: |
